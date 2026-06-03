@@ -30,8 +30,13 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
 *.tsbuildinfo
 .vercel
+
+# unrelated local paths (never commit)
+Downloads/
+OneDrive/
