@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   Asset,
+  FeeBumpTransaction,
   Horizon,
   Keypair,
   Memo,
@@ -25,7 +26,7 @@ import {
 @Injectable()
 export class StellarService {
   private readonly logger = new Logger(StellarService.name);
-  private readonly server: Horizon.Server;
+  private readonly horizonServer: Horizon.Server;
   private readonly networkPassphrase: string;
   private readonly friendbotUrl: string;
 
@@ -39,7 +40,7 @@ export class StellarService {
     this.friendbotUrl = this.configService.getOrThrow<string>(
       'stellar.friendbotUrl',
     );
-    this.server = new Horizon.Server(horizonUrl);
+    this.horizonServer = new Horizon.Server(horizonUrl);
   }
 
   async createAccount(fundWithFriendbot = true): Promise<StellarAccountKeys> {
@@ -78,7 +79,7 @@ export class StellarService {
   }): Promise<BuiltTransaction> {
     const sourceKeypair = Keypair.fromSecret(params.sourceSecret);
     const account = await this.loadAccount(sourceKeypair.publicKey());
-    const fee = await this.server.fetchBaseFee();
+    const fee = await this.horizonServer.fetchBaseFee();
 
     const asset =
       params.assetCode && params.assetIssuer
@@ -112,7 +113,7 @@ export class StellarService {
   async submitTransaction(xdr: string): Promise<SubmittedTransaction> {
     try {
       const transaction = new Transaction(xdr, this.networkPassphrase);
-      const response = await this.server.submitTransaction(transaction);
+      const response = await this.horizonServer.submitTransaction(transaction);
 
       return {
         hash: response.hash,
@@ -136,11 +137,76 @@ export class StellarService {
     }));
   }
 
+  get server(): Horizon.Server {
+    return this.horizonServer;
+  }
+
+  get network(): string {
+    return this.networkPassphrase;
+  }
+
+  async verifySignedXdr(xdr: string): Promise<boolean> {
+    try {
+      const transaction = this.parseTransaction(xdr);
+
+      if (transaction.signatures.length === 0) {
+        return false;
+      }
+
+      const sourceAccount = transaction.source;
+      const account = await this.horizonServer.loadAccount(sourceAccount);
+      const txHash = transaction.hash();
+
+      return transaction.signatures.some((signature) => {
+        const hint = signature.hint();
+        const signatureBytes = signature.signature();
+
+        return account.signers.some((signer) => {
+          try {
+            const keypair = Keypair.fromPublicKey(signer.key);
+            if (!keypair.signatureHint().equals(hint)) {
+              return false;
+            }
+
+            return keypair.verify(txHash, signatureBytes);
+          } catch {
+            return false;
+          }
+        });
+      });
+    } catch (error) {
+      this.logger.warn(
+        `XDR verification failed: ${error instanceof Error ? error.message : error}`,
+      );
+      return false;
+    }
+  }
+
+  async submit(xdr: string): Promise<string> {
+    const result = await this.submitTransaction(xdr);
+    return result.hash;
+  }
+
+  async getAccountSequence(publicKey: string): Promise<string> {
+    const account = await this.loadAccount(publicKey);
+    return account.sequence;
+  }
+
+  parseTransaction(xdr: string): Transaction {
+    const transaction = TransactionBuilder.fromXDR(xdr, this.networkPassphrase);
+
+    if (transaction instanceof FeeBumpTransaction) {
+      throw new BadRequestException('Fee bump transactions are not supported');
+    }
+
+    return transaction;
+  }
+
   private async loadAccount(
     publicKey: string,
   ): Promise<Horizon.AccountResponse> {
     try {
-      return await this.server.loadAccount(publicKey);
+      return await this.horizonServer.loadAccount(publicKey);
     } catch (error) {
       this.handleHorizonError(error, `load account ${publicKey}`);
     }
