@@ -6,6 +6,10 @@ import {
   type MpcProviderType,
   type MpcWallet,
 } from '@/lib/mpc';
+import {
+  assertSendAllowed,
+  type ComplianceScreenResult,
+} from '@/lib/compliance';
 
 interface WalletState {
   wallet: MpcWallet | null;
@@ -18,6 +22,11 @@ interface WalletState {
   createWallet: () => Promise<MpcWallet>;
   clearWallet: () => Promise<void>;
   upgradeToWeb3Auth: () => Promise<void>;
+  checkSendCompliance: (params: {
+    destination: string;
+    amount: string;
+    asset?: string;
+  }) => Promise<ComplianceScreenResult[]>;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -121,6 +130,29 @@ export const useWalletStore = create<WalletState>((set, get) => ({
             : 'Web3Auth upgrade failed';
 
       set({ isLoading: false, error: message });
+    }
+  },
+
+  checkSendCompliance: async ({ destination, amount, asset }) => {
+    const { wallet } = get();
+    if (!wallet) {
+      throw new Error('Wallet is not loaded');
+    }
+
+    set({ error: null });
+
+    try {
+      return await assertSendAllowed({
+        source: wallet.publicKey,
+        destination,
+        amount,
+        asset,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Compliance check failed';
+      set({ error: message });
+      throw error;
     }
   },
 }));
