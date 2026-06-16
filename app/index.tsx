@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -55,13 +56,21 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>Create wallet (single-key)</Text>
         </Pressable>
       ) : (
-        <Pressable
-          style={[styles.buttonSecondary, isLoading && styles.buttonDisabled]}
-          disabled={isLoading || providerType === "web3auth"}
-          onPress={() => void upgradeToWeb3Auth()}
-        >
-          <Text style={styles.buttonSecondaryText}>Upgrade to Web3Auth MPC</Text>
-        </Pressable>
+        <>
+          <Link href="/offline/send" style={styles.navLink}>
+            Offline send (QR)
+          </Link>
+          <Link href="/offline/receive" style={styles.navLink}>
+            Offline receive (scan & relay)
+          </Link>
+          <Pressable
+            style={[styles.buttonSecondary, isLoading && styles.buttonDisabled]}
+            disabled={isLoading || providerType === "web3auth"}
+            onPress={() => void upgradeToWeb3Auth()}
+          >
+            <Text style={styles.buttonSecondaryText}>Upgrade to Web3Auth MPC</Text>
+          </Pressable>
+        </>
       )}
     </View>
   );
@@ -142,5 +151,17 @@ const styles = StyleSheet.create({
     color: "#e5e5e5",
     fontWeight: "600",
     fontSize: 15,
+  },
+  navLink: {
+    width: "100%",
+    maxWidth: 360,
+    color: "#ffffff",
+    textAlign: "center",
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#404040",
+    marginBottom: 12,
+    overflow: "hidden",
   },
 });
