@@ -32,7 +32,13 @@
           "origin": "https://fastpay.app"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FastPay to scan offline payment QR codes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

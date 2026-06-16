@@ -13,6 +13,11 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: "FastPay Wallet" }} />
+        <Stack.Screen name="offline/send" options={{ title: "Offline Send" }} />
+        <Stack.Screen
+          name="offline/receive"
+          options={{ title: "Offline Receive" }}
+        />
       </Stack>
     </>
   );

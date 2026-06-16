@@ -10,6 +10,9 @@ import {
   assertSendAllowed,
   type ComplianceScreenResult,
 } from '@/lib/compliance';
+import { submitOfflineRelay, type RelayResponse } from '@/lib/api';
+import { buildUnsignedPayment } from '@/lib/stellar/build-payment';
+import { STELLAR_NETWORK_PASSPHRASE } from '@/lib/stellar/constants';
 
 interface WalletState {
   wallet: MpcWallet | null;
@@ -27,6 +30,16 @@ interface WalletState {
     amount: string;
     asset?: string;
   }) => Promise<ComplianceScreenResult[]>;
+  prepareOfflinePayment: (params: {
+    destination: string;
+    amount: string;
+    memo?: string;
+    recipientPhone?: string;
+  }) => Promise<{ signedTxXDR: string; recipientPhone?: string }>;
+  relayOfflinePayment: (params: {
+    signedTxXDR: string;
+    recipientPhone?: string;
+  }) => Promise<RelayResponse>;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -152,6 +165,67 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const message =
         error instanceof Error ? error.message : 'Compliance check failed';
       set({ error: message });
+      throw error;
+    }
+  },
+
+  prepareOfflinePayment: async ({
+    destination,
+    amount,
+    memo,
+    recipientPhone,
+  }) => {
+    const { mpcService, wallet } = get();
+    if (!mpcService || !wallet) {
+      throw new Error('Wallet is not loaded');
+    }
+
+    set({ isLoading: true, error: null });
+
+    try {
+      await assertSendAllowed({
+        source: wallet.publicKey,
+        destination,
+        amount,
+        asset: 'XLM',
+      });
+
+      const unsignedXdr = await buildUnsignedPayment({
+        sourcePublicKey: wallet.publicKey,
+        destination,
+        amount,
+        memo,
+      });
+
+      const signedTxXDR = await mpcService.signTransaction(
+        unsignedXdr,
+        STELLAR_NETWORK_PASSPHRASE,
+      );
+
+      set({ isLoading: false });
+      return { signedTxXDR, recipientPhone };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to prepare offline payment';
+      set({ isLoading: false, error: message });
+      throw error;
+    }
+  },
+
+  relayOfflinePayment: async ({ signedTxXDR, recipientPhone }) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await submitOfflineRelay({
+        signedTxXDR,
+        recipientPhone,
+      });
+      set({ isLoading: false });
+      return response;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to relay offline payment';
+      set({ isLoading: false, error: message });
       throw error;
     }
   },
