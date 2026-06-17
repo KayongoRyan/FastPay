@@ -20,8 +20,15 @@ npm start           # mobile (Expo Go)
 ## Project structure
 
 ```
-app/           # Expo Router screens
-components/    # Shared UI
-store/         # Wallet state (Zustand)
-lib/           # Wallet core logic (keys, chains, RPC)
+FastPay/           # This app (Expo / React Native)
+  app/             # Expo Router screens
+  store/           # Wallet state (Zustand)
+  lib/             # Wallet core (keys, API clients, compliance)
+
+../fastpay-backend/   # Backend monorepo (separate folder)
+  apps/            # Microservices (api-gateway, payment-service, etc.)
+  libs/            # Shared MongoDB module
+  infrastructure/  # Docker (Mongo, Redis, mock Horizon)
 ```
+
+Backend API default: `http://localhost:3000` (api-gateway)
