@@ -37,6 +37,7 @@ npm run docker:up
 npm install
 
 # Core services (separate terminals)
+npm run start:auth          # :3001
 npm run start:blockchain   # :3009
 npm run start:fraud        # :3011
 npm run start:payment      # :3003
@@ -60,6 +61,7 @@ Canonical schemas: `libs/schemas/` — see `docs/schema/er-diagram.md`.
 
 | Path | Service |
 |------|---------|
+| `/auth/*` | auth-service |
 | `/stellar/*` | blockchain-service |
 | `/offline/*` | payment-service |
 | `/compliance/*` | fraud-service |

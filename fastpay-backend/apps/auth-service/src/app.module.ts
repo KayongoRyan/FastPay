@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
 
 import { createHealthController } from '@fastpay/common';
 import { FastpayMongoModule } from '@fastpay/mongo';
-import { User, UserSchema } from '@fastpay/schemas';
+
+import { AuthModule } from './auth/auth.module';
 
 const HealthController = createHealthController('auth-service');
 
@@ -12,7 +12,7 @@ const HealthController = createHealthController('auth-service');
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '../../.env'] }),
     FastpayMongoModule.forRoot(),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    AuthModule,
   ],
   controllers: [HealthController],
 })

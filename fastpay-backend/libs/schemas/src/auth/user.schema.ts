@@ -9,10 +9,10 @@ export enum KycStatus {
 
 @Schema({ collection: 'users', timestamps: true })
 export class User {
-  @Prop({ sparse: true, unique: true })
+  @Prop({ sparse: true })
   phone?: string;
 
-  @Prop({ sparse: true, unique: true })
+  @Prop({ sparse: true })
   email?: string;
 
   @Prop({ required: true })
@@ -36,11 +36,14 @@ export class User {
   @Prop({ default: false })
   biometricEnabled!: boolean;
 
-  @Prop()
+  @Prop({ select: false })
   passwordHash?: string;
 
-  @Prop()
+  @Prop({ select: false })
   refreshTokenHash?: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export type UserDocument = HydratedDocument<User>;

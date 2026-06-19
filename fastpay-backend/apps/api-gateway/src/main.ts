@@ -11,6 +11,7 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
   const routes = [
+    { path: '/auth', target: config.get('gateway.authUrl') },
     { path: '/stellar', target: config.get('gateway.blockchainUrl') },
     { path: '/offline', target: config.get('gateway.paymentUrl') },
     { path: '/compliance', target: config.get('gateway.fraudUrl') },

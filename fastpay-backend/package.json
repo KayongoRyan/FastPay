@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "start:gateway": "npm run start:dev -w @fastpay/api-gateway",
+    "start:auth": "npm run start:dev -w @fastpay/auth-service",
     "start:payment": "npm run start:dev -w @fastpay/payment-service",
     "start:blockchain": "npm run start:dev -w @fastpay/blockchain-service",
     "start:fraud": "npm run start:dev -w @fastpay/fraud-service",
