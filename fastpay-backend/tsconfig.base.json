@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "paths": {
+      "@fastpay/common": ["libs/common/src"],
+      "@fastpay/common/*": ["libs/common/src/*"],
+      "@fastpay/mongo": ["libs/mongo/src"],
+      "@fastpay/mongo/*": ["libs/mongo/src/*"],
+      "@fastpay/schemas": ["libs/schemas/src"],
+      "@fastpay/schemas/*": ["libs/schemas/src/*"]
+    }
+  }
+}

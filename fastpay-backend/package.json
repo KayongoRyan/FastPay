@@ -1,0 +1,24 @@
+{
+  "name": "fastpay-backend",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "start:gateway": "npm run start:dev -w @fastpay/api-gateway",
+    "start:payment": "npm run start:dev -w @fastpay/payment-service",
+    "start:blockchain": "npm run start:dev -w @fastpay/blockchain-service",
+    "start:fraud": "npm run start:dev -w @fastpay/fraud-service",
+    "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.8.3"
+  }
+}
