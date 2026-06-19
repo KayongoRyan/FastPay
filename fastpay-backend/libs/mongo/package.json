@@ -1,0 +1,12 @@
+{
+  "name": "@fastpay/mongo",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/mongoose": "^11.0.0",
+    "mongoose": "^8.9.0"
+  }
+}

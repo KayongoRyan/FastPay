@@ -1,16 +1,11 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
 # dependencies
 node_modules/
 
-# env
-.env
-.env*.local
-
-# build
-dist/
-*.tsbuildinfo
-
-# Expo (FastPay/)
+# Expo
 .expo/
+dist/
 web-build/
 expo-env.d.ts
 
@@ -30,12 +25,18 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# OS
+# macOS
 .DS_Store
 *.pem
 
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
 .vercel
 
-# unrelated local paths
+# unrelated local paths (never commit)
 Downloads/
 OneDrive/

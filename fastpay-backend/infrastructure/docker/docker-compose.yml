@@ -1,0 +1,40 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: fastpay-mongo
+    ports:
+      - '27018:27017'
+    volumes:
+      - fastpay-mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastpay-redis
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mock-horizon:
+    image: node:20-alpine
+    container_name: fastpay-mock-horizon
+    working_dir: /app
+    command: node mock-horizon.js
+    volumes:
+      - ./mock-horizon.js:/app/mock-horizon.js:ro
+    ports:
+      - '8090:8090'
+    restart: unless-stopped
+
+volumes:
+  fastpay-mongo-data:
