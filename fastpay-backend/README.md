@@ -62,6 +62,19 @@ Canonical schemas: `libs/schemas/` — see `docs/schema/er-diagram.md`.
 | Path | Service |
 |------|---------|
 | `/auth/*` | auth-service |
+
+### Auth endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/auth/register` | Create account |
+| POST | `/auth/login` | Login (rate-limited, lockout after 5 failures) |
+| POST | `/auth/refresh` | Rotate tokens |
+| POST | `/auth/logout` | Invalidate refresh token (Bearer required) |
+| POST | `/auth/biometric/enroll` | Enable/disable biometric flag |
+| GET | `/auth/me` | Current user profile |
+
+Audit events are written to `audit_logs` on register, login, refresh, logout, and biometric enroll.
 | `/stellar/*` | blockchain-service |
 | `/offline/*` | payment-service |
 | `/compliance/*` | fraud-service |

@@ -1,4 +1,4 @@
-export { apiGet, apiPost, getApiUrl } from './client';
+export { apiGet, apiGetAuth, apiPost, apiPostAuth, getApiUrl, setAccessTokenProvider } from './client';
 export {
   getRelayStatus,
   submitOfflineRelay,

@@ -27,7 +27,7 @@ async function bootstrap() {
     );
   }
 
-  const port = process.env.PORT ?? 3000;
+  const port = Number(process.env.GATEWAY_PORT ?? process.env.PORT ?? 3000);
   await app.listen(port);
   console.log(`api-gateway running on http://localhost:${port}`);
 }
