@@ -15,12 +15,18 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '@fastpay/schemas';
 
 import {
-  JwtAccessPayload,
-  JwtRefreshPayload,
-} from './interfaces/jwt-payload.interface';
+  AUTH_AUDIT_ACTIONS,
+  AuditContext,
+} from './audit/audit.constants';
+import { AuditLogService } from './audit/audit-log.service';
 import { BiometricEnrollDto } from './dto/biometric-enroll.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import {
+  JwtAccessPayload,
+  JwtRefreshPayload,
+} from './interfaces/jwt-payload.interface';
+import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
 
 export interface AuthTokens {
   accessToken: string;
@@ -49,6 +55,8 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly rateLimiter: LoginRateLimiterService,
+    private readonly auditLog: AuditLogService,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
     this.accessExpiresIn = this.configService.getOrThrow<string>(
@@ -59,9 +67,18 @@ export class AuthService {
     );
   }
 
-  async register(dto: RegisterDto): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+  async register(
+    dto: RegisterDto,
+    context?: AuditContext,
+  ): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+    await this.rateLimiter.assertRegisterAllowed(context?.ipAddress);
+
     if (!dto.phone && !dto.email) {
       throw new ConflictException('Phone or email is required');
+    }
+
+    if (dto.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email.trim())) {
+      throw new ConflictException('Invalid email address');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, this.bcryptRounds);
@@ -79,6 +96,17 @@ export class AuthService {
       });
 
       const tokens = await this.issueTokens(user);
+
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REGISTER,
+        userId: user._id.toString(),
+        context,
+        details: {
+          email: user.email,
+          phone: user.phone,
+        },
+      });
+
       return { user: this.toAuthUser(user), tokens };
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
@@ -88,8 +116,13 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+  async login(
+    dto: LoginDto,
+    context?: AuditContext,
+  ): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
     const trimmed = dto.identifier.trim();
+    await this.rateLimiter.assertLoginAllowed(trimmed);
+
     const user = await this.userModel
       .findOne({
         $or: [{ email: trimmed.toLowerCase() }, { phone: trimmed }],
@@ -98,6 +131,7 @@ export class AuthService {
       .exec();
 
     if (!user?.passwordHash) {
+      await this.handleLoginFailure(trimmed, context, 'invalid_credentials');
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -105,14 +139,27 @@ export class AuthService {
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
+      await this.handleLoginFailure(trimmed, context, 'invalid_credentials', user._id.toString());
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    await this.rateLimiter.clearLoginFailures(trimmed);
+
     const tokens = await this.issueTokens(user);
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.LOGIN_SUCCESS,
+      userId: user._id.toString(),
+      context,
+    });
+
     return { user: this.toAuthUser(user), tokens };
   }
 
-  async refresh(refreshToken: string): Promise<AuthTokens> {
+  async refresh(
+    refreshToken: string,
+    context?: AuditContext,
+  ): Promise<AuthTokens> {
     let payload: JwtRefreshPayload;
 
     try {
@@ -120,10 +167,21 @@ export class AuthService {
         secret: this.configService.getOrThrow<string>('auth.jwtRefreshSecret'),
       });
     } catch {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REFRESH_FAILED,
+        context,
+        details: { reason: 'invalid_token' },
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (payload.type !== 'refresh') {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REFRESH_FAILED,
+        userId: payload.sub,
+        context,
+        details: { reason: 'wrong_token_type' },
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -133,6 +191,12 @@ export class AuthService {
       .exec();
 
     if (!user?.refreshTokenHash) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REFRESH_FAILED,
+        userId: payload.sub,
+        context,
+        details: { reason: 'no_stored_refresh' },
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
@@ -140,15 +204,44 @@ export class AuthService {
 
     const tokenHash = this.hashValue(refreshToken);
     if (tokenHash !== user.refreshTokenHash) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REFRESH_FAILED,
+        userId: user._id.toString(),
+        context,
+        details: { reason: 'hash_mismatch' },
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    return this.issueTokens(user);
+    const tokens = await this.issueTokens(user);
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.REFRESH,
+      userId: user._id.toString(),
+      context,
+    });
+
+    return tokens;
+  }
+
+  async logout(userId: string, context?: AuditContext): Promise<{ success: true }> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { $unset: { refreshTokenHash: 1 } })
+      .exec();
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.LOGOUT,
+      userId,
+      context,
+    });
+
+    return { success: true };
   }
 
   async enrollBiometric(
     userId: string,
     dto: BiometricEnrollDto,
+    context?: AuditContext,
   ): Promise<AuthUserResponse> {
     const user = await this.userModel
       .findByIdAndUpdate(
@@ -161,6 +254,13 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.BIOMETRIC_ENROLL,
+      userId,
+      context,
+      details: { enabled: dto.enabled },
+    });
 
     return this.toAuthUser(user);
   }
@@ -182,6 +282,35 @@ export class AuthService {
 
     this.assertAccountUsable(user);
     return this.toAuthUser(user);
+  }
+
+  private async handleLoginFailure(
+    identifier: string,
+    context: AuditContext | undefined,
+    reason: string,
+    userId?: string,
+  ): Promise<void> {
+    const result = await this.rateLimiter.recordLoginFailure(identifier);
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.LOGIN_FAILED,
+      userId,
+      context,
+      details: {
+        reason,
+        attemptsRemaining: result.attemptsRemaining,
+        locked: result.locked,
+      },
+    });
+
+    if (result.locked) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.LOGIN_LOCKED,
+        userId,
+        context,
+        details: { identifier: this.normalizeIdentifier(identifier) },
+      });
+    }
   }
 
   private async issueTokens(user: UserDocument): Promise<AuthTokens> {
@@ -242,6 +371,10 @@ export class AuthService {
 
   private hashValue(value: string): string {
     return createHash('sha256').update(value).digest('hex');
+  }
+
+  private normalizeIdentifier(identifier: string): string {
+    return identifier.trim().toLowerCase();
   }
 
   private parseExpiresIn(value: string): number {
