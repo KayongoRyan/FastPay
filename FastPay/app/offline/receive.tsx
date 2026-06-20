@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,9 +15,10 @@ import { useWalletStore } from "@/store/walletStore";
 
 export default function OfflineReceiveScreen() {
   const { isLoading, error, relayOfflinePayment } = useWalletStore();
+  const isWeb = Platform.OS === "web";
   const [permission, requestPermission] = useCameraPermissions();
   const [manualPayload, setManualPayload] = useState("");
-  const [scanning, setScanning] = useState(true);
+  const [scanning, setScanning] = useState(!isWeb);
   const [relayResult, setRelayResult] = useState<string | null>(null);
 
   const relayPayload = async (raw: string) => {
@@ -29,7 +31,7 @@ export default function OfflineReceiveScreen() {
     setScanning(false);
   };
 
-  if (!permission) {
+  if (!isWeb && !permission) {
     return (
       <View style={styles.container}>
         <Text style={styles.subtitle}>Checking camera permission...</Text>
@@ -37,7 +39,7 @@ export default function OfflineReceiveScreen() {
     );
   }
 
-  if (!permission.granted) {
+  if (!isWeb && permission && !permission.granted) {
     return (
       <View style={styles.container}>
         <Text style={styles.subtitle}>Camera access is required to scan offline payment QR codes.</Text>
@@ -55,7 +57,11 @@ export default function OfflineReceiveScreen() {
         Scan a signed transaction QR and relay it when this device is online.
       </Text>
 
-      {scanning ? (
+      {isWeb ? (
+        <Text style={styles.subtitle}>
+          QR scanning is not available on web. Paste the signed transaction JSON below.
+        </Text>
+      ) : scanning ? (
         <View style={styles.cameraWrap}>
           <CameraView
             style={styles.camera}
@@ -68,11 +74,11 @@ export default function OfflineReceiveScreen() {
             }}
           />
         </View>
-      ) : (
+      ) : !isWeb ? (
         <Pressable style={styles.buttonSecondary} onPress={() => setScanning(true)}>
           <Text style={styles.buttonSecondaryText}>Scan another QR</Text>
         </Pressable>
-      )}
+      ) : null}
 
       <Text style={styles.label}>Or paste QR JSON manually</Text>
       <TextInput
