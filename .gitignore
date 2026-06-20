@@ -39,3 +39,13 @@ yarn-error.*
 # unrelated local paths
 Downloads/
 OneDrive/
+
+# Flutter (fastpay_mobile/)
+fastpay_mobile/.dart_tool/
+fastpay_mobile/.flutter-plugins
+fastpay_mobile/.flutter-plugins-dependencies
+fastpay_mobile/build/
+fastpay_mobile/.pub-cache/
+fastpay_mobile/.pub/
+fastpay_mobile/**/Generated.xcconfig
+fastpay_mobile/**/flutter_export_environment.sh
