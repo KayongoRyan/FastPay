@@ -36,6 +36,12 @@ export class User {
   @Prop({ default: false })
   biometricEnabled!: boolean;
 
+  @Prop({ sparse: true })
+  biometricDeviceId?: string;
+
+  @Prop()
+  biometricPublicKey?: string;
+
   @Prop({ select: false })
   passwordHash?: string;
 
@@ -51,3 +57,4 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 UserSchema.index({ email: 1 }, { unique: true, sparse: true });
+UserSchema.index({ biometricDeviceId: 1 }, { unique: true, sparse: true });

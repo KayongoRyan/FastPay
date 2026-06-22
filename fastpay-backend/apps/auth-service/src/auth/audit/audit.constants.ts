@@ -6,6 +6,8 @@ export const AUTH_AUDIT_ACTIONS = {
   REFRESH: 'auth.refresh',
   REFRESH_FAILED: 'auth.refresh.failed',
   BIOMETRIC_ENROLL: 'auth.biometric.enroll',
+  BIOMETRIC_LOGIN_SUCCESS: 'auth.biometric.login.success',
+  BIOMETRIC_LOGIN_FAILED: 'auth.biometric.login.failed',
   LOGOUT: 'auth.logout',
 } as const;
 

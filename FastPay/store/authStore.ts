@@ -1,16 +1,29 @@
 import { create } from 'zustand';
 
 import {
+  biometricLogin,
   clearAuthSession,
+  clearDeviceKeyMaterial,
+  enrollBiometric,
+  fetchBiometricChallenge,
   fetchCurrentUser,
+  generateDeviceKeyMaterial,
+  getBiometricCapability,
   isAccessTokenExpired,
+  isBiometricLockEnabled,
   loadAccessToken,
+  loadDeviceKeyMaterial,
   loadRefreshToken,
+  loadStoredUser,
   loginUser,
   logoutUser,
+  promptBiometric,
   refreshSession,
   registerUser,
   saveAuthSession,
+  saveDeviceKeyMaterial,
+  setBiometricLockEnabled,
+  signChallenge,
   type AuthUser,
   type LoginInput,
   type RegisterInput,
@@ -22,12 +35,17 @@ interface AuthState {
   accessToken: string | null;
   isReady: boolean;
   isLoading: boolean;
+  isLocked: boolean;
+  biometricLabel: string;
   error: string | null;
   initialize: () => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   login: (input: LoginInput) => Promise<void>;
   logout: () => Promise<void>;
   refreshIfNeeded: () => Promise<boolean>;
+  unlockWithBiometric: () => Promise<void>;
+  enableBiometric: () => Promise<void>;
+  disableBiometric: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => {
@@ -38,12 +56,33 @@ export const useAuthStore = create<AuthState>((set, get) => {
     accessToken: null,
     isReady: false,
     isLoading: false,
+    isLocked: false,
+    biometricLabel: 'Biometrics',
     error: null,
 
     initialize: async () => {
       set({ isLoading: true, error: null });
 
       try {
+        const capability = await getBiometricCapability();
+        set({ biometricLabel: capability.label });
+
+        const [storedUser, biometricLock] = await Promise.all([
+          loadStoredUser(),
+          isBiometricLockEnabled(),
+        ]);
+
+        if (biometricLock && storedUser?.biometricEnabled) {
+          set({
+            user: storedUser,
+            accessToken: null,
+            isLocked: true,
+            isReady: true,
+            isLoading: false,
+          });
+          return;
+        }
+
         const [accessToken, refreshToken] = await Promise.all([
           loadAccessToken(),
           loadRefreshToken(),
@@ -58,7 +97,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
           const refreshed = await refreshSession(refreshToken);
           set({ accessToken: refreshed.accessToken });
           const user = await fetchCurrentUser();
-          await saveAuthSession(user, refreshed);
+          await saveAuthSession(user, refreshed, {
+            biometricProtected: storedUser?.biometricEnabled ?? false,
+          });
           set({
             user,
             accessToken: refreshed.accessToken,
@@ -74,6 +115,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
           accessToken,
           refreshToken,
           expiresIn: '15m',
+        }, {
+          biometricProtected: user.biometricEnabled,
         });
 
         set({
@@ -87,6 +130,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({
           user: null,
           accessToken: null,
+          isLocked: false,
           isReady: true,
           isLoading: false,
         });
@@ -102,6 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({
           user: session.user,
           accessToken: session.tokens.accessToken,
+          isLocked: false,
           isLoading: false,
         });
       } catch (error) {
@@ -118,9 +163,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const session = await loginUser(input);
         await saveAuthSession(session.user, session.tokens);
+        await setBiometricLockEnabled(false);
         set({
           user: session.user,
           accessToken: session.tokens.accessToken,
+          isLocked: false,
           isLoading: false,
         });
       } catch (error) {
@@ -144,6 +191,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({
           user: null,
           accessToken: null,
+          isLocked: false,
           isLoading: false,
         });
       }
@@ -161,11 +209,148 @@ export const useAuthStore = create<AuthState>((set, get) => {
       const user = get().user;
 
       if (user) {
-        await saveAuthSession(user, tokens);
+        await saveAuthSession(user, tokens, {
+          biometricProtected: user.biometricEnabled,
+        });
       }
 
       set({ accessToken: tokens.accessToken });
       return true;
+    },
+
+    unlockWithBiometric: async () => {
+      set({ isLoading: true, error: null });
+
+      try {
+        const authenticated = await promptBiometric('Unlock FastPay');
+        if (!authenticated) {
+          set({ isLoading: false, error: 'Biometric authentication cancelled' });
+          return;
+        }
+
+        const deviceKey = await loadDeviceKeyMaterial();
+        if (!deviceKey) {
+          throw new Error('Biometric device key not found');
+        }
+
+        const { challenge } = await fetchBiometricChallenge(deviceKey.deviceId);
+        const signature = signChallenge(deviceKey.secretKey, challenge);
+        const session = await biometricLogin({
+          deviceId: deviceKey.deviceId,
+          signature,
+        });
+
+        await saveAuthSession(session.user, session.tokens, {
+          biometricProtected: true,
+        });
+
+        set({
+          user: session.user,
+          accessToken: session.tokens.accessToken,
+          isLocked: false,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Biometric unlock failed';
+        set({ isLoading: false, error: message });
+        throw error;
+      }
+    },
+
+    enableBiometric: async () => {
+      const { user, accessToken } = get();
+      if (!user || !accessToken) {
+        throw new Error('Sign in before enabling biometrics');
+      }
+
+      set({ isLoading: true, error: null });
+
+      try {
+        const capability = await getBiometricCapability();
+        if (!capability.available || !capability.enrolled) {
+          throw new Error(`${capability.label} is not available on this device`);
+        }
+
+        const authenticated = await promptBiometric(`Enable ${capability.label}`);
+        if (!authenticated) {
+          set({ isLoading: false, error: 'Biometric authentication cancelled' });
+          return;
+        }
+
+        const deviceKey = await generateDeviceKeyMaterial();
+        await saveDeviceKeyMaterial(deviceKey.deviceId, deviceKey.secretKey);
+
+        const updatedUser = await enrollBiometric({
+          enabled: true,
+          deviceId: deviceKey.deviceId,
+          publicKey: deviceKey.publicKey,
+        });
+
+        const refreshToken = await loadRefreshToken();
+        if (!refreshToken) {
+          throw new Error('Missing refresh token');
+        }
+
+        await saveAuthSession(updatedUser, {
+          accessToken,
+          refreshToken,
+          expiresIn: '15m',
+        }, { biometricProtected: true });
+
+        await setBiometricLockEnabled(true);
+
+        set({
+          user: updatedUser,
+          biometricLabel: capability.label,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error) {
+        await clearDeviceKeyMaterial();
+        const message =
+          error instanceof Error ? error.message : 'Failed to enable biometrics';
+        set({ isLoading: false, error: message });
+        throw error;
+      }
+    },
+
+    disableBiometric: async () => {
+      const { user, accessToken } = get();
+      if (!user || !accessToken) {
+        return;
+      }
+
+      set({ isLoading: true, error: null });
+
+      try {
+        const updatedUser = await enrollBiometric({ enabled: false });
+        const refreshToken = await loadRefreshToken();
+        if (!refreshToken) {
+          throw new Error('Missing refresh token');
+        }
+
+        await saveAuthSession(updatedUser, {
+          accessToken,
+          refreshToken,
+          expiresIn: '15m',
+        });
+
+        await clearDeviceKeyMaterial();
+        await setBiometricLockEnabled(false);
+
+        set({
+          user: updatedUser,
+          isLoading: false,
+          error: null,
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to disable biometrics';
+        set({ isLoading: false, error: message });
+        throw error;
+      }
     },
   };
 });

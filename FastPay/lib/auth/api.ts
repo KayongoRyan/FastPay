@@ -1,9 +1,10 @@
-import { apiGetAuth, apiPost, apiPostAuth } from '@/lib/api/client';
+import { apiGet, apiGetAuth, apiPost, apiPostAuth } from '@/lib/api/client';
 
 import type {
   AuthSession,
   AuthTokens,
   AuthUser,
+  BiometricEnrollInput,
   LoginInput,
   RegisterInput,
 } from './types';
@@ -28,6 +29,23 @@ export async function logoutUser(): Promise<void> {
   await apiPostAuth<{ success: true }>('/auth/logout', {});
 }
 
-export async function enrollBiometric(enabled: boolean): Promise<AuthUser> {
-  return apiPostAuth<AuthUser>('/auth/biometric/enroll', { enabled });
+export async function enrollBiometric(
+  input: BiometricEnrollInput,
+): Promise<AuthUser> {
+  return apiPostAuth<AuthUser>('/auth/biometric/enroll', input);
+}
+
+export async function fetchBiometricChallenge(
+  deviceId: string,
+): Promise<{ challenge: string; expiresIn: number }> {
+  return apiGet<{ challenge: string; expiresIn: number }>(
+    `/auth/biometric/challenge?deviceId=${encodeURIComponent(deviceId)}`,
+  );
+}
+
+export async function biometricLogin(input: {
+  deviceId: string;
+  signature: string;
+}): Promise<AuthSession> {
+  return apiPost<AuthSession>('/auth/biometric/login', input);
 }

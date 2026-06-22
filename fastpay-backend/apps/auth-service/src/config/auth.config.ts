@@ -15,4 +15,7 @@ export default registerAs('auth', () => ({
   loginLockoutSeconds: Number(process.env.AUTH_LOGIN_LOCKOUT_SECONDS ?? 900),
   registerMaxPerIp: Number(process.env.AUTH_REGISTER_MAX_PER_IP ?? 10),
   registerWindowSeconds: Number(process.env.AUTH_REGISTER_WINDOW_SECONDS ?? 3600),
+  biometricChallengeTtlSeconds: Number(
+    process.env.AUTH_BIOMETRIC_CHALLENGE_TTL_SECONDS ?? 60,
+  ),
 }));

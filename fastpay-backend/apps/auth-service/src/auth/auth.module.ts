@@ -11,6 +11,7 @@ import { AuditLogService } from './audit/audit-log.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { BiometricChallengeService } from './rate-limit/biometric-challenge.service';
 import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
 
 @Module({
@@ -30,7 +31,13 @@ import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LoginRateLimiterService, AuditLogService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LoginRateLimiterService,
+    BiometricChallengeService,
+    AuditLogService,
+  ],
   exports: [AuthService, JwtModule, PassportModule],
 })
 export class AuthModule {}

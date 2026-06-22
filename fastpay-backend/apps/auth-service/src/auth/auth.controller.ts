@@ -3,13 +3,16 @@ import {
   Controller,
   Get,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { AuthService } from './auth.service';
+import { BiometricChallengeQueryDto } from './dto/biometric-challenge-query.dto';
 import { BiometricEnrollDto } from './dto/biometric-enroll.dto';
+import { BiometricLoginDto } from './dto/biometric-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -53,6 +56,16 @@ export class AuthController {
       dto,
       extractAuditContext(req),
     );
+  }
+
+  @Get('biometric/challenge')
+  biometricChallenge(@Query() query: BiometricChallengeQueryDto) {
+    return this.authService.createBiometricChallenge(query.deviceId);
+  }
+
+  @Post('biometric/login')
+  biometricLogin(@Body() dto: BiometricLoginDto, @Req() req: Request) {
+    return this.authService.biometricLogin(dto, extractAuditContext(req));
   }
 
   @UseGuards(JwtAuthGuard)
