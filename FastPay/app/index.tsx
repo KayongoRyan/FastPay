@@ -1,4 +1,4 @@
-import { Link, router } from "expo-router";
+import { Href, Link, router } from "expo-router";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -10,7 +10,16 @@ function truncateKey(publicKey: string): string {
 }
 
 export default function HomeScreen() {
-  const { user, isReady: authReady, isLoading: authLoading, logout } = useAuthStore();
+  const {
+    user,
+    isReady: authReady,
+    isLoading: authLoading,
+    isLocked,
+    biometricLabel,
+    logout,
+    enableBiometric,
+    disableBiometric,
+  } = useAuthStore();
   const {
     wallet,
     providerType,
@@ -23,10 +32,16 @@ export default function HomeScreen() {
   } = useWalletStore();
 
   useEffect(() => {
-    if (user) {
+    if (isLocked) {
+      router.replace("/biometric-unlock" as Href);
+    }
+  }, [isLocked]);
+
+  useEffect(() => {
+    if (user && !isLocked) {
       void initialize();
     }
-  }, [user, initialize]);
+  }, [user, isLocked, initialize]);
 
   if (!authReady || authLoading) {
     return (
@@ -68,6 +83,11 @@ export default function HomeScreen() {
           {user.kycStatus} (level {user.kycLevel})
         </Text>
 
+        <Text style={styles.label}>Biometric</Text>
+        <Text style={styles.value}>
+          {user.biometricEnabled ? `${biometricLabel} enabled` : "Password only"}
+        </Text>
+
         <Text style={styles.label}>MPC provider</Text>
         <Text style={styles.value}>{providerType}</Text>
 
@@ -107,6 +127,28 @@ export default function HomeScreen() {
             <Text style={styles.buttonSecondaryText}>Upgrade to Web3Auth MPC</Text>
           </Pressable>
         </>
+      )}
+
+      {user.biometricEnabled ? (
+        <Pressable
+          style={[styles.buttonSecondary, authLoading && styles.buttonDisabled]}
+          disabled={authLoading}
+          onPress={() => void disableBiometric()}
+        >
+          <Text style={styles.buttonSecondaryText}>
+            Disable {biometricLabel}
+          </Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          style={[styles.buttonSecondary, authLoading && styles.buttonDisabled]}
+          disabled={authLoading}
+          onPress={() => void enableBiometric()}
+        >
+          <Text style={styles.buttonSecondaryText}>
+            Enable {biometricLabel}
+          </Text>
+        </Pressable>
       )}
 
       <Pressable

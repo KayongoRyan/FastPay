@@ -1,6 +1,7 @@
 import '../../../core/api/api_client.dart';
 import '../models/auth_models.dart';
 import 'auth_storage.dart';
+import 'device_key_service.dart';
 
 class AuthRepository {
   AuthRepository({
@@ -47,6 +48,7 @@ class AuthRepository {
     );
 
     await _persist(session);
+    await _storage.setBiometricLockEnabled(false);
     return session;
   }
 
@@ -59,7 +61,11 @@ class AuthRepository {
 
     _api.setAccessToken(tokens.accessToken);
     final user = await fetchMe();
-    await _storage.saveSession(user, tokens);
+    await _storage.saveSession(
+      user,
+      tokens,
+      biometricProtected: user.biometricEnabled,
+    );
     return tokens;
   }
 
@@ -69,6 +75,51 @@ class AuthRepository {
       parser: AuthUser.fromJson,
       authenticated: true,
     );
+  }
+
+  Future<AuthUser> enrollBiometric({
+    required bool enabled,
+    String? deviceId,
+    String? publicKey,
+  }) async {
+    return _api.post(
+      '/auth/biometric/enroll',
+      body: {
+        'enabled': enabled,
+        if (deviceId != null) 'deviceId': deviceId,
+        if (publicKey != null) 'publicKey': publicKey,
+      },
+      parser: AuthUser.fromJson,
+      authenticated: true,
+    );
+  }
+
+  Future<BiometricChallenge> fetchBiometricChallenge(String deviceId) async {
+    final encoded = Uri.encodeQueryComponent(deviceId);
+    return _api.get(
+      '/auth/biometric/challenge?deviceId=$encoded',
+      parser: BiometricChallenge.fromJson,
+    );
+  }
+
+  Future<AuthSession> biometricLogin({
+    required String deviceId,
+    required String signature,
+  }) async {
+    final session = await _api.post(
+      '/auth/biometric/login',
+      body: {
+        'deviceId': deviceId,
+        'signature': signature,
+      },
+      parser: AuthSession.fromJson,
+    );
+
+    await _persist(
+      session,
+      biometricProtected: true,
+    );
+    return session;
   }
 
   Future<void> logout() async {
@@ -103,8 +154,50 @@ class AuthRepository {
     return fetchMe();
   }
 
-  Future<void> _persist(AuthSession session) async {
+  Future<AuthUser?> readStoredUser() => _storage.readUser();
+
+  Future<bool> isBiometricLockEnabled() => _storage.isBiometricLockEnabled();
+
+  Future<void> setBiometricLockEnabled(bool enabled) =>
+      _storage.setBiometricLockEnabled(enabled);
+
+  Future<StoredDeviceKey?> readDeviceKeyMaterial() =>
+      _storage.readDeviceKeyMaterial();
+
+  Future<void> saveDeviceKeyMaterial(DeviceKeyMaterial material) =>
+      _storage.saveDeviceKeyMaterial(
+        deviceId: material.deviceId,
+        secretKey: material.secretKey,
+      );
+
+  Future<void> clearDeviceKeyMaterial() => _storage.clearDeviceKeyMaterial();
+
+  Future<void> _persist(
+    AuthSession session, {
+    bool biometricProtected = false,
+  }) async {
     _api.setAccessToken(session.tokens.accessToken);
-    await _storage.saveSession(session.user, session.tokens);
+    await _storage.saveSession(
+      session.user,
+      session.tokens,
+      biometricProtected: biometricProtected,
+    );
+  }
+}
+
+class BiometricChallenge {
+  const BiometricChallenge({
+    required this.challenge,
+    required this.expiresIn,
+  });
+
+  final String challenge;
+  final int expiresIn;
+
+  factory BiometricChallenge.fromJson(Map<String, dynamic> json) {
+    return BiometricChallenge(
+      challenge: json['challenge'] as String,
+      expiresIn: json['expiresIn'] as int? ?? 60,
+    );
   }
 }

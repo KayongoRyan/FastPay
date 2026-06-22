@@ -48,6 +48,12 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 _InfoRow(label: 'Account', value: user.email ?? user.phone ?? user.id),
                 _InfoRow(label: 'KYC', value: '${user.kycStatus} (level ${user.kycLevel})'),
+                _InfoRow(
+                  label: 'Biometric',
+                  value: user.biometricEnabled
+                      ? '${auth.biometricLabel} enabled'
+                      : 'Password only',
+                ),
                 const _InfoRow(
                   label: 'Wallet',
                   value: 'Stellar wallet — coming next milestone',
@@ -55,6 +61,21 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+            if (user.biometricEnabled)
+              OutlinedButton(
+                onPressed: auth.isLoading
+                    ? null
+                    : () => ref.read(authProvider.notifier).disableBiometric(),
+                child: Text('Disable ${auth.biometricLabel}'),
+              )
+            else
+              OutlinedButton(
+                onPressed: auth.isLoading
+                    ? null
+                    : () => ref.read(authProvider.notifier).enableBiometric(),
+                child: Text('Enable ${auth.biometricLabel}'),
+              ),
+            const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => context.push('/offline/send'),
               child: const Text('Offline send (QR)'),

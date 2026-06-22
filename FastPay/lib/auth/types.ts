@@ -31,3 +31,9 @@ export interface LoginInput {
   identifier: string;
   password: string;
 }
+
+export interface BiometricEnrollInput {
+  enabled: boolean;
+  deviceId?: string;
+  publicKey?: string;
+}

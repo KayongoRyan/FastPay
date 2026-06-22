@@ -3,18 +3,27 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import type { AuthTokens, AuthUser } from './types';
+import { DEVICE_ID_KEY, DEVICE_SECRET_KEY } from './device-key';
 
 const ACCESS_TOKEN_KEY = 'fastpay_access_token';
 const REFRESH_TOKEN_KEY = 'fastpay_refresh_token';
+const REFRESH_TOKEN_BIO_KEY = 'fastpay_refresh_token_bio';
 const USER_KEY = 'fastpay_auth_user';
+const BIOMETRIC_LOCK_KEY = 'fastpay_biometric_lock';
 
-async function setSecureItem(key: string, value: string): Promise<void> {
+type SecureOptions = SecureStore.SecureStoreOptions | undefined;
+
+async function setSecureItem(
+  key: string,
+  value: string,
+  options?: SecureOptions,
+): Promise<void> {
   if (Platform.OS === 'web') {
     await AsyncStorage.setItem(key, value);
     return;
   }
 
-  await SecureStore.setItemAsync(key, value);
+  await SecureStore.setItemAsync(key, value, options);
 }
 
 async function getSecureItem(key: string): Promise<string | null> {
@@ -37,12 +46,30 @@ async function deleteSecureItem(key: string): Promise<void> {
 export async function saveAuthSession(
   user: AuthUser,
   tokens: AuthTokens,
+  options?: { biometricProtected?: boolean },
 ): Promise<void> {
+  const biometricProtected = options?.biometricProtected ?? false;
+  const secureOptions: SecureOptions =
+    biometricProtected && Platform.OS !== 'web'
+      ? {
+          requireAuthentication: true,
+          authenticationPrompt: 'Unlock FastPay',
+        }
+      : undefined;
+
   await Promise.all([
     setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken),
-    setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken),
+    biometricProtected
+      ? setSecureItem(REFRESH_TOKEN_BIO_KEY, tokens.refreshToken, secureOptions)
+      : setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken),
     AsyncStorage.setItem(USER_KEY, JSON.stringify(user)),
   ]);
+
+  if (!biometricProtected) {
+    await deleteSecureItem(REFRESH_TOKEN_BIO_KEY);
+  } else {
+    await deleteSecureItem(REFRESH_TOKEN_KEY);
+  }
 }
 
 export async function loadAccessToken(): Promise<string | null> {
@@ -50,7 +77,12 @@ export async function loadAccessToken(): Promise<string | null> {
 }
 
 export async function loadRefreshToken(): Promise<string | null> {
-  return getSecureItem(REFRESH_TOKEN_KEY);
+  const standard = await getSecureItem(REFRESH_TOKEN_KEY);
+  if (standard) {
+    return standard;
+  }
+
+  return getSecureItem(REFRESH_TOKEN_BIO_KEY);
 }
 
 export async function loadStoredUser(): Promise<AuthUser | null> {
@@ -70,7 +102,65 @@ export async function clearAuthSession(): Promise<void> {
   await Promise.all([
     deleteSecureItem(ACCESS_TOKEN_KEY),
     deleteSecureItem(REFRESH_TOKEN_KEY),
-    AsyncStorage.removeItem(USER_KEY),
+    deleteSecureItem(REFRESH_TOKEN_BIO_KEY),
+    deleteSecureItem(DEVICE_ID_KEY),
+    deleteSecureItem(DEVICE_SECRET_KEY),
+    AsyncStorage.multiRemove([USER_KEY, BIOMETRIC_LOCK_KEY]),
+  ]);
+}
+
+export async function setBiometricLockEnabled(enabled: boolean): Promise<void> {
+  if (enabled) {
+    await AsyncStorage.setItem(BIOMETRIC_LOCK_KEY, '1');
+    return;
+  }
+
+  await AsyncStorage.removeItem(BIOMETRIC_LOCK_KEY);
+}
+
+export async function isBiometricLockEnabled(): Promise<boolean> {
+  const value = await AsyncStorage.getItem(BIOMETRIC_LOCK_KEY);
+  return value === '1';
+}
+
+export async function saveDeviceKeyMaterial(
+  deviceId: string,
+  secretKey: string,
+): Promise<void> {
+  const secureOptions: SecureOptions =
+    Platform.OS !== 'web'
+      ? {
+          requireAuthentication: true,
+          authenticationPrompt: 'Unlock FastPay device key',
+        }
+      : undefined;
+
+  await Promise.all([
+    setSecureItem(DEVICE_ID_KEY, deviceId, secureOptions),
+    setSecureItem(DEVICE_SECRET_KEY, secretKey, secureOptions),
+  ]);
+}
+
+export async function loadDeviceKeyMaterial(): Promise<{
+  deviceId: string;
+  secretKey: string;
+} | null> {
+  const [deviceId, secretKey] = await Promise.all([
+    getSecureItem(DEVICE_ID_KEY),
+    getSecureItem(DEVICE_SECRET_KEY),
+  ]);
+
+  if (!deviceId || !secretKey) {
+    return null;
+  }
+
+  return { deviceId, secretKey };
+}
+
+export async function clearDeviceKeyMaterial(): Promise<void> {
+  await Promise.all([
+    deleteSecureItem(DEVICE_ID_KEY),
+    deleteSecureItem(DEVICE_SECRET_KEY),
   ]);
 }
 

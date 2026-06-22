@@ -34,6 +34,12 @@
       ],
       "expo-secure-store",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow FastPay to unlock your wallet with Face ID."
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Allow FastPay to scan offline payment QR codes."

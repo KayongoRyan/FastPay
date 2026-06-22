@@ -24,6 +24,10 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ title: "FastPay Wallet" }} />
         <Stack.Screen name="login" options={{ title: "Sign in" }} />
         <Stack.Screen name="register" options={{ title: "Register" }} />
+        <Stack.Screen
+          name="biometric-unlock"
+          options={{ title: "Unlock", headerShown: false }}
+        />
         <Stack.Screen name="offline/send" options={{ title: "Offline Send" }} />
         <Stack.Screen
           name="offline/receive"

@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +21,7 @@ import {
 } from './audit/audit.constants';
 import { AuditLogService } from './audit/audit-log.service';
 import { BiometricEnrollDto } from './dto/biometric-enroll.dto';
+import { BiometricLoginDto } from './dto/biometric-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import {
@@ -27,6 +29,8 @@ import {
   JwtRefreshPayload,
 } from './interfaces/jwt-payload.interface';
 import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
+import { BiometricChallengeService } from './rate-limit/biometric-challenge.service';
+import { verifyEd25519Signature } from './utils/ed25519.util';
 
 export interface AuthTokens {
   accessToken: string;
@@ -56,6 +60,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly rateLimiter: LoginRateLimiterService,
+    private readonly biometricChallenge: BiometricChallengeService,
     private readonly auditLog: AuditLogService,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
@@ -243,12 +248,31 @@ export class AuthService {
     dto: BiometricEnrollDto,
     context?: AuditContext,
   ): Promise<AuthUserResponse> {
+    if (dto.enabled) {
+      if (!dto.deviceId || !dto.publicKey) {
+        throw new ConflictException(
+          'deviceId and publicKey are required when enabling biometric auth',
+        );
+      }
+
+      if (Buffer.from(dto.publicKey, 'base64').length !== 32) {
+        throw new ConflictException('publicKey must be a base64-encoded Ed25519 key');
+      }
+    }
+
+    const update = dto.enabled
+      ? {
+          biometricEnabled: true,
+          biometricDeviceId: dto.deviceId,
+          biometricPublicKey: dto.publicKey,
+        }
+      : {
+          biometricEnabled: false,
+          $unset: { biometricDeviceId: 1, biometricPublicKey: 1 },
+        };
+
     const user = await this.userModel
-      .findByIdAndUpdate(
-        userId,
-        { biometricEnabled: dto.enabled },
-        { new: true },
-      )
+      .findByIdAndUpdate(userId, update, { new: true })
       .exec();
 
     if (!user) {
@@ -259,10 +283,96 @@ export class AuthService {
       action: AUTH_AUDIT_ACTIONS.BIOMETRIC_ENROLL,
       userId,
       context,
-      details: { enabled: dto.enabled },
+      details: {
+        enabled: dto.enabled,
+        deviceId: dto.enabled ? dto.deviceId : undefined,
+      },
     });
 
     return this.toAuthUser(user);
+  }
+
+  async createBiometricChallenge(deviceId: string): Promise<{
+    challenge: string;
+    expiresIn: number;
+  }> {
+    const user = await this.userModel
+      .findOne({ biometricDeviceId: deviceId, biometricEnabled: true })
+      .exec();
+
+    if (!user?.biometricPublicKey) {
+      throw new NotFoundException('Biometric device not enrolled');
+    }
+
+    this.assertAccountUsable(user);
+
+    const challenge = await this.biometricChallenge.createChallenge(
+      user._id.toString(),
+      deviceId,
+    );
+
+    return {
+      challenge,
+      expiresIn: this.biometricChallenge.expiresInSeconds,
+    };
+  }
+
+  async biometricLogin(
+    dto: BiometricLoginDto,
+    context?: AuditContext,
+  ): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+    const user = await this.userModel
+      .findOne({ biometricDeviceId: dto.deviceId, biometricEnabled: true })
+      .exec();
+
+    if (!user?.biometricPublicKey) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.BIOMETRIC_LOGIN_FAILED,
+        context,
+        details: { reason: 'device_not_enrolled', deviceId: dto.deviceId },
+      });
+      throw new UnauthorizedException('Biometric login failed');
+    }
+
+    const stored = await this.biometricChallenge.consumeChallenge(dto.deviceId);
+    if (!stored || stored.userId !== user._id.toString()) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.BIOMETRIC_LOGIN_FAILED,
+        userId: user._id.toString(),
+        context,
+        details: { reason: 'invalid_or_expired_challenge', deviceId: dto.deviceId },
+      });
+      throw new UnauthorizedException('Biometric login failed');
+    }
+
+    const valid = verifyEd25519Signature(
+      user.biometricPublicKey,
+      stored.nonce,
+      dto.signature,
+    );
+
+    if (!valid) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.BIOMETRIC_LOGIN_FAILED,
+        userId: user._id.toString(),
+        context,
+        details: { reason: 'invalid_signature', deviceId: dto.deviceId },
+      });
+      throw new UnauthorizedException('Biometric login failed');
+    }
+
+    this.assertAccountUsable(user);
+
+    const tokens = await this.issueTokens(user);
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.BIOMETRIC_LOGIN_SUCCESS,
+      userId: user._id.toString(),
+      context,
+      details: { deviceId: dto.deviceId },
+    });
+
+    return { user: this.toAuthUser(user), tokens };
   }
 
   async getProfile(userId: string): Promise<AuthUserResponse> {
