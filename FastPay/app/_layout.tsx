@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 
 import { useAuthStore } from "@/store/authStore";
+import { colors } from "@/theme/colors";
 
 export default function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -16,23 +17,17 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: "#0a0a0a" },
-          headerTintColor: "#ffffff",
-          contentStyle: { backgroundColor: "#0a0a0a" },
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.background },
+          animation: "fade",
         }}
       >
-        <Stack.Screen name="index" options={{ title: "FastPay Wallet" }} />
-        <Stack.Screen name="login" options={{ title: "Sign in" }} />
-        <Stack.Screen name="register" options={{ title: "Register" }} />
-        <Stack.Screen
-          name="biometric-unlock"
-          options={{ title: "Unlock", headerShown: false }}
-        />
-        <Stack.Screen name="offline/send" options={{ title: "Offline Send" }} />
-        <Stack.Screen
-          name="offline/receive"
-          options={{ title: "Offline Receive" }}
-        />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(main)" />
+        <Stack.Screen name="biometric-unlock" />
+        <Stack.Screen name="offline/send" options={{ headerShown: true, title: "Offline Send", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
+        <Stack.Screen name="offline/receive" options={{ headerShown: true, title: "Offline Receive", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
       </Stack>
     </>
   );

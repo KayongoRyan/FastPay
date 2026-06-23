@@ -1,7 +1,12 @@
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { FastPayLogo } from "@/components/FastPayLogo";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { Screen } from "@/components/ui/Screen";
 import { useAuthStore } from "@/store/authStore";
+import { colors } from "@/theme/colors";
+import { spacing } from "@/theme/spacing";
 
 export default function BiometricUnlockScreen() {
   const {
@@ -14,7 +19,8 @@ export default function BiometricUnlockScreen() {
   } = useAuthStore();
 
   return (
-    <View style={styles.container}>
+    <Screen centered>
+      <FastPayLogo size={48} />
       <Text style={styles.title}>FastPay is locked</Text>
       <Text style={styles.subtitle}>
         {user
@@ -24,78 +30,61 @@ export default function BiometricUnlockScreen() {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Pressable
-        style={[styles.button, isLoading && styles.buttonDisabled]}
-        disabled={isLoading}
+      <PrimaryButton
+        label={isLoading ? "Unlocking..." : `Unlock with ${biometricLabel}`}
         onPress={() => {
-          void unlockWithBiometric().then(() => router.replace("/"));
+          void unlockWithBiometric().then(() =>
+            router.replace("/(main)/home" as Href),
+          );
         }}
-      >
-        <Text style={styles.buttonText}>
-          {isLoading ? "Unlocking..." : `Unlock with ${biometricLabel}`}
-        </Text>
-      </Pressable>
+        loading={isLoading}
+        style={styles.button}
+      />
 
       <Pressable
-        style={styles.secondaryButton}
+        style={styles.secondary}
         disabled={isLoading}
         onPress={() => {
-          void logout().then(() => router.replace("/login"));
+          void logout().then(() => router.replace("/(auth)/login" as Href));
         }}
       >
-        <Text style={styles.secondaryButtonText}>Sign in with password</Text>
+        <Text style={styles.secondaryText}>Sign in with password</Text>
       </Pressable>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#0a0a0a",
-  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700",
-    color: "#ffffff",
-    marginBottom: 8,
+    color: colors.white,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
-    color: "#a3a3a3",
+    fontSize: 15,
+    color: colors.textMuted,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   error: {
-    color: "#f87171",
-    marginBottom: 16,
+    color: colors.error,
+    marginBottom: spacing.md,
     textAlign: "center",
   },
   button: {
     width: "100%",
     maxWidth: 360,
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
+    marginTop: spacing.md,
   },
-  buttonDisabled: {
-    opacity: 0.5,
+  secondary: {
+    paddingVertical: spacing.lg,
   },
-  buttonText: {
-    color: "#0a0a0a",
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  secondaryButton: {
-    paddingVertical: 14,
-  },
-  secondaryButtonText: {
-    color: "#a3a3a3",
+  secondaryText: {
+    color: colors.textMuted,
     fontSize: 15,
   },
 });

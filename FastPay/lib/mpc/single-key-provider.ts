@@ -1,4 +1,4 @@
-import { Keypair, TransactionBuilder } from '@stellar/stellar-sdk';
+import { Keypair, TransactionBuilder } from '@/lib/stellar/sdk';
 
 import {
   clearSecretKey,

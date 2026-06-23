@@ -1,15 +1,18 @@
 import {
   Asset,
-  Horizon,
   Memo,
   Operation,
   TransactionBuilder,
-} from '@stellar/stellar-sdk';
+} from '@/lib/stellar/sdk';
 
 import {
   STELLAR_HORIZON_URL,
   STELLAR_NETWORK_PASSPHRASE,
 } from '@/lib/stellar/constants';
+import {
+  fetchHorizonBaseFee,
+  loadHorizonAccount,
+} from '@/lib/stellar/horizon-client';
 
 export interface BuildPaymentParams {
   sourcePublicKey: string;
@@ -23,11 +26,10 @@ export interface BuildPaymentParams {
 export async function buildUnsignedPayment(
   params: BuildPaymentParams,
 ): Promise<string> {
-  const server = new Horizon.Server(STELLAR_HORIZON_URL, {
-    allowHttp: STELLAR_HORIZON_URL.startsWith('http://'),
-  });
-  const account = await server.loadAccount(params.sourcePublicKey);
-  const fee = await server.fetchBaseFee();
+  const [account, fee] = await Promise.all([
+    loadHorizonAccount(params.sourcePublicKey),
+    fetchHorizonBaseFee(),
+  ]);
 
   const asset =
     params.assetCode && params.assetIssuer
@@ -35,7 +37,7 @@ export async function buildUnsignedPayment(
       : Asset.native();
 
   let builder = new TransactionBuilder(account, {
-    fee: fee.toString(),
+    fee,
     networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
   }).addOperation(
     Operation.payment({
