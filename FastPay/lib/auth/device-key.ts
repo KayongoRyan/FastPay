@@ -1,4 +1,4 @@
-import { Keypair } from '@stellar/stellar-sdk';
+import { Keypair } from '@/lib/stellar/sdk';
 import * as Crypto from 'expo-crypto';
 
 const DEVICE_ID_KEY = 'fastpay_biometric_device_id';

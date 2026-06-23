@@ -9,17 +9,19 @@
     "newArchEnabled": true,
     "splash": {
       "resizeMode": "contain",
-      "backgroundColor": "#0a0a0a"
+      "backgroundColor": "#0B1F3F"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fastpay.wallet"
+      "bundleIdentifier": "com.fastpay.wallet",
+      "backgroundColor": "#0B1F3F"
     },
     "android": {
       "package": "com.fastpay.wallet",
       "adaptiveIcon": {
-        "backgroundColor": "#0a0a0a"
-      }
+        "backgroundColor": "#0B1F3F"
+      },
+      "backgroundColor": "#0B1F3F"
     },
     "web": {
       "bundler": "metro",
