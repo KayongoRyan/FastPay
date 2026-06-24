@@ -6,7 +6,10 @@ import { ChevronDown } from "lucide-react-native";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
+import {
+  TAB_BAR_PADDING,
+  TabScreenLayout,
+} from "@/components/layout/TabScreenLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -25,7 +28,16 @@ export default function BuyScreen() {
   const converted = (numericAmount * RWF_TO_USDT).toFixed(6);
 
   return (
-    <TabScreenLayout scroll={false} style={styles.container}>
+    <TabScreenLayout
+      scroll={false}
+      bottomInset={0}
+      style={styles.container}
+      footer={
+        <View style={styles.keypadFooter}>
+          <NumericKeypad onKey={onKey} onDelete={onDelete} variant="light" />
+        </View>
+      }
+    >
       <BackHeader title="Buy USDT" onBack={() => router.back()} />
 
       <Pressable style={styles.currencyBtn}>
@@ -42,10 +54,6 @@ export default function BuyScreen() {
       </Pressable>
 
       <PrimaryButton label="CONVERT" onPress={() => {}} style={styles.convertBtn} />
-
-      <View style={styles.keypadWrap}>
-        <NumericKeypad onKey={onKey} onDelete={onDelete} variant="light" />
-      </View>
     </TabScreenLayout>
   );
 }
@@ -89,6 +97,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   paymentText: { color: colors.white, fontSize: 15 },
-  convertBtn: { marginBottom: spacing.md },
-  keypadWrap: { flex: 1, justifyContent: "flex-end", marginHorizontal: -spacing.lg },
+  convertBtn: { marginBottom: spacing.sm },
+  keypadFooter: {
+    marginHorizontal: -spacing.lg,
+    paddingBottom: TAB_BAR_PADDING,
+  },
 });

@@ -13,6 +13,8 @@ interface VirtualCardProps {
   cardNumber?: string;
   expiry?: string;
   qrHref?: Href;
+  revealed?: boolean;
+  onToggleReveal?: () => void;
 }
 
 export function VirtualCard({
@@ -20,12 +22,23 @@ export function VirtualCard({
   cardNumber = "2550 3456 7728 3504",
   expiry = "19/30",
   qrHref = "/offline/receive" as Href,
+  revealed: revealedProp,
+  onToggleReveal,
 }: VirtualCardProps) {
-  const [revealed, setRevealed] = useState(false);
+  const [internalRevealed, setInternalRevealed] = useState(false);
+  const revealed = revealedProp ?? internalRevealed;
+
+  const handleToggleReveal = () => {
+    if (onToggleReveal) {
+      onToggleReveal();
+    } else {
+      setInternalRevealed((v) => !v);
+    }
+  };
 
   const displayNumber = revealed
     ? cardNumber
-    : cardNumber.replace(/\d(?=\d{4})/g, "•");
+    : "•••• •••• •••• ••••";
 
   return (
     <View>
@@ -53,7 +66,7 @@ export function VirtualCard({
           </View>
           <Pressable
             style={styles.eyeBtn}
-            onPress={() => setRevealed((v) => !v)}
+            onPress={handleToggleReveal}
             hitSlop={8}
           >
             {revealed ? (

@@ -12,13 +12,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
 
-const TAB_BAR_PADDING = 88;
+export const TAB_BAR_PADDING = 88;
 
 interface TabScreenLayoutProps {
   children: ReactNode;
   scroll?: boolean;
   style?: ViewStyle;
   footer?: ReactNode;
+  /** Override default bottom padding reserved for tab bar (default 88). */
+  bottomInset?: number;
 }
 
 export function TabScreenLayout({
@@ -26,17 +28,24 @@ export function TabScreenLayout({
   scroll = true,
   style,
   footer,
+  bottomInset = TAB_BAR_PADDING,
 }: TabScreenLayoutProps) {
+  const contentStyle = [
+    styles.content,
+    { paddingBottom: bottomInset },
+    style,
+  ];
+
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[styles.content, style]}
+      contentContainerStyle={contentStyle}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.content, styles.flex, style]}>{children}</View>
+    <View style={[contentStyle, styles.flex]}>{children}</View>
   );
 
   return (
@@ -64,6 +73,5 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    paddingBottom: TAB_BAR_PADDING,
   },
 });

@@ -1,5 +1,5 @@
 import { Href, Link, router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ArrowLeftRight,
@@ -22,7 +22,7 @@ const TRANSACTIONS = [
     id: "1",
     title: "Concert Tickets",
     date: "27 05 2026",
-    amount: "45,000 RWF",
+    amount: "45,000",
     image:
       "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=120&h=120&fit=crop",
   },
@@ -30,7 +30,7 @@ const TRANSACTIONS = [
     id: "2",
     title: "Concert Tickets",
     date: "27 05 2026",
-    amount: "45,000 RWF",
+    amount: "45,000",
     image:
       "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&h=120&fit=crop",
   },
@@ -38,7 +38,7 @@ const TRANSACTIONS = [
     id: "3",
     title: "Concert Tickets",
     date: "27 05 2026",
-    amount: "45,000 RWF",
+    amount: "45,000",
     image:
       "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop",
   },
@@ -68,6 +68,7 @@ function getInitials(name: string): string {
 }
 
 export default function HomeScreen() {
+  const [sensitiveVisible, setSensitiveVisible] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
   const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
     useWalletStore();
@@ -97,9 +98,15 @@ export default function HomeScreen() {
       </View>
 
       <Text style={styles.balanceLabel}>Your Balance</Text>
-      <Text style={styles.balance}>{BALANCE} RWF</Text>
+      <Text style={styles.balance}>
+        {sensitiveVisible ? `${BALANCE} RWF` : "•••••• RWF"}
+      </Text>
 
-      <VirtualCard holderName={user.fullName} />
+      <VirtualCard
+        holderName={user.fullName}
+        revealed={sensitiveVisible}
+        onToggleReveal={() => setSensitiveVisible((v) => !v)}
+      />
 
       <Text style={styles.sectionTitle}>Services</Text>
       <View style={styles.services}>
@@ -262,7 +269,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   txAmount: {
-    color: colors.white,
+    color: colors.error,
     fontSize: 14,
     fontWeight: "600",
   },
