@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { X } from "lucide-react-native";
 
 import { BackspaceKeyIcon } from "@/components/ui/BackspaceKeyIcon";
 import { colors } from "@/theme/colors";
@@ -31,6 +32,7 @@ interface NumericKeypadProps {
   onKey: (key: string) => void;
   onDelete: () => void;
   variant?: KeypadVariant;
+  onClose?: () => void;
 }
 
 function getRows(variant: KeypadVariant) {
@@ -43,6 +45,7 @@ export function NumericKeypad({
   onKey,
   onDelete,
   variant = "dark",
+  onClose,
 }: NumericKeypadProps) {
   const rows = getRows(variant);
   const isConvert = variant === "convert";
@@ -56,6 +59,18 @@ export function NumericKeypad({
         isLight && styles.shellLight,
       ]}
     >
+      {isConvert && onClose ? (
+        <View style={styles.convertHeader}>
+          <Pressable
+            style={styles.convertHeaderBtn}
+            onPress={onClose}
+            hitSlop={10}
+          >
+            <X color={colors.white} size={22} />
+          </Pressable>
+        </View>
+      ) : null}
+
       {rows.map((row) => (
         <View
           key={row.join("-")}
@@ -118,7 +133,7 @@ export function NumericKeypad({
   );
 }
 
-const KEY_HEIGHT = 64;
+const KEY_HEIGHT = 56;
 
 const styles = StyleSheet.create({
   shell: {
@@ -126,9 +141,11 @@ const styles = StyleSheet.create({
   },
   shellConvert: {
     backgroundColor: "#0D2D6E",
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
     paddingHorizontal: spacing.md,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   shellLight: {
     backgroundColor: colors.white,
@@ -175,8 +192,21 @@ const styles = StyleSheet.create({
   },
   keyTextConvert: {
     color: colors.white,
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "700",
+  },
+  convertHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    minHeight: 36,
+    marginBottom: spacing.xs,
+  },
+  convertHeaderBtn: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   keyTextLight: {
     color: colors.background,
