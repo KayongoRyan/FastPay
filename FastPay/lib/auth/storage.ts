@@ -49,27 +49,18 @@ export async function saveAuthSession(
   options?: { biometricProtected?: boolean },
 ): Promise<void> {
   const biometricProtected = options?.biometricProtected ?? false;
-  const secureOptions: SecureOptions =
-    biometricProtected && Platform.OS !== 'web'
-      ? {
-          requireAuthentication: true,
-          authenticationPrompt: 'Unlock FastPay',
-        }
-      : undefined;
 
-  await Promise.all([
-    setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken),
-    biometricProtected
-      ? setSecureItem(REFRESH_TOKEN_BIO_KEY, tokens.refreshToken, secureOptions)
-      : setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken),
-    AsyncStorage.setItem(USER_KEY, JSON.stringify(user)),
-  ]);
+  await setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken);
 
-  if (!biometricProtected) {
-    await deleteSecureItem(REFRESH_TOKEN_BIO_KEY);
-  } else {
+  if (biometricProtected) {
+    await setSecureItem(REFRESH_TOKEN_BIO_KEY, tokens.refreshToken);
     await deleteSecureItem(REFRESH_TOKEN_KEY);
+  } else {
+    await setSecureItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    await deleteSecureItem(REFRESH_TOKEN_BIO_KEY);
   }
+
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export async function loadAccessToken(): Promise<string | null> {
@@ -127,18 +118,9 @@ export async function saveDeviceKeyMaterial(
   deviceId: string,
   secretKey: string,
 ): Promise<void> {
-  const secureOptions: SecureOptions =
-    Platform.OS !== 'web'
-      ? {
-          requireAuthentication: true,
-          authenticationPrompt: 'Unlock FastPay device key',
-        }
-      : undefined;
-
-  await Promise.all([
-    setSecureItem(DEVICE_ID_KEY, deviceId, secureOptions),
-    setSecureItem(DEVICE_SECRET_KEY, secretKey, secureOptions),
-  ]);
+  // Writes are sequential; biometric is verified via promptBiometric before use.
+  await setSecureItem(DEVICE_ID_KEY, deviceId);
+  await setSecureItem(DEVICE_SECRET_KEY, secretKey);
 }
 
 export async function loadDeviceKeyMaterial(): Promise<{

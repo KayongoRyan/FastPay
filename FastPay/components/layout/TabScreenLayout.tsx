@@ -13,6 +13,10 @@ import { FLOATING_TAB_BAR_HEIGHT } from "@/components/navigation/MainTabBar";
 import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
 
+/** Static fallback for layouts; prefer `useTabBarPadding()` in components. */
+export const TAB_BAR_PADDING =
+  FLOATING_TAB_BAR_HEIGHT + spacing.lg + spacing.sm;
+
 /** Default bottom inset for content above the floating tab bar. */
 export function useTabBarPadding(override?: number): number {
   const insets = useSafeAreaInsets();
