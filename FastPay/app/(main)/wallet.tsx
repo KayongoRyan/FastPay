@@ -9,6 +9,8 @@ import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
+const BALANCE = "200,450";
+
 export default function WalletScreen() {
   const { user, isReady, isLoading } = useRequireAuth();
   const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
@@ -28,18 +30,18 @@ export default function WalletScreen() {
 
   return (
     <TabScreenLayout>
-      <Text style={styles.title}>Wallet</Text>
-      <Text style={styles.subtitle}>Your virtual card & Stellar wallet</Text>
+      <Text style={styles.balanceLabel}>Your Balance</Text>
+      <Text style={styles.balance}>{BALANCE} RWF</Text>
 
       <VirtualCard holderName={user.fullName} />
 
       <View style={styles.card}>
-        <Text style={styles.label}>Stellar address</Text>
+        <Text style={styles.label}>Stellar wallet</Text>
         <Text style={styles.value}>
           {walletReady
             ? wallet
               ? wallet.publicKey
-              : "No wallet created"
+              : "No wallet created yet"
             : "Loading..."}
         </Text>
       </View>
@@ -70,8 +72,17 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
-  title: { color: colors.white, fontSize: 26, fontWeight: "700", marginBottom: 4 },
-  subtitle: { color: colors.textMuted, marginBottom: spacing.lg },
+  balanceLabel: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  balance: {
+    color: colors.white,
+    fontSize: 34,
+    fontWeight: "700",
+    marginBottom: spacing.lg,
+  },
   card: {
     borderWidth: 1,
     borderColor: colors.border,
