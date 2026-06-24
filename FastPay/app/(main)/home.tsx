@@ -1,32 +1,62 @@
 import { Href, Link, router } from "expo-router";
 import { useEffect } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  ChevronDown,
-  CreditCard,
-  Plus,
+  ArrowLeftRight,
+  MoreHorizontal,
+  Receipt,
+  TicketPercent,
 } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
-import { TokenListRow } from "@/components/ui/TokenListRow";
+import { VirtualCard } from "@/components/ui/VirtualCard";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-const TRENDING = [
-  { id: "1", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
-  { id: "2", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
-  { id: "3", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
+const BALANCE = "200,450";
+
+const TRANSACTIONS = [
+  {
+    id: "1",
+    title: "Concert Tickets",
+    date: "27 05 2026",
+    amount: "45,000 RWF",
+    image:
+      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=120&h=120&fit=crop",
+  },
+  {
+    id: "2",
+    title: "Concert Tickets",
+    date: "27 05 2026",
+    amount: "45,000 RWF",
+    image:
+      "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&h=120&fit=crop",
+  },
+  {
+    id: "3",
+    title: "Concert Tickets",
+    date: "27 05 2026",
+    amount: "45,000 RWF",
+    image:
+      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop",
+  },
 ];
+
+const SERVICES = [
+  { id: "transfer", label: "Transfer", icon: ArrowLeftRight, href: "/convert" as Href },
+  { id: "voucher", label: "Voucher", icon: TicketPercent, href: "/buy" as Href },
+  { id: "bill", label: "Bill", icon: Receipt, href: "/analytics" as Href },
+  { id: "more", label: "More", icon: MoreHorizontal, href: "/settings" as Href },
+] as const;
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+}
 
 function getInitials(name: string): string {
   return name
@@ -39,7 +69,8 @@ function getInitials(name: string): string {
 
 export default function HomeScreen() {
   const { user, isReady, isLoading } = useRequireAuth();
-  const { wallet, initialize, createWallet, isLoading: walletLoading } = useWalletStore();
+  const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
+    useWalletStore();
 
   useEffect(() => {
     if (user) void initialize();
@@ -53,71 +84,55 @@ export default function HomeScreen() {
     );
   }
 
-  const handle = `@${user.fullName.toLowerCase().replace(/\s+/g, "")}`;
-  const balance = wallet ? "150,776" : "0";
-
   return (
     <TabScreenLayout>
-      <View style={styles.profileRow}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>{getGreeting()},</Text>
+          <Text style={styles.name}>{user.fullName}</Text>
+        </View>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{getInitials(user.fullName)}</Text>
         </View>
-        <View>
-          <Text style={styles.handle}>{handle}</Text>
-          <Text style={styles.displayName}>{user.fullName}</Text>
+      </View>
+
+      <Text style={styles.balanceLabel}>Your Balance</Text>
+      <Text style={styles.balance}>{BALANCE} RWF</Text>
+
+      <VirtualCard holderName={user.fullName} />
+
+      <Text style={styles.sectionTitle}>Services</Text>
+      <View style={styles.services}>
+        {SERVICES.map((service) => {
+          const Icon = service.icon;
+          return (
+            <Pressable
+              key={service.id}
+              style={styles.service}
+              onPress={() => router.push(service.href)}
+            >
+              <View style={styles.serviceIcon}>
+                <Icon color={colors.white} size={22} />
+              </View>
+              <Text style={styles.serviceLabel}>{service.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Text style={styles.sectionTitle}>Transactions</Text>
+      {TRANSACTIONS.map((tx) => (
+        <View key={tx.id} style={styles.txCard}>
+          <Image source={{ uri: tx.image }} style={styles.txThumb} />
+          <View style={styles.txInfo}>
+            <Text style={styles.txTitle}>{tx.title}</Text>
+            <Text style={styles.txDate}>{tx.date}</Text>
+          </View>
+          <Text style={styles.txAmount}>{tx.amount}</Text>
         </View>
-      </View>
-
-      <View style={styles.balanceRow}>
-        <Text style={styles.balance}>{balance} RWF</Text>
-        <View style={styles.changePill}>
-          <Text style={styles.changeText}>+1.22 · 2.4%</Text>
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        <QuickAction icon={Plus} label="Add Fund" onPress={() => router.push("/buy" as Href)} />
-        <QuickAction
-          icon={ArrowUpRight}
-          label="Transfer"
-          onPress={() => router.push("/convert" as Href)}
-        />
-        <QuickAction
-          icon={ArrowDownLeft}
-          label="Receive"
-          onPress={() => router.push("/wallet" as Href)}
-        />
-        <QuickAction
-          icon={CreditCard}
-          label="Purchase"
-          onPress={() => router.push("/buy" as Href)}
-        />
-      </View>
-
-      <TextInput
-        placeholder="Search Tokens"
-        placeholderTextColor={colors.textSubtle}
-        style={styles.search}
-      />
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Trending Tokens</Text>
-        <Pressable style={styles.filterBtn}>
-          <Text style={styles.filterText}>Today</Text>
-          <ChevronDown color={colors.white} size={16} />
-        </Pressable>
-      </View>
-
-      {TRENDING.map((item) => (
-        <TokenListRow
-          key={item.id}
-          title={item.title}
-          date={item.date}
-          amount={item.amount}
-        />
       ))}
 
-      {!wallet ? (
+      {!wallet && walletReady ? (
         <Pressable
           style={[styles.walletCta, walletLoading && styles.disabled]}
           disabled={walletLoading}
@@ -127,7 +142,9 @@ export default function HomeScreen() {
             {walletLoading ? "Creating wallet..." : "Create Stellar wallet"}
           </Text>
         </Pressable>
-      ) : (
+      ) : null}
+
+      {wallet ? (
         <View style={styles.offlineRow}>
           <Link href="/offline/send" style={styles.offlineLink}>
             Offline send
@@ -136,109 +153,119 @@ export default function HomeScreen() {
             Offline receive
           </Link>
         </View>
-      )}
+      ) : null}
     </TabScreenLayout>
-  );
-}
-
-function QuickAction({
-  icon: Icon,
-  label,
-  onPress,
-}: {
-  icon: typeof Plus;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.quickAction} onPress={onPress}>
-      <View style={styles.quickIcon}>
-        <Icon color={colors.white} size={20} />
-      </View>
-      <Text style={styles.quickLabel}>{label}</Text>
-    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
-  profileRow: {
+  header: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.lg,
   },
+  greeting: {
+    color: colors.textMuted,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  name: {
+    color: colors.white,
+    fontSize: 22,
+    fontWeight: "700",
+    lineHeight: 28,
+  },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: colors.white, fontWeight: "700", fontSize: 18 },
-  handle: { color: colors.textMuted, fontSize: 13 },
-  displayName: { color: colors.white, fontSize: 18, fontWeight: "700" },
-  balanceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  avatarText: {
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  balanceLabel: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  balance: {
+    color: colors.white,
+    fontSize: 34,
+    fontWeight: "700",
     marginBottom: spacing.lg,
   },
-  balance: { color: colors.white, fontSize: 32, fontWeight: "700" },
-  changePill: {
-    backgroundColor: "rgba(0,174,239,0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
+  sectionTitle: {
+    color: colors.white,
+    fontSize: 17,
+    fontWeight: "600",
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
   },
-  changeText: { color: colors.primary, fontSize: 12, fontWeight: "600" },
-  actions: {
+  services: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: spacing.lg,
   },
-  quickAction: { alignItems: "center", width: "23%" },
-  quickIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.md,
+  service: {
+    alignItems: "center",
+    width: "22%",
+    gap: spacing.sm,
+  },
+  serviceIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.inputBg,
-    marginBottom: spacing.sm,
   },
-  quickLabel: { color: colors.textMuted, fontSize: 11, textAlign: "center" },
-  search: {
+  serviceLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  txCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  txThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+  },
+  txInfo: {
+    flex: 1,
+  },
+  txTitle: {
     color: colors.white,
-    backgroundColor: colors.inputBg,
-    marginBottom: spacing.lg,
+    fontSize: 15,
+    fontWeight: "500",
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
+  txDate: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 2,
   },
-  sectionTitle: { color: colors.white, fontSize: 17, fontWeight: "600" },
-  filterBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  txAmount: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "600",
   },
-  filterText: { color: colors.white, fontSize: 13 },
   walletCta: {
     marginTop: spacing.lg,
     borderWidth: 1,
@@ -247,9 +274,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: "center",
   },
-  walletCtaText: { color: colors.primary, fontWeight: "600" },
+  walletCtaText: {
+    color: colors.primary,
+    fontWeight: "600",
+  },
   disabled: { opacity: 0.5 },
-  offlineRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
+  offlineRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
   offlineLink: {
     flex: 1,
     color: colors.white,
