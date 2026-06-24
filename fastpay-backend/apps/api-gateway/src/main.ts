@@ -23,6 +23,7 @@ async function bootstrap() {
       createProxyMiddleware({
         target: route.target,
         changeOrigin: true,
+        pathRewrite: (path) => `${route.path}${path}`,
       }),
     );
   }

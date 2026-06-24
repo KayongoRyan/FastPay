@@ -27,7 +27,7 @@ export function Screen({
   style,
   footer,
 }: ScreenProps) {
-  const content = scroll ? (
+  const body = scroll ? (
     <ScrollView
       contentContainerStyle={[
         styles.scrollContent,
@@ -40,9 +40,17 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.content, centered && styles.centered, style]}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.scrollContent,
+        centered && styles.centered,
+        style,
+      ]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
       {children}
-    </View>
+    </ScrollView>
   );
 
   return (
@@ -50,8 +58,9 @@ export function Screen({
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
       >
-        {content}
+        <View style={styles.flex}>{body}</View>
         {footer}
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -65,11 +74,6 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
   },
   scrollContent: {
     flexGrow: 1,

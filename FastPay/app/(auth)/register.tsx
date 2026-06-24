@@ -1,6 +1,6 @@
 import { Href, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 
 import { FastPayLogo } from "@/components/FastPayLogo";
 import { AuthFooter } from "@/components/ui/AuthFooter";
@@ -25,20 +25,26 @@ export default function RegisterScreen() {
 
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit =
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
-    email.trim().length > 0 &&
-    password.length >= 8;
-
   const onSubmit = () => {
-    if (!canSubmit) {
-      setError("Fill all fields. Password must be at least 8 characters.");
+    Keyboard.dismiss();
+    setError(null);
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Enter your first and last name.");
       return;
     }
 
-    setError(null);
-    router.push("/(auth)/pin-setup" as Href);
+    if (!email.trim()) {
+      setError("Enter your email address.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    router.push("/pin-setup" as Href);
   };
 
   return (
@@ -80,16 +86,13 @@ export default function RegisterScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+        onSubmitEditing={onSubmit}
+        returnKeyType="go"
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <PrimaryButton
-        label="Sign Up"
-        onPress={onSubmit}
-        disabled={!canSubmit}
-        style={styles.button}
-      />
+      <PrimaryButton label="Sign Up" onPress={onSubmit} style={styles.button} />
     </Screen>
   );
 }
