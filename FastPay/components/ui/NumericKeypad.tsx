@@ -9,11 +9,20 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"] as co
 interface NumericKeypadProps {
   onKey: (key: string) => void;
   onDelete: () => void;
+  variant?: "dark" | "light";
 }
 
-export function NumericKeypad({ onKey, onDelete }: NumericKeypadProps) {
+export function NumericKeypad({
+  onKey,
+  onDelete,
+  variant = "dark",
+}: NumericKeypadProps) {
+  const light = variant === "light";
+  const keyTextColor = light ? colors.background : colors.white;
+  const pressedBg = light ? "rgba(11,31,63,0.08)" : colors.inputBg;
+
   return (
-    <View style={styles.grid}>
+    <View style={[styles.grid, light && styles.gridLight]}>
       {KEYS.map((key, index) => {
         if (key === "") {
           return <View key={`empty-${index}`} style={styles.key} />;
@@ -22,7 +31,7 @@ export function NumericKeypad({ onKey, onDelete }: NumericKeypadProps) {
         if (key === "del") {
           return (
             <Pressable key="del" style={styles.key} onPress={onDelete}>
-              <Delete color={colors.white} size={22} />
+              <Delete color={keyTextColor} size={22} />
             </Pressable>
           );
         }
@@ -30,10 +39,13 @@ export function NumericKeypad({ onKey, onDelete }: NumericKeypadProps) {
         return (
           <Pressable
             key={key}
-            style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
+            style={({ pressed }) => [
+              styles.key,
+              pressed && { backgroundColor: pressedBg },
+            ]}
             onPress={() => onKey(key)}
           >
-            <Text style={styles.keyText}>{key}</Text>
+            <Text style={[styles.keyText, { color: keyTextColor }]}>{key}</Text>
           </Pressable>
         );
       })}
@@ -49,6 +61,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingTop: spacing.md,
   },
+  gridLight: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginHorizontal: -spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
   key: {
     width: "30%",
     maxWidth: 110,
@@ -61,7 +81,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.inputBg,
   },
   keyText: {
-    color: colors.white,
     fontSize: 24,
     fontWeight: "500",
   },

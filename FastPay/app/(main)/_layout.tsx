@@ -1,14 +1,23 @@
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
 
+import { MainTabBar } from "@/components/navigation/MainTabBar";
 import { colors } from "@/theme/colors";
 
 export default function MainLayout() {
   return (
-    <Stack
+    <Tabs
+      tabBar={(props) => <MainTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.background },
+        sceneStyle: { backgroundColor: colors.background },
       }}
-    />
+    >
+      <Tabs.Screen name="home" options={{ title: "Home" }} />
+      <Tabs.Screen name="wallet" options={{ title: "Wallet" }} />
+      <Tabs.Screen name="convert" options={{ title: "Convert" }} />
+      <Tabs.Screen name="analytics" options={{ title: "Analytics" }} />
+      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+      <Tabs.Screen name="buy" options={{ href: null, title: "Buy" }} />
+    </Tabs>
   );
 }
