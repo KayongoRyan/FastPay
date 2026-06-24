@@ -8,10 +8,7 @@ import {
 } from "react-native";
 import { ArrowDown, ChevronDown, Keyboard, X } from "lucide-react-native";
 
-import {
-  TAB_BAR_PADDING,
-  TabScreenLayout,
-} from "@/components/layout/TabScreenLayout";
+import { TabScreenLayout, useTabBarPadding } from "@/components/layout/TabScreenLayout";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -34,6 +31,7 @@ export default function ConvertScreen() {
   const [currencyCode, setCurrencyCode] = useState<CurrencyCode>("RWF");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [keypadOpen, setKeypadOpen] = useState(false);
+  const tabBarPadding = useTabBarPadding();
 
   const currency = getCurrency(currencyCode);
   const numericAmount = Number(amount) || 0;
@@ -55,11 +53,11 @@ export default function ConvertScreen() {
   return (
     <TabScreenLayout
       scroll={false}
-      bottomInset={keypadOpen ? 0 : TAB_BAR_PADDING}
+      bottomInset={keypadOpen ? 0 : undefined}
       style={styles.container}
       footer={
         keypadOpen ? (
-          <View style={styles.keypadFooter}>
+          <View style={[styles.keypadFooter, { paddingBottom: tabBarPadding }]}>
             <NumericKeypad
               onKey={onKey}
               onDelete={onDelete}
@@ -264,7 +262,6 @@ const styles = StyleSheet.create({
   },
   keypadFooter: {
     marginHorizontal: -spacing.lg,
-    paddingBottom: TAB_BAR_PADDING,
   },
   modalBackdrop: {
     flex: 1,

@@ -1,6 +1,10 @@
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 
-import { MainTabBar } from "@/components/navigation/MainTabBar";
+import {
+  FLOATING_TAB_BAR_HEIGHT,
+  MainTabBar,
+} from "@/components/navigation/MainTabBar";
 import { colors } from "@/theme/colors";
 
 export default function MainLayout() {
@@ -10,6 +14,14 @@ export default function MainLayout() {
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
+        tabBarStyle: {
+          position: "absolute",
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          elevation: 0,
+          height: FLOATING_TAB_BAR_HEIGHT,
+          ...(Platform.OS === "ios" ? { shadowOpacity: 0 } : {}),
+        },
       }}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />

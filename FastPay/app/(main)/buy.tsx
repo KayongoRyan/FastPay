@@ -6,10 +6,7 @@ import { ChevronDown } from "lucide-react-native";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import {
-  TAB_BAR_PADDING,
-  TabScreenLayout,
-} from "@/components/layout/TabScreenLayout";
+import { TabScreenLayout, useTabBarPadding } from "@/components/layout/TabScreenLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -18,6 +15,7 @@ const RWF_TO_USDT = 0.0000108245;
 
 export default function BuyScreen() {
   useRequireAuth();
+  const tabBarPadding = useTabBarPadding();
   const [amount, setAmount] = useState("10000");
   const [payment, setPayment] = useState("MTN/ MOMO");
 
@@ -33,7 +31,7 @@ export default function BuyScreen() {
       bottomInset={0}
       style={styles.container}
       footer={
-        <View style={styles.keypadFooter}>
+        <View style={[styles.keypadFooter, { paddingBottom: tabBarPadding }]}>
           <NumericKeypad onKey={onKey} onDelete={onDelete} variant="light" />
         </View>
       }
@@ -100,6 +98,5 @@ const styles = StyleSheet.create({
   convertBtn: { marginBottom: spacing.sm },
   keypadFooter: {
     marginHorizontal: -spacing.lg,
-    paddingBottom: TAB_BAR_PADDING,
   },
 });
