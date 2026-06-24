@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { useAuthStore } from "@/store/authStore";
 import { colors } from "@/theme/colors";
@@ -13,7 +14,7 @@ export default function RootLayout() {
   }, [initialize]);
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -29,6 +30,6 @@ export default function RootLayout() {
         <Stack.Screen name="offline/send" options={{ headerShown: true, title: "Offline Send", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
         <Stack.Screen name="offline/receive" options={{ headerShown: true, title: "Offline Receive", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }

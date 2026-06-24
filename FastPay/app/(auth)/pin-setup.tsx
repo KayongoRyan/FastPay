@@ -15,9 +15,11 @@ import { spacing } from "@/theme/spacing";
 const PIN_LENGTH = 4;
 
 export default function PinSetupScreen() {
-  const { register, isLoading, error } = useAuthStore();
+  const register = useAuthStore((state) => state.register);
+  const error = useAuthStore((state) => state.error);
   const { firstName, lastName, email, password, setPin } = useOnboardingStore();
   const [pin, setLocalPin] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const onKey = (key: string) => {
     if (pin.length < PIN_LENGTH) {
@@ -36,15 +38,18 @@ export default function PinSetupScreen() {
 
     setPin(pin);
 
+    setSubmitting(true);
     try {
       await register({
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         email: email.trim(),
         password,
       });
-      router.replace("/(auth)/verify-email" as Href);
+      router.replace("/verify-email" as Href);
     } catch {
       // error in store
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -64,7 +69,7 @@ export default function PinSetupScreen() {
       <PrimaryButton
         label="Next"
         onPress={() => void onNext()}
-        loading={isLoading}
+        loading={submitting}
         disabled={pin.length !== PIN_LENGTH}
         style={styles.button}
       />

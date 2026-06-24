@@ -1,4 +1,4 @@
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { getApiBaseUrl } from './config';
 
 type AccessTokenProvider = () => Promise<string | null>;
 
@@ -9,7 +9,7 @@ export function setAccessTokenProvider(provider: AccessTokenProvider | null): vo
 }
 
 export function getApiUrl(): string {
-  return API_URL.replace(/\/$/, '');
+  return getApiBaseUrl();
 }
 
 async function buildHeaders(
@@ -56,11 +56,19 @@ async function apiFetch<T>(
   authenticated = false,
 ): Promise<T> {
   const headers = await buildHeaders(authenticated);
-  const response = await fetch(`${getApiUrl()}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+
+  let response: Response;
+  try {
+    response = await fetch(`${getApiUrl()}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new Error(
+      `Cannot reach API at ${getApiUrl()}. Start the backend gateway and try again.`,
+    );
+  }
 
   if (!response.ok) {
     await parseError(response, path);

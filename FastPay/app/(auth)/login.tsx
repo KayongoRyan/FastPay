@@ -1,6 +1,6 @@
 import { Href, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 
 import { FastPayLogo } from "@/components/FastPayLogo";
 import { AuthFooter } from "@/components/ui/AuthFooter";
@@ -12,18 +12,35 @@ import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
 
 export default function LoginScreen() {
-  const { login, isLoading, error } = useAuthStore();
+  const login = useAuthStore((state) => state.login);
+  const error = useAuthStore((state) => state.error);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async () => {
+    Keyboard.dismiss();
+    setLocalError(null);
+
+    const trimmed = identifier.trim();
+    if (!trimmed || !password) {
+      setLocalError("Enter your email or phone and password.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      await login({ identifier: identifier.trim(), password });
+      await login({ identifier: trimmed, password });
       router.replace("/(main)/home" as Href);
     } catch {
-      // surfaced via store
+      // error surfaced via store
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const displayError = localError ?? error;
 
   return (
     <Screen
@@ -45,19 +62,24 @@ export default function LoginScreen() {
             keyboardType="email-address"
             value={identifier}
             onChangeText={setIdentifier}
+            onSubmitEditing={() => void onSubmit()}
+            returnKeyType="go"
           />
           <Input
             placeholder="Password"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
+            onSubmitEditing={() => void onSubmit()}
+            returnKeyType="go"
           />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {displayError ? (
+            <Text style={styles.error}>{displayError}</Text>
+          ) : null}
           <PrimaryButton
             label="Log In"
             onPress={() => void onSubmit()}
-            loading={isLoading}
-            disabled={!identifier || !password}
+            loading={submitting}
             style={styles.button}
           />
         </View>
