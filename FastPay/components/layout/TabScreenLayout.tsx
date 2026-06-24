@@ -7,19 +7,27 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { FLOATING_TAB_BAR_HEIGHT } from "@/components/navigation/MainTabBar";
 import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
 
-export const TAB_BAR_PADDING = 88;
+/** Default bottom inset for content above the floating tab bar. */
+export function useTabBarPadding(override?: number): number {
+  const insets = useSafeAreaInsets();
+  return (
+    override ??
+    FLOATING_TAB_BAR_HEIGHT + Math.max(insets.bottom, spacing.sm)
+  );
+}
 
 interface TabScreenLayoutProps {
   children: ReactNode;
   scroll?: boolean;
   style?: ViewStyle;
   footer?: ReactNode;
-  /** Override default bottom padding reserved for tab bar (default 88). */
+  /** Override default bottom padding reserved for tab bar. */
   bottomInset?: number;
 }
 
@@ -28,11 +36,12 @@ export function TabScreenLayout({
   scroll = true,
   style,
   footer,
-  bottomInset = TAB_BAR_PADDING,
+  bottomInset,
 }: TabScreenLayoutProps) {
+  const tabBarPadding = useTabBarPadding(bottomInset);
   const contentStyle = [
     styles.content,
-    { paddingBottom: bottomInset },
+    { paddingBottom: tabBarPadding },
     style,
   ];
 
