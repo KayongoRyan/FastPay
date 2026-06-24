@@ -32,7 +32,7 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await login({ identifier: trimmed, password });
-      router.replace("/(main)/home" as Href);
+      router.replace("/home" as Href);
     } catch {
       // error surfaced via store
     } finally {

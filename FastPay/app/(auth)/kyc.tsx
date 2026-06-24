@@ -13,7 +13,7 @@ export default function KycScreen() {
 
   const onComplete = () => {
     reset();
-    router.replace("/(main)/home" as Href);
+    router.replace("/home" as Href);
   };
 
   return (

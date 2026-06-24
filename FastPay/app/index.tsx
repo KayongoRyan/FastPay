@@ -21,7 +21,7 @@ export default function SplashScreen() {
       }
 
       if (user) {
-        router.replace("/(main)/home" as Href);
+        router.replace("/home" as Href);
         return;
       }
 

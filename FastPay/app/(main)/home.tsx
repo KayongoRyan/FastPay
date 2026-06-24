@@ -2,45 +2,31 @@ import { Href, Link, router } from "expo-router";
 import { useEffect } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
-  ArrowLeftRight,
-  BarChart3,
-  MoreHorizontal,
-  Receipt,
-  Ticket,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ChevronDown,
+  CreditCard,
+  Plus,
 } from "lucide-react-native";
 
-import { VirtualCard } from "@/components/ui/VirtualCard";
-import { Screen } from "@/components/ui/Screen";
-import { useAuthStore } from "@/store/authStore";
+import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
+import { TokenListRow } from "@/components/ui/TokenListRow";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-const TRANSACTIONS = [
-  { id: "1", title: "Concert Tickets", date: "Oct 12", amount: -120 },
-  { id: "2", title: "Grocery Store", date: "Oct 10", amount: -54.2 },
-  { id: "3", title: "Salary Deposit", date: "Oct 1", amount: 2400 },
+const TRENDING = [
+  { id: "1", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
+  { id: "2", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
+  { id: "3", title: "Shopping", date: "27 05 2026", amount: "50,450 RWF" },
 ];
-
-const SERVICES = [
-  { id: "transfer", label: "Transfer", icon: ArrowLeftRight },
-  { id: "voucher", label: "Voucher", icon: Ticket },
-  { id: "bill", label: "Bill", icon: Receipt },
-  { id: "more", label: "More", icon: MoreHorizontal },
-] as const;
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
-}
 
 function getInitials(name: string): string {
   return name
@@ -52,243 +38,207 @@ function getInitials(name: string): string {
 }
 
 export default function HomeScreen() {
-  const {
-    user,
-    isReady,
-    isLoading: authLoading,
-    isLocked,
-    logout,
-    enableBiometric,
-    disableBiometric,
-    biometricLabel,
-  } = useAuthStore();
-
-  const {
-    wallet,
-    isReady: walletReady,
-    isLoading: walletLoading,
-    initialize,
-    createWallet,
-  } = useWalletStore();
+  const { user, isReady, isLoading } = useRequireAuth();
+  const { wallet, initialize, createWallet, isLoading: walletLoading } = useWalletStore();
 
   useEffect(() => {
-    if (!isReady) return;
-    if (isLocked) {
-      router.replace("/biometric-unlock" as Href);
-      return;
-    }
-    if (!user) {
-      router.replace("/(auth)/login" as Href);
-    }
-  }, [isReady, isLocked, user]);
+    if (user) void initialize();
+  }, [user, initialize]);
 
-  useEffect(() => {
-    if (user && !isLocked) {
-      void initialize();
-    }
-  }, [user, isLocked, initialize]);
-
-  if (!isReady || authLoading || !user) {
+  if (!isReady || isLoading || !user) {
     return (
-      <Screen centered>
+      <TabScreenLayout scroll={false}>
         <Text style={styles.muted}>Loading...</Text>
-      </Screen>
+      </TabScreenLayout>
     );
   }
 
-  const displayName = user.fullName || "User";
-  const balance = wallet ? "7,904.48" : "0.00";
+  const handle = `@${user.fullName.toLowerCase().replace(/\s+/g, "")}`;
+  const balance = wallet ? "150,776" : "0";
 
   return (
-    <Screen style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>
-              {getGreeting()},{"\n"}
-              <Text style={styles.name}>{displayName}</Text>
-            </Text>
-          </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(displayName)}</Text>
-          </View>
+    <TabScreenLayout>
+      <View style={styles.profileRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{getInitials(user.fullName)}</Text>
         </View>
-
-        <Text style={styles.balanceLabel}>Your Balance</Text>
-        <Text style={styles.balance}>${balance}</Text>
-
-        <VirtualCard holderName={displayName} />
-
-        <Text style={styles.sectionTitle}>Services</Text>
-        <View style={styles.services}>
-          {SERVICES.map((service) => {
-            const Icon = service.icon;
-            const onPress =
-              service.id === "more"
-                ? () =>
-                    user.biometricEnabled
-                      ? void disableBiometric()
-                      : void enableBiometric()
-                : service.id === "bill"
-                  ? () => router.push("/(main)/analytics" as Href)
-                  : undefined;
-
-            return (
-              <Pressable key={service.id} style={styles.service} onPress={onPress}>
-                <View style={styles.serviceIcon}>
-                  <Icon color={colors.white} size={22} />
-                </View>
-                <Text style={styles.serviceLabel}>{service.label}</Text>
-              </Pressable>
-            );
-          })}
+        <View>
+          <Text style={styles.handle}>{handle}</Text>
+          <Text style={styles.displayName}>{user.fullName}</Text>
         </View>
+      </View>
 
-        {!wallet && walletReady ? (
-          <Pressable
-            style={[styles.walletCta, walletLoading && styles.disabled]}
-            disabled={walletLoading}
-            onPress={() => void createWallet()}
-          >
-            <Text style={styles.walletCtaText}>
-              {walletLoading ? "Creating wallet..." : "Create Stellar wallet"}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        {wallet ? (
-          <View style={styles.offlineRow}>
-            <Link href="/offline/send" style={styles.offlineLink}>
-              Offline send
-            </Link>
-            <Link href="/offline/receive" style={styles.offlineLink}>
-              Offline receive
-            </Link>
-          </View>
-        ) : null}
-
-        <View style={styles.transactionsHeader}>
-          <Text style={styles.sectionTitle}>Transactions</Text>
-          <Pressable onPress={() => router.push("/(main)/analytics" as Href)}>
-            <BarChart3 color={colors.primary} size={20} />
-          </Pressable>
+      <View style={styles.balanceRow}>
+        <Text style={styles.balance}>{balance} RWF</Text>
+        <View style={styles.changePill}>
+          <Text style={styles.changeText}>+1.22 · 2.4%</Text>
         </View>
+      </View>
 
-        {TRANSACTIONS.map((tx) => (
-          <View key={tx.id} style={styles.txRow}>
-            <View style={styles.txIcon}>
-              <Receipt color={colors.white} size={18} />
-            </View>
-            <View style={styles.txInfo}>
-              <Text style={styles.txTitle}>{tx.title}</Text>
-              <Text style={styles.txDate}>{tx.date}</Text>
-            </View>
-            <Text
-              style={[
-                styles.txAmount,
-                tx.amount < 0 ? styles.txNegative : styles.txPositive,
-              ]}
-            >
-              {tx.amount < 0 ? "-" : "+"}${Math.abs(tx.amount).toFixed(2)}
-            </Text>
-          </View>
-        ))}
+      <View style={styles.actions}>
+        <QuickAction icon={Plus} label="Add Fund" onPress={() => router.push("/buy" as Href)} />
+        <QuickAction
+          icon={ArrowUpRight}
+          label="Transfer"
+          onPress={() => router.push("/convert" as Href)}
+        />
+        <QuickAction
+          icon={ArrowDownLeft}
+          label="Receive"
+          onPress={() => router.push("/wallet" as Href)}
+        />
+        <QuickAction
+          icon={CreditCard}
+          label="Purchase"
+          onPress={() => router.push("/buy" as Href)}
+        />
+      </View>
 
-        <Pressable
-          style={styles.signOut}
-          onPress={() => void logout().then(() => router.replace("/(auth)/login" as Href))}
-        >
-          <Text style={styles.signOutText}>Sign out</Text>
+      <TextInput
+        placeholder="Search Tokens"
+        placeholderTextColor={colors.textSubtle}
+        style={styles.search}
+      />
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Trending Tokens</Text>
+        <Pressable style={styles.filterBtn}>
+          <Text style={styles.filterText}>Today</Text>
+          <ChevronDown color={colors.white} size={16} />
         </Pressable>
+      </View>
 
-        {!user.biometricEnabled ? (
-          <Text style={styles.hint}>
-            Tap More to enable {biometricLabel}
+      {TRENDING.map((item) => (
+        <TokenListRow
+          key={item.id}
+          title={item.title}
+          date={item.date}
+          amount={item.amount}
+        />
+      ))}
+
+      {!wallet ? (
+        <Pressable
+          style={[styles.walletCta, walletLoading && styles.disabled]}
+          disabled={walletLoading}
+          onPress={() => void createWallet()}
+        >
+          <Text style={styles.walletCtaText}>
+            {walletLoading ? "Creating wallet..." : "Create Stellar wallet"}
           </Text>
-        ) : null}
-      </ScrollView>
-    </Screen>
+        </Pressable>
+      ) : (
+        <View style={styles.offlineRow}>
+          <Link href="/offline/send" style={styles.offlineLink}>
+            Offline send
+          </Link>
+          <Link href="/offline/receive" style={styles.offlineLink}>
+            Offline receive
+          </Link>
+        </View>
+      )}
+    </TabScreenLayout>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  onPress,
+}: {
+  icon: typeof Plus;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.quickAction} onPress={onPress}>
+      <View style={styles.quickIcon}>
+        <Icon color={colors.white} size={20} />
+      </View>
+      <Text style={styles.quickLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    paddingTop: spacing.sm,
-  },
-  muted: {
-    color: colors.textMuted,
-  },
-  header: {
+  muted: { color: colors.textMuted },
+  profileRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing.lg,
   },
-  greeting: {
-    color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  name: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: "700",
-  },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: {
-    color: colors.white,
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  balanceLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  balance: {
-    color: colors.white,
-    fontSize: 36,
-    fontWeight: "700",
+  avatarText: { color: colors.white, fontWeight: "700", fontSize: 18 },
+  handle: { color: colors.textMuted, fontSize: 13 },
+  displayName: { color: colors.white, fontSize: 18, fontWeight: "700" },
+  balanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing.lg,
   },
-  sectionTitle: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: spacing.lg,
-    marginBottom: spacing.md,
+  balance: { color: colors.white, fontSize: 32, fontWeight: "700" },
+  changePill: {
+    backgroundColor: "rgba(0,174,239,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
   },
-  services: {
+  changeText: { color: colors.primary, fontSize: 12, fontWeight: "600" },
+  actions: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: spacing.lg,
   },
-  service: {
-    alignItems: "center",
-    gap: spacing.sm,
-    width: "22%",
-  },
-  serviceIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  quickAction: { alignItems: "center", width: "23%" },
+  quickIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.inputBg,
+    marginBottom: spacing.sm,
   },
-  serviceLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textAlign: "center",
+  quickLabel: { color: colors.textMuted, fontSize: 11, textAlign: "center" },
+  search: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    color: colors.white,
+    backgroundColor: colors.inputBg,
+    marginBottom: spacing.lg,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: { color: colors.white, fontSize: 17, fontWeight: "600" },
+  filterBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterText: { color: colors.white, fontSize: 13 },
   walletCta: {
     marginTop: spacing.lg,
     borderWidth: 1,
@@ -297,18 +247,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: "center",
   },
-  walletCtaText: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  offlineRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
+  walletCtaText: { color: colors.primary, fontWeight: "600" },
+  disabled: { opacity: 0.5 },
+  offlineRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
   offlineLink: {
     flex: 1,
     color: colors.white,
@@ -318,64 +259,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingVertical: spacing.sm,
     overflow: "hidden",
-  },
-  transactionsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  txRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
-    gap: spacing.md,
-  },
-  txIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.inputBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  txInfo: {
-    flex: 1,
-  },
-  txTitle: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  txDate: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  txAmount: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  txNegative: {
-    color: colors.white,
-  },
-  txPositive: {
-    color: colors.success,
-  },
-  signOut: {
-    marginTop: spacing.xl,
-    alignItems: "center",
-    paddingVertical: spacing.md,
-  },
-  signOutText: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  hint: {
-    color: colors.textSubtle,
-    fontSize: 12,
-    textAlign: "center",
-    marginBottom: spacing.xl,
   },
 });
