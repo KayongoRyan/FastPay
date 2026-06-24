@@ -9,7 +9,8 @@ import { radius, spacing } from "@/theme/spacing";
 
 export default function SettingsScreen() {
   const { user, isReady, isLoading } = useRequireAuth();
-  const { logout, enableBiometric, disableBiometric, biometricLabel } = useAuthStore();
+  const { logout, enableBiometric, disableBiometric, biometricLabel, isLoading: authBusy } =
+    useAuthStore();
 
   if (!isReady || isLoading || !user) {
     return (
@@ -38,7 +39,8 @@ export default function SettingsScreen() {
       </View>
 
       <Pressable
-        style={styles.rowBtn}
+        style={[styles.rowBtn, authBusy && styles.disabled]}
+        disabled={authBusy}
         onPress={() =>
           user.biometricEnabled ? void disableBiometric() : void enableBiometric()
         }
@@ -87,6 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   rowBtnText: { color: colors.white, fontWeight: "600" },
+  disabled: { opacity: 0.5 },
   signOutBtn: { borderColor: colors.error, marginTop: spacing.md },
   signOutText: { color: colors.error, fontWeight: "600" },
 });

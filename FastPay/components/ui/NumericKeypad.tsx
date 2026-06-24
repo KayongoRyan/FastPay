@@ -140,12 +140,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   shellConvert: {
-    backgroundColor: "#0D2D6E",
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: "transparent",
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
   },
   shellLight: {
     backgroundColor: colors.white,

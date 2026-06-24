@@ -1,4 +1,4 @@
-import "react-native-get-random-values";
+import "@/lib/polyfills";
 
 export {
   Account,

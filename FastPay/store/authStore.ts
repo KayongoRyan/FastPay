@@ -260,7 +260,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     enableBiometric: async () => {
-      const { user, accessToken } = get();
+      const { user, accessToken, isLoading } = get();
+      if (isLoading) {
+        return;
+      }
       if (!user || !accessToken) {
         throw new Error('Sign in before enabling biometrics');
       }

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { ArrowDown, ChevronDown, Keyboard, X } from "lucide-react-native";
 
-import { TabScreenLayout, useTabBarPadding } from "@/components/layout/TabScreenLayout";
+import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -31,7 +31,6 @@ export default function ConvertScreen() {
   const [currencyCode, setCurrencyCode] = useState<CurrencyCode>("RWF");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [keypadOpen, setKeypadOpen] = useState(false);
-  const tabBarPadding = useTabBarPadding();
 
   const currency = getCurrency(currencyCode);
   const numericAmount = Number(amount) || 0;
@@ -51,23 +50,7 @@ export default function ConvertScreen() {
   };
 
   return (
-    <TabScreenLayout
-      scroll={false}
-      bottomInset={keypadOpen ? 0 : undefined}
-      style={styles.container}
-      footer={
-        keypadOpen ? (
-          <View style={[styles.keypadFooter, { paddingBottom: tabBarPadding }]}>
-            <NumericKeypad
-              onKey={onKey}
-              onDelete={onDelete}
-              variant="convert"
-              onClose={() => setKeypadOpen(false)}
-            />
-          </View>
-        ) : null
-      }
-    >
+    <TabScreenLayout scroll={false} style={styles.container}>
       <View style={styles.main}>
         <View style={styles.content}>
           <Text style={styles.header}>CONVERT</Text>
@@ -109,6 +92,17 @@ export default function ConvertScreen() {
             onPress={() => {}}
             style={styles.convertBtn}
           />
+
+          {keypadOpen ? (
+            <View style={styles.keypadWrap}>
+              <NumericKeypad
+                onKey={onKey}
+                onDelete={onDelete}
+                variant="convert"
+                onClose={() => setKeypadOpen(false)}
+              />
+            </View>
+          ) : null}
         </View>
 
         {!keypadOpen ? (
@@ -242,7 +236,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   convertBtn: {
-    marginBottom: spacing.sm,
+    marginBottom: 0,
+  },
+  keypadWrap: {
+    marginTop: 12,
   },
   openKeypadBtn: {
     alignSelf: "flex-end",
@@ -259,9 +256,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-  },
-  keypadFooter: {
-    marginHorizontal: -spacing.lg,
   },
   modalBackdrop: {
     flex: 1,
