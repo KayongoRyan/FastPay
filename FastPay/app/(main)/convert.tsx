@@ -53,58 +53,76 @@ export default function ConvertScreen() {
   };
 
   return (
-    <View style={styles.screen}>
-      <TabScreenLayout
-        scroll={false}
-        bottomInset={keypadOpen ? 0 : TAB_BAR_PADDING}
-        style={styles.container}
-        footer={
-          keypadOpen ? (
-            <View style={styles.keypadFooter}>
-              <NumericKeypad
-                onKey={onKey}
-                onDelete={onDelete}
-                variant="convert"
-              />
+    <TabScreenLayout
+      scroll={false}
+      bottomInset={keypadOpen ? 0 : TAB_BAR_PADDING}
+      style={styles.container}
+      footer={
+        keypadOpen ? (
+          <View style={styles.keypadFooter}>
+            <NumericKeypad
+              onKey={onKey}
+              onDelete={onDelete}
+              variant="convert"
+              onClose={() => setKeypadOpen(false)}
+            />
+          </View>
+        ) : null
+      }
+    >
+      <View style={styles.main}>
+        <View style={styles.content}>
+          <Text style={styles.header}>CONVERT</Text>
+
+          <View style={styles.flow}>
+            <Pressable
+              style={styles.currencyBtn}
+              onPress={() => {
+                setPickerOpen(true);
+                setKeypadOpen(false);
+              }}
+            >
+              <Text style={styles.currencyText}>{currency.code}</Text>
+              <ChevronDown color={colors.white} size={18} />
+            </Pressable>
+
+            <ArrowDown color={colors.textMuted} size={20} style={styles.arrow} />
+
+            <View style={styles.usdtBadge}>
+              <Text style={styles.usdtText}>USDT</Text>
             </View>
-          ) : null
-        }
-      >
-      <Text style={styles.header}>CONVERT</Text>
+          </View>
 
-      <View style={styles.flow}>
-        <Pressable
-          style={styles.currencyBtn}
-          onPress={() => {
-            setPickerOpen(true);
-            setKeypadOpen(false);
-          }}
-        >
-          <Text style={styles.currencyText}>{currency.code}</Text>
-          <ChevronDown color={colors.white} size={18} />
-        </Pressable>
+          <Pressable
+            style={styles.amountWrap}
+            onPress={() => setKeypadOpen(true)}
+          >
+            <Text style={styles.amount}>
+              {formatAmount(numericAmount)} {currency.code}
+            </Text>
+            {keypadOpen ? <View style={styles.cursor} /> : null}
+          </Pressable>
 
-        <ArrowDown color={colors.textMuted} size={20} style={styles.arrow} />
+          <Text style={styles.convertedLabel}>You receive</Text>
+          <Text style={styles.converted}>{formatUsdt(usdtAmount)} USDT</Text>
 
-        <View style={styles.usdtBadge}>
-          <Text style={styles.usdtText}>USDT</Text>
+          <PrimaryButton
+            label="CONVERT"
+            onPress={() => {}}
+            style={styles.convertBtn}
+          />
         </View>
+
+        {!keypadOpen ? (
+          <Pressable
+            style={styles.openKeypadBtn}
+            onPress={() => setKeypadOpen(true)}
+            hitSlop={8}
+          >
+            <Keyboard color={colors.white} size={24} />
+          </Pressable>
+        ) : null}
       </View>
-
-      <Pressable
-        style={styles.amountWrap}
-        onPress={() => setKeypadOpen(true)}
-      >
-        <Text style={styles.amount}>
-          {formatAmount(numericAmount)} {currency.code}
-        </Text>
-        {keypadOpen ? <View style={styles.cursor} /> : null}
-      </Pressable>
-
-      <Text style={styles.convertedLabel}>You receive</Text>
-      <Text style={styles.converted}>{formatUsdt(usdtAmount)} USDT</Text>
-
-      <PrimaryButton label="CONVERT" onPress={() => {}} style={styles.convertBtn} />
 
       <Modal visible={pickerOpen} transparent animationType="fade">
         <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
@@ -135,30 +153,21 @@ export default function ConvertScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-      </TabScreenLayout>
-
-      <Pressable
-        style={styles.keyboardFab}
-        onPress={() => setKeypadOpen((open) => !open)}
-        hitSlop={8}
-      >
-        {keypadOpen ? (
-          <X color={colors.white} size={24} />
-        ) : (
-          <Keyboard color={colors.white} size={24} />
-        )}
-      </Pressable>
-    </View>
+    </TabScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-    paddingBottom: spacing.md,
+    paddingBottom: 0,
+  },
+  main: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  content: {
+    flexShrink: 1,
   },
   header: {
     color: colors.white,
@@ -166,11 +175,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 2,
     textAlign: "center",
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
   flow: {
     alignItems: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     gap: spacing.sm,
   },
   currencyBtn: {
@@ -206,17 +215,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   amount: {
     color: colors.white,
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "700",
     textAlign: "center",
   },
   cursor: {
     width: 2,
-    height: 32,
+    height: 28,
     backgroundColor: colors.primary,
     marginLeft: 4,
     borderRadius: 1,
@@ -230,31 +239,32 @@ const styles = StyleSheet.create({
   converted: {
     color: colors.white,
     textAlign: "center",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "600",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
-  convertBtn: { marginBottom: spacing.sm },
-  keypadFooter: {
-    marginHorizontal: -spacing.lg,
-    paddingBottom: TAB_BAR_PADDING,
+  convertBtn: {
+    marginBottom: spacing.sm,
   },
-  keyboardFab: {
-    position: "absolute",
-    right: spacing.lg,
-    bottom: TAB_BAR_PADDING + spacing.sm,
+  openKeypadBtn: {
+    alignSelf: "flex-end",
     width: 52,
     height: 52,
     borderRadius: 26,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
+  },
+  keypadFooter: {
+    marginHorizontal: -spacing.lg,
+    paddingBottom: TAB_BAR_PADDING,
   },
   modalBackdrop: {
     flex: 1,
