@@ -1,17 +1,40 @@
 import { Link } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
-import { VirtualCard } from "@/components/ui/VirtualCard";
+import {
+  VirtualCardCarousel,
+  VirtualCardItem,
+} from "@/components/ui/VirtualCardCarousel";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-const BALANCE = "200,450";
+const WALLET_CARDS: VirtualCardItem[] = [
+  {
+    id: "fastpay-rwf",
+    cardNumber: "2550 3456 7728 3504",
+    expiry: "19/30",
+    gradientColors: ["#1F5C52", "#0F3D38"],
+  },
+  {
+    id: "fastpay-usdt",
+    cardNumber: "4412 8890 1123 9087",
+    expiry: "06/28",
+    gradientColors: ["#163A6B", "#08182F"],
+  },
+  {
+    id: "fastpay-savings",
+    cardNumber: "9012 4567 3344 2100",
+    expiry: "12/29",
+    gradientColors: ["#0B4F6C", "#062E40"],
+  },
+];
 
 export default function WalletScreen() {
+  const [sensitiveVisible, setSensitiveVisible] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
   const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
     useWalletStore();
@@ -30,10 +53,14 @@ export default function WalletScreen() {
 
   return (
     <TabScreenLayout>
-      <Text style={styles.balanceLabel}>Your Balance</Text>
-      <Text style={styles.balance}>{BALANCE} RWF</Text>
+      <Text style={styles.title}>Wallet</Text>
 
-      <VirtualCard holderName={user.fullName} />
+      <VirtualCardCarousel
+        holderName={user.fullName}
+        cards={WALLET_CARDS}
+        revealed={sensitiveVisible}
+        onToggleReveal={() => setSensitiveVisible((v) => !v)}
+      />
 
       <View style={styles.card}>
         <Text style={styles.label}>Stellar wallet</Text>
@@ -72,14 +99,9 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
-  balanceLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  balance: {
+  title: {
     color: colors.white,
-    fontSize: 34,
+    fontSize: 26,
     fontWeight: "700",
     marginBottom: spacing.lg,
   },
@@ -88,7 +110,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
     padding: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
     marginBottom: spacing.lg,
     backgroundColor: colors.inputBg,
   },
