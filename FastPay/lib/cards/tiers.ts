@@ -97,3 +97,16 @@ export function validateTierReceiveAmount(
   }
   return null;
 }
+
+/** Highest purchasable tier the user qualifies for at this receive volume. */
+export function getBestMatchingTier(
+  monthlyReceiveRwf: number,
+): PurchasableTierId | null {
+  for (let i = PURCHASABLE_TIERS.length - 1; i >= 0; i -= 1) {
+    const tierId = PURCHASABLE_TIERS[i];
+    if (monthlyReceiveRwf >= CARD_TIERS[tierId].minMonthlyReceiveRwf) {
+      return tierId;
+    }
+  }
+  return null;
+}

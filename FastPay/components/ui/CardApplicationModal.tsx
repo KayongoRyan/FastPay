@@ -12,7 +12,10 @@ import { CheckCircle2, X, XCircle } from "lucide-react-native";
 
 import { Input } from "@/components/ui/Input";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { validateApplicationForm } from "@/lib/cards/application";
+import {
+  CardTierApplicationForm,
+  validateApplicationForm,
+} from "@/lib/cards/application";
 import {
   CARD_TIERS,
   formatRwf,
@@ -41,6 +44,9 @@ export function CardApplicationModal({
   const { submitTierApplication, isSubmitting, tierReceiveAmounts } =
     useCardSubscriptionStore();
 
+  const [currentTierId, setCurrentTierId] = useState<PurchasableTierId | null>(
+    tierId,
+  );
   const [step, setStep] = useState<ApplicationStep>("form");
   const [amount, setAmount] = useState("");
   const [accountPhone, setAccountPhone] = useState("");
@@ -48,14 +54,21 @@ export function CardApplicationModal({
   const [localError, setLocalError] = useState<string | null>(null);
   const [resultMessage, setResultMessage] = useState("");
   const [approved, setApproved] = useState(false);
+  const [verifiedReceiveRwf, setVerifiedReceiveRwf] = useState<number | null>(
+    null,
+  );
+  const [suggestedTierId, setSuggestedTierId] =
+    useState<PurchasableTierId | null>(null);
 
-  const tier = tierId ? CARD_TIERS[tierId] : null;
+  const tier = currentTierId ? CARD_TIERS[currentTierId] : null;
+  const suggestedTier = suggestedTierId ? CARD_TIERS[suggestedTierId] : null;
 
   useEffect(() => {
     if (!visible || !tierId) {
       return;
     }
 
+    setCurrentTierId(tierId);
     const existing = tierReceiveAmounts[tierId];
     const defaultAmount =
       existing ?? CARD_TIERS[tierId].minMonthlyReceiveRwf;
@@ -65,6 +78,8 @@ export function CardApplicationModal({
     setLocalError(null);
     setResultMessage("");
     setApproved(false);
+    setVerifiedReceiveRwf(null);
+    setSuggestedTierId(null);
     setStep("form");
   }, [visible, tierId, tierReceiveAmounts, user?.phone]);
 
@@ -75,13 +90,33 @@ export function CardApplicationModal({
     onClose();
   };
 
-  const handleSubmit = async () => {
-    if (!tierId || !user) {
+  const runVerification = async (form: CardTierApplicationForm) => {
+    if (!user) {
       return;
     }
 
-    const form = {
-      tierId,
+    setLocalError(null);
+    setStep("verifying");
+
+    const verification = await submitTierApplication(form, {
+      userId: user.id,
+      userPhone: user.phone,
+    });
+
+    setApproved(verification.approved);
+    setResultMessage(verification.message);
+    setVerifiedReceiveRwf(verification.actualMonthlyReceiveRwf ?? null);
+    setSuggestedTierId(verification.suggestedTierId ?? null);
+    setStep("result");
+  };
+
+  const handleSubmit = async () => {
+    if (!currentTierId || !user) {
+      return;
+    }
+
+    const form: CardTierApplicationForm = {
+      tierId: currentTierId,
       monthlyReceiveRwf: parseRwfInput(amount),
       accountPhone,
       businessName,
@@ -96,22 +131,53 @@ export function CardApplicationModal({
       return;
     }
 
-    setLocalError(null);
-    setStep("verifying");
+    await runVerification(form);
+  };
 
-    const verification = await submitTierApplication(form, {
-      userId: user.id,
-      userPhone: user.phone,
+  const handleApplySuggested = async () => {
+    if (!user || !suggestedTierId || verifiedReceiveRwf === null) {
+      return;
+    }
+
+    if (businessName.trim().length < 2) {
+      setStep("form");
+      setLocalError("Enter your business or primary payment source first.");
+      return;
+    }
+
+    const phone = accountPhone.replace(/\D/g, "");
+    if (phone.length < 9) {
+      setStep("form");
+      setLocalError("Enter a valid account phone number first.");
+      return;
+    }
+
+    setCurrentTierId(suggestedTierId);
+    setAmount(verifiedReceiveRwf.toLocaleString());
+
+    await runVerification({
+      tierId: suggestedTierId,
+      monthlyReceiveRwf: verifiedReceiveRwf,
+      accountPhone,
+      businessName,
     });
-
-    setApproved(verification.approved);
-    setResultMessage(verification.message);
-    setStep("result");
   };
 
   if (!tier) {
     return null;
   }
+
+  const showSuggestion =
+    !approved &&
+    suggestedTier &&
+    verifiedReceiveRwf !== null &&
+    suggestedTierId !== currentTierId;
+
+  const showApplyWithVerified =
+    !approved &&
+    suggestedTierId &&
+    verifiedReceiveRwf !== null &&
+    suggestedTierId === currentTierId;
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -202,18 +268,67 @@ export function CardApplicationModal({
           ) : null}
 
           {step === "result" ? (
-            <View style={styles.statusWrap}>
-              {approved ? (
-                <CheckCircle2 color={colors.success} size={48} />
-              ) : (
-                <XCircle color={colors.error} size={48} />
-              )}
-              <Text style={styles.statusTitle}>
-                {approved ? "Application approved" : "Not eligible yet"}
-              </Text>
-              <Text style={styles.statusHint}>{resultMessage}</Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.resultContent}
+            >
+              <View style={styles.statusWrap}>
+                {approved ? (
+                  <CheckCircle2 color={colors.success} size={48} />
+                ) : (
+                  <XCircle color={colors.error} size={48} />
+                )}
+                <Text style={styles.statusTitle}>
+                  {approved ? "Application approved" : "Not eligible for this tier"}
+                </Text>
+                <Text style={styles.statusHint}>{resultMessage}</Text>
+              </View>
+
+              {showSuggestion ? (
+                <View style={styles.suggestionBox}>
+                  <Text style={styles.suggestionLabel}>Suggested for you</Text>
+                  <View style={styles.suggestionRow}>
+                    <View
+                      style={[
+                        styles.swatch,
+                        {
+                          backgroundColor: suggestedTier.gradientColors[0],
+                        },
+                      ]}
+                    />
+                    <View style={styles.suggestionInfo}>
+                      <Text style={styles.suggestionTitle}>
+                        {suggestedTier.label}
+                      </Text>
+                      <Text style={styles.suggestionDesc}>
+                        Matches your verified receive of{" "}
+                        {formatRwf(verifiedReceiveRwf!)}
+                      </Text>
+                      <Text style={styles.suggestionReq}>
+                        {suggestedTier.requirementLabel}
+                      </Text>
+                    </View>
+                  </View>
+                  <PrimaryButton
+                    label={`Apply for ${suggestedTier.label}`}
+                    onPress={() => void handleApplySuggested()}
+                    loading={isSubmitting}
+                    style={styles.suggestionBtn}
+                  />
+                </View>
+              ) : null}
+
+              {showApplyWithVerified ? (
+                <PrimaryButton
+                  label={`Apply with ${formatRwf(verifiedReceiveRwf!)}`}
+                  onPress={() => void handleApplySuggested()}
+                  loading={isSubmitting}
+                  style={styles.submitBtn}
+                />
+              ) : null}
+
               <PrimaryButton
-                label={approved ? "Done" : "Update application"}
+                label={approved ? "Done" : "Edit application"}
                 onPress={() => {
                   if (approved) {
                     handleClose();
@@ -223,7 +338,7 @@ export function CardApplicationModal({
                 }}
                 style={styles.submitBtn}
               />
-            </View>
+            </ScrollView>
           ) : null}
         </Pressable>
       </Pressable>
@@ -288,9 +403,12 @@ const styles = StyleSheet.create({
   submitBtn: {
     marginTop: spacing.sm,
   },
+  resultContent: {
+    paddingBottom: spacing.sm,
+  },
   statusWrap: {
     alignItems: "center",
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     gap: spacing.sm,
   },
   statusTitle: {
@@ -304,6 +422,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
+  },
+  suggestionBox: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: "rgba(0,174,239,0.06)",
+  },
+  suggestionLabel: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: spacing.sm,
+  },
+  suggestionRow: {
+    flexDirection: "row",
+    gap: spacing.md,
     marginBottom: spacing.md,
+  },
+  swatch: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  suggestionInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  suggestionTitle: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  suggestionDesc: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  suggestionReq: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  suggestionBtn: {
+    marginTop: 0,
   },
 });

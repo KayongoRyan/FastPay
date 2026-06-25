@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import type { VirtualCardItem } from "@/components/ui/VirtualCardCarousel";
-import type { CardTierApplicationForm, TierVerificationContext } from "@/lib/cards/application";
+import type { CardTierApplicationForm, TierVerificationContext, TierVerificationResult } from "@/lib/cards/application";
 import { verifyTierApplication } from "@/lib/cards/application";
 import {
   CARD_TIERS,
@@ -27,7 +27,7 @@ interface CardSubscriptionState {
   submitTierApplication: (
     form: CardTierApplicationForm,
     context: TierVerificationContext,
-  ) => Promise<{ approved: boolean; message: string }>;
+  ) => Promise<TierVerificationResult>;
   cancelTierCard: (tierId: PurchasableTierId) => Promise<boolean>;
   applyTier: (tierId: CardTierId) => Promise<void>;
   getOwnedCards: () => VirtualCardItem[];
@@ -86,7 +86,10 @@ export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get)
   submitTierApplication: async (form, context) => {
     const { ownedTierIds, isSubmitting, tierReceiveAmounts } = get();
     if (isSubmitting) {
-      return { approved: false, message: "Application already in progress." };
+      return {
+        approved: false,
+        message: "Application already in progress.",
+      };
     }
 
     set({ isSubmitting: true, error: null });
