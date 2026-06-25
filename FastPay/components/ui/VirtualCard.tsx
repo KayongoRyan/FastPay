@@ -15,6 +15,8 @@ interface VirtualCardProps {
   qrHref?: Href;
   revealed?: boolean;
   onToggleReveal?: () => void;
+  gradientColors?: [string, string];
+  hideDots?: boolean;
 }
 
 export function VirtualCard({
@@ -24,6 +26,8 @@ export function VirtualCard({
   qrHref = "/offline/receive" as Href,
   revealed: revealedProp,
   onToggleReveal,
+  gradientColors = ["#1F5C52", "#0F3D38"],
+  hideDots = false,
 }: VirtualCardProps) {
   const [internalRevealed, setInternalRevealed] = useState(false);
   const revealed = revealedProp ?? internalRevealed;
@@ -43,7 +47,7 @@ export function VirtualCard({
   return (
     <View>
       <LinearGradient
-        colors={["#1F5C52", "#0F3D38"]}
+        colors={gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.card}
@@ -78,11 +82,13 @@ export function VirtualCard({
         </View>
       </LinearGradient>
 
-      <View style={styles.dots}>
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
-        <View style={styles.dot} />
-      </View>
+      {!hideDots ? (
+        <View style={styles.dots}>
+          <View style={[styles.dot, styles.dotActive]} />
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+        </View>
+      ) : null}
     </View>
   );
 }
