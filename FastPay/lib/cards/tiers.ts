@@ -8,8 +8,9 @@ export interface CardTierDefinition {
   id: CardTierId;
   label: string;
   description: string;
-  priceRwf: number;
-  billingLabel: string;
+  /** Minimum expected monthly account receive amount (RWF). */
+  minMonthlyReceiveRwf: number;
+  requirementLabel: string;
   gradientColors: [string, string];
   cardNumber: string;
   expiry: string;
@@ -21,8 +22,8 @@ export const CARD_TIERS: Record<CardTierId, CardTierDefinition> = {
     id: "standard",
     label: "FastPay",
     description: "Default virtual card included with your wallet.",
-    priceRwf: 0,
-    billingLabel: "Free",
+    minMonthlyReceiveRwf: 0,
+    requirementLabel: "Free",
     gradientColors: ["#1F5C52", "#0F3D38"],
     cardNumber: "2550 3456 7728 3504",
     expiry: "19/30",
@@ -32,8 +33,8 @@ export const CARD_TIERS: Record<CardTierId, CardTierDefinition> = {
     id: "bronze",
     label: "Bronze",
     description: "Entry tier with bronze styling and basic perks.",
-    priceRwf: 5_000,
-    billingLabel: "5,000 RWF / month",
+    minMonthlyReceiveRwf: 800_000,
+    requirementLabel: "From 800,000 RWF / month received",
     gradientColors: ["#A8714A", "#6B4423"],
     cardNumber: "6201 4488 9012 7733",
     expiry: "08/28",
@@ -43,8 +44,8 @@ export const CARD_TIERS: Record<CardTierId, CardTierDefinition> = {
     id: "silver",
     label: "Silver",
     description: "Mid tier with higher limits and silver card design.",
-    priceRwf: 15_000,
-    billingLabel: "15,000 RWF / month",
+    minMonthlyReceiveRwf: 5_000_000,
+    requirementLabel: "From 5,000,000 RWF / month received",
     gradientColors: ["#BFC5CE", "#7B8494"],
     cardNumber: "4412 8890 1123 9087",
     expiry: "06/29",
@@ -54,8 +55,8 @@ export const CARD_TIERS: Record<CardTierId, CardTierDefinition> = {
     id: "gold",
     label: "Gold",
     description: "Premium tier with gold card design and priority support.",
-    priceRwf: 35_000,
-    billingLabel: "35,000 RWF / month",
+    minMonthlyReceiveRwf: 23_000_000,
+    requirementLabel: "From 23,000,000 RWF / month received",
     gradientColors: ["#E8C547", "#B8860B"],
     cardNumber: "9012 4567 3344 2100",
     expiry: "12/30",
@@ -79,4 +80,20 @@ export function tierToCardItem(tierId: CardTierId): VirtualCardItem {
 
 export function formatRwf(amount: number): string {
   return `${amount.toLocaleString()} RWF`;
+}
+
+export function parseRwfInput(value: string): number {
+  const digits = value.replace(/[^\d]/g, "");
+  return Number(digits) || 0;
+}
+
+export function validateTierReceiveAmount(
+  tierId: PurchasableTierId,
+  amountRwf: number,
+): string | null {
+  const min = CARD_TIERS[tierId].minMonthlyReceiveRwf;
+  if (amountRwf < min) {
+    return `Minimum for ${CARD_TIERS[tierId].label} is ${formatRwf(min)} per month received.`;
+  }
+  return null;
 }
