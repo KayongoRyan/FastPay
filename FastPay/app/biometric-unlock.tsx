@@ -33,9 +33,9 @@ export default function BiometricUnlockScreen() {
       <PrimaryButton
         label={isLoading ? "Unlocking..." : `Unlock with ${biometricLabel}`}
         onPress={() => {
-          void unlockWithBiometric().then(() =>
-            router.replace("/home" as Href),
-          );
+          void unlockWithBiometric()
+            .then(() => router.replace("/home" as Href))
+            .catch(() => undefined);
         }}
         loading={isLoading}
         style={styles.button}

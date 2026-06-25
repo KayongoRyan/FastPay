@@ -146,6 +146,21 @@ export async function clearDeviceKeyMaterial(): Promise<void> {
   ]);
 }
 
+export async function resetLocalBiometricState(
+  user: AuthUser | null,
+): Promise<AuthUser | null> {
+  await clearDeviceKeyMaterial();
+  await setBiometricLockEnabled(false);
+
+  if (!user) {
+    return null;
+  }
+
+  const updatedUser = { ...user, biometricEnabled: false };
+  await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+  return updatedUser;
+}
+
 export function getAccessTokenExpiryMs(accessToken: string): number | null {
   try {
     const payload = JSON.parse(atob(accessToken.split('.')[1] ?? '')) as {

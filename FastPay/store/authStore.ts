@@ -23,6 +23,7 @@ import {
   saveAuthSession,
   saveDeviceKeyMaterial,
   setBiometricLockEnabled,
+  resetLocalBiometricState,
   signChallenge,
   type AuthUser,
   type LoginInput,
@@ -73,14 +74,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
         ]);
 
         if (biometricLock && storedUser?.biometricEnabled) {
-          set({
-            user: storedUser,
-            accessToken: null,
-            isLocked: true,
-            isReady: true,
-            isLoading: false,
-          });
-          return;
+          const deviceKey = await loadDeviceKeyMaterial();
+          if (deviceKey) {
+            set({
+              user: storedUser,
+              accessToken: null,
+              isLocked: true,
+              isReady: true,
+              isLoading: false,
+            });
+            return;
+          }
+
+          await setBiometricLockEnabled(false);
         }
 
         const [accessToken, refreshToken] = await Promise.all([
@@ -254,6 +260,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Biometric unlock failed';
+
+        if (message.toLowerCase().includes('not enrolled')) {
+          const updatedUser = await resetLocalBiometricState(get().user);
+          set({
+            user: updatedUser,
+            isLocked: false,
+            isLoading: false,
+            error:
+              'Biometric setup is out of sync. Sign in with your password and re-enable biometrics in Settings.',
+          });
+          return;
+        }
+
         set({ isLoading: false, error: message });
         throw error;
       }
@@ -270,6 +289,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       set({ isLoading: true, error: null });
 
+      let enrolledOnBackend = false;
+
       try {
         const capability = await getBiometricCapability();
         if (!capability.available || !capability.enrolled) {
@@ -282,6 +303,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
           return;
         }
 
+        await clearDeviceKeyMaterial();
+
         const deviceKey = await generateDeviceKeyMaterial();
         await saveDeviceKeyMaterial(deviceKey.deviceId, deviceKey.secretKey);
 
@@ -290,6 +313,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           deviceId: deviceKey.deviceId,
           publicKey: deviceKey.publicKey,
         });
+        enrolledOnBackend = true;
 
         const refreshToken = await loadRefreshToken();
         if (!refreshToken) {
@@ -312,6 +336,16 @@ export const useAuthStore = create<AuthState>((set, get) => {
         });
       } catch (error) {
         await clearDeviceKeyMaterial();
+        await setBiometricLockEnabled(false);
+
+        if (enrolledOnBackend) {
+          try {
+            await enrollBiometric({ enabled: false });
+          } catch {
+            // Best-effort rollback if later steps failed after enroll.
+          }
+        }
+
         const message =
           error instanceof Error ? error.message : 'Failed to enable biometrics';
         set({ isLoading: false, error: message });

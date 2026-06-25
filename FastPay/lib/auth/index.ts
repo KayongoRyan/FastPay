@@ -25,6 +25,7 @@ export {
   saveAuthSession,
   saveDeviceKeyMaterial,
   setBiometricLockEnabled,
+  resetLocalBiometricState,
 } from './storage';
 export type {
   AuthSession,
