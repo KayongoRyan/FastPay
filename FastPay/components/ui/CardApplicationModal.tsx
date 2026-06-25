@@ -1,25 +1,30 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { X } from "lucide-react-native";
+import { CheckCircle2, X, XCircle } from "lucide-react-native";
 
 import { Input } from "@/components/ui/Input";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { validateApplicationForm } from "@/lib/cards/application";
 import {
   CARD_TIERS,
   formatRwf,
   parseRwfInput,
   PurchasableTierId,
-  validateTierReceiveAmount,
 } from "@/lib/cards/tiers";
+import { useAuthStore } from "@/store/authStore";
 import { useCardSubscriptionStore } from "@/store/cardSubscriptionStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
+
+type ApplicationStep = "form" | "verifying" | "result";
 
 interface CardApplicationModalProps {
   tierId: PurchasableTierId | null;
@@ -32,10 +37,17 @@ export function CardApplicationModal({
   visible,
   onClose,
 }: CardApplicationModalProps) {
-  const { submitTierApplication, isSubmitting, error, tierReceiveAmounts } =
+  const user = useAuthStore((s) => s.user);
+  const { submitTierApplication, isSubmitting, tierReceiveAmounts } =
     useCardSubscriptionStore();
+
+  const [step, setStep] = useState<ApplicationStep>("form");
   const [amount, setAmount] = useState("");
+  const [accountPhone, setAccountPhone] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [resultMessage, setResultMessage] = useState("");
+  const [approved, setApproved] = useState(false);
 
   const tier = tierId ? CARD_TIERS[tierId] : null;
 
@@ -48,77 +60,171 @@ export function CardApplicationModal({
     const defaultAmount =
       existing ?? CARD_TIERS[tierId].minMonthlyReceiveRwf;
     setAmount(defaultAmount.toLocaleString());
+    setAccountPhone(user?.phone ?? "");
+    setBusinessName("");
     setLocalError(null);
-  }, [visible, tierId, tierReceiveAmounts]);
+    setResultMessage("");
+    setApproved(false);
+    setStep("form");
+  }, [visible, tierId, tierReceiveAmounts, user?.phone]);
+
+  const handleClose = () => {
+    if (isSubmitting) {
+      return;
+    }
+    onClose();
+  };
 
   const handleSubmit = async () => {
-    if (!tierId) {
+    if (!tierId || !user) {
       return;
     }
 
-    const numericAmount = parseRwfInput(amount);
-    const validationError = validateTierReceiveAmount(tierId, numericAmount);
+    const form = {
+      tierId,
+      monthlyReceiveRwf: parseRwfInput(amount),
+      accountPhone,
+      businessName,
+    };
+
+    const validationError = validateApplicationForm(form, {
+      userId: user.id,
+      userPhone: user.phone,
+    });
     if (validationError) {
       setLocalError(validationError);
       return;
     }
 
-    const success = await submitTierApplication(tierId, numericAmount);
-    if (success) {
-      onClose();
-    }
+    setLocalError(null);
+    setStep("verifying");
+
+    const verification = await submitTierApplication(form, {
+      userId: user.id,
+      userPhone: user.phone,
+    });
+
+    setApproved(verification.approved);
+    setResultMessage(verification.message);
+    setStep("result");
   };
 
   if (!tier) {
     return null;
   }
 
-  const displayError = localError ?? error;
-
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <Pressable style={styles.backdrop} onPress={handleClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
-            <Text style={styles.title}>Apply for {tier.label}</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
+            <Text style={styles.title}>
+              {step === "result" && approved
+                ? `${tier.label} approved`
+                : `Apply for ${tier.label}`}
+            </Text>
+            <Pressable onPress={handleClose} hitSlop={8} disabled={isSubmitting}>
               <X color={colors.white} size={22} />
             </Pressable>
           </View>
 
-          <Text style={styles.hint}>
-            Complete your payment profile. You cannot go below the minimum monthly
-            receive amount for this card tier.
-          </Text>
+          {step === "form" ? (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text style={styles.hint}>
+                Complete your payment profile. We verify your monthly receive
+                against account records before issuing the card.
+              </Text>
 
-          <View style={styles.minBox}>
-            <Text style={styles.minLabel}>Minimum required</Text>
-            <Text style={styles.minValue}>
-              {formatRwf(tier.minMonthlyReceiveRwf)} / month
-            </Text>
-          </View>
+              <View style={styles.minBox}>
+                <Text style={styles.minLabel}>Minimum required</Text>
+                <Text style={styles.minValue}>
+                  {formatRwf(tier.minMonthlyReceiveRwf)} / month
+                </Text>
+              </View>
 
-          <Input
-            label="Expected monthly receive (RWF)"
-            value={amount}
-            onChangeText={(text) => {
-              setAmount(text);
-              setLocalError(null);
-            }}
-            keyboardType="numeric"
-            placeholder={tier.minMonthlyReceiveRwf.toLocaleString()}
-          />
+              <Input
+                label="Expected monthly receive (RWF)"
+                value={amount}
+                onChangeText={(text) => {
+                  setAmount(text);
+                  setLocalError(null);
+                }}
+                keyboardType="numeric"
+                placeholder={tier.minMonthlyReceiveRwf.toLocaleString()}
+              />
 
-          {displayError ? (
-            <Text style={styles.error}>{displayError}</Text>
+              <Input
+                label="Account phone number"
+                value={accountPhone}
+                onChangeText={(text) => {
+                  setAccountPhone(text);
+                  setLocalError(null);
+                }}
+                keyboardType="phone-pad"
+                placeholder="+250 7XX XXX XXX"
+                autoComplete="tel"
+              />
+
+              <Input
+                label="Business / primary payment source"
+                value={businessName}
+                onChangeText={(text) => {
+                  setBusinessName(text);
+                  setLocalError(null);
+                }}
+                placeholder="e.g. Retail shop, freelance clients"
+              />
+
+              {localError ? (
+                <Text style={styles.error}>{localError}</Text>
+              ) : null}
+
+              <PrimaryButton
+                label="Submit for verification"
+                onPress={() => void handleSubmit()}
+                style={styles.submitBtn}
+              />
+            </ScrollView>
           ) : null}
 
-          <PrimaryButton
-            label={isSubmitting ? "Submitting..." : "Complete application"}
-            onPress={() => void handleSubmit()}
-            loading={isSubmitting}
-            style={styles.submitBtn}
-          />
+          {step === "verifying" ? (
+            <View style={styles.statusWrap}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.statusTitle}>Verifying your profile</Text>
+              <Text style={styles.statusHint}>
+                Checking payment history and monthly receive against {tier.label}{" "}
+                requirements...
+              </Text>
+            </View>
+          ) : null}
+
+          {step === "result" ? (
+            <View style={styles.statusWrap}>
+              {approved ? (
+                <CheckCircle2 color={colors.success} size={48} />
+              ) : (
+                <XCircle color={colors.error} size={48} />
+              )}
+              <Text style={styles.statusTitle}>
+                {approved ? "Application approved" : "Not eligible yet"}
+              </Text>
+              <Text style={styles.statusHint}>{resultMessage}</Text>
+              <PrimaryButton
+                label={approved ? "Done" : "Update application"}
+                onPress={() => {
+                  if (approved) {
+                    handleClose();
+                    return;
+                  }
+                  setStep("form");
+                }}
+                style={styles.submitBtn}
+              />
+            </View>
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>
@@ -137,6 +243,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+    maxHeight: "88%",
   },
   header: {
     flexDirection: "row",
@@ -180,5 +287,23 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginTop: spacing.sm,
+  },
+  statusWrap: {
+    alignItems: "center",
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  statusTitle: {
+    color: colors.white,
+    fontSize: 17,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  statusHint: {
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+    marginBottom: spacing.md,
   },
 });

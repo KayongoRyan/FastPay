@@ -2,12 +2,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import type { VirtualCardItem } from "@/components/ui/VirtualCardCarousel";
+import type { CardTierApplicationForm, TierVerificationContext } from "@/lib/cards/application";
+import { verifyTierApplication } from "@/lib/cards/application";
 import {
   CARD_TIERS,
   CardTierId,
   PurchasableTierId,
   tierToCardItem,
-  validateTierReceiveAmount,
 } from "@/lib/cards/tiers";
 
 const OWNED_KEY = "fastpay_card_owned_tiers";
@@ -20,12 +21,14 @@ interface CardSubscriptionState {
   tierReceiveAmounts: Partial<Record<CardTierId, number>>;
   isReady: boolean;
   isSubmitting: boolean;
+  isCancelling: boolean;
   error: string | null;
   initialize: () => Promise<void>;
   submitTierApplication: (
-    tierId: PurchasableTierId,
-    monthlyReceiveRwf: number,
-  ) => Promise<boolean>;
+    form: CardTierApplicationForm,
+    context: TierVerificationContext,
+  ) => Promise<{ approved: boolean; message: string }>;
+  cancelTierCard: (tierId: PurchasableTierId) => Promise<boolean>;
   applyTier: (tierId: CardTierId) => Promise<void>;
   getOwnedCards: () => VirtualCardItem[];
 }
@@ -50,6 +53,7 @@ export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get)
   tierReceiveAmounts: {},
   isReady: false,
   isSubmitting: false,
+  isCancelling: false,
   error: null,
 
   initialize: async () => {
@@ -79,23 +83,22 @@ export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get)
     set({ ownedTierIds, activeTierId, tierReceiveAmounts, isReady: true, error: null });
   },
 
-  submitTierApplication: async (tierId, monthlyReceiveRwf) => {
+  submitTierApplication: async (form, context) => {
     const { ownedTierIds, isSubmitting, tierReceiveAmounts } = get();
     if (isSubmitting) {
-      return false;
-    }
-
-    const validationError = validateTierReceiveAmount(tierId, monthlyReceiveRwf);
-    if (validationError) {
-      set({ error: validationError });
-      return false;
+      return { approved: false, message: "Application already in progress." };
     }
 
     set({ isSubmitting: true, error: null });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      const verification = await verifyTierApplication(form, context);
+      if (!verification.approved) {
+        set({ isSubmitting: false, error: verification.message });
+        return verification;
+      }
 
+      const { tierId, monthlyReceiveRwf } = form;
       const nextOwned = ownedTierIds.includes(tierId)
         ? ownedTierIds
         : [...ownedTierIds, tierId];
@@ -117,11 +120,46 @@ export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get)
         isSubmitting: false,
         error: null,
       });
+      return verification;
+    } catch {
+      const message = `Could not complete ${CARD_TIERS[form.tierId].label} application`;
+      set({ isSubmitting: false, error: message });
+      return { approved: false, message };
+    }
+  },
+
+  cancelTierCard: async (tierId) => {
+    const { ownedTierIds, activeTierId, tierReceiveAmounts, isCancelling } =
+      get();
+    if (isCancelling || !ownedTierIds.includes(tierId)) {
+      return false;
+    }
+
+    set({ isCancelling: true, error: null });
+
+    try {
+      const nextOwned = ownedTierIds.filter((id) => id !== tierId);
+      const nextActive = activeTierId === tierId ? "standard" : activeTierId;
+      const { [tierId]: _removed, ...nextReceive } = tierReceiveAmounts;
+
+      await Promise.all([
+        AsyncStorage.setItem(OWNED_KEY, JSON.stringify(nextOwned)),
+        AsyncStorage.setItem(ACTIVE_KEY, nextActive),
+        AsyncStorage.setItem(RECEIVE_KEY, JSON.stringify(nextReceive)),
+      ]);
+
+      set({
+        ownedTierIds: nextOwned,
+        activeTierId: nextActive,
+        tierReceiveAmounts: nextReceive,
+        isCancelling: false,
+        error: null,
+      });
       return true;
     } catch {
       set({
-        isSubmitting: false,
-        error: `Could not complete ${CARD_TIERS[tierId].label} application`,
+        isCancelling: false,
+        error: `Could not cancel ${CARD_TIERS[tierId].label} card`,
       });
       return false;
     }
