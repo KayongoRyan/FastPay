@@ -17,6 +17,7 @@ interface VirtualCardProps {
   onToggleReveal?: () => void;
   gradientColors?: [string, string];
   hideDots?: boolean;
+  tierLabel?: string;
 }
 
 export function VirtualCard({
@@ -28,6 +29,7 @@ export function VirtualCard({
   onToggleReveal,
   gradientColors = ["#1F5C52", "#0F3D38"],
   hideDots = false,
+  tierLabel,
 }: VirtualCardProps) {
   const [internalRevealed, setInternalRevealed] = useState(false);
   const revealed = revealedProp ?? internalRevealed;
@@ -53,7 +55,14 @@ export function VirtualCard({
         style={styles.card}
       >
         <View style={styles.topRow}>
-          <FastPayLogo size={28} />
+          <View style={styles.logoBlock}>
+            <FastPayLogo size={28} />
+            {tierLabel ? (
+              <View style={styles.tierBadge}>
+                <Text style={styles.tierBadgeText}>{tierLabel.toUpperCase()}</Text>
+              </View>
+            ) : null}
+          </View>
           <Link href={qrHref} asChild>
             <Pressable style={styles.qrBtn} hitSlop={8}>
               <QrCode color={colors.white} size={22} />
@@ -104,6 +113,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+  },
+  logoBlock: {
+    gap: spacing.sm,
+  },
+  tierBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  tierBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
   },
   qrBtn: {
     width: 40,
