@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { CardApplicationModal } from "@/components/ui/CardApplicationModal";
 import {
@@ -13,16 +13,32 @@ import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
 export function CardSubscriptionPanel() {
-  const { ownedTierIds, activeTierId, error, applyTier } =
+  const { ownedTierIds, activeTierId, error, applyTier, cancelTierCard, isCancelling } =
     useCardSubscriptionStore();
   const [formTierId, setFormTierId] = useState<PurchasableTierId | null>(null);
+
+  const handleCancel = (tierId: PurchasableTierId) => {
+    const tier = CARD_TIERS[tierId];
+    Alert.alert(
+      "Cancel card",
+      `Remove your ${tier.label} card? You can apply again after verification.`,
+      [
+        { text: "Keep card", style: "cancel" },
+        {
+          text: "Cancel card",
+          style: "destructive",
+          onPress: () => void cancelTierCard(tierId),
+        },
+      ],
+    );
+  };
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>Card subscriptions</Text>
       <Text style={styles.subtitle}>
-        Apply for a tier, complete your payment profile, then use the card you
-        qualify for.
+        Apply for a tier, complete verification, then use the card you qualify
+        for. Cancel anytime if you no longer need a tier.
       </Text>
 
       {error && !formTierId ? <Text style={styles.error}>{error}</Text> : null}
@@ -44,6 +60,7 @@ export function CardSubscriptionPanel() {
             tierId={tierId}
             owned={owned}
             active={active}
+            cancelling={isCancelling}
             onApply={() => {
               if (owned && !active) {
                 void applyTier(tierId);
@@ -51,6 +68,7 @@ export function CardSubscriptionPanel() {
               }
               setFormTierId(tierId);
             }}
+            onCancel={owned ? () => handleCancel(tierId) : undefined}
           />
         );
       })}
@@ -68,10 +86,19 @@ interface TierRowProps {
   tierId: CardTierId;
   owned: boolean;
   active: boolean;
+  cancelling?: boolean;
   onApply: () => void;
+  onCancel?: () => void;
 }
 
-function TierRow({ tierId, owned, active, onApply }: TierRowProps) {
+function TierRow({
+  tierId,
+  owned,
+  active,
+  cancelling,
+  onApply,
+  onCancel,
+}: TierRowProps) {
   const tier = CARD_TIERS[tierId];
 
   return (
@@ -90,15 +117,27 @@ function TierRow({ tierId, owned, active, onApply }: TierRowProps) {
       <View style={styles.actions}>
         {active ? (
           <View style={styles.activeBadge}>
-            <Text style={styles.activeBadgeText}>Applied</Text>
+            <Text style={styles.activeBadgeText}>Active</Text>
           </View>
         ) : (
           <Pressable style={styles.applyBtn} onPress={onApply}>
             <Text style={styles.applyBtnText}>
-              {owned ? "Apply card" : "Apply"}
+              {owned ? "Use card" : "Apply"}
             </Text>
           </Pressable>
         )}
+
+        {onCancel ? (
+          <Pressable
+            style={[styles.cancelBtn, cancelling && styles.disabled]}
+            onPress={onCancel}
+            disabled={cancelling}
+          >
+            <Text style={styles.cancelBtnText}>
+              {cancelling ? "Cancelling..." : "Cancel card"}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -170,7 +209,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actions: {
-    alignItems: "flex-start",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   applyBtn: {
     borderWidth: 1,
@@ -178,13 +220,29 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
-    minWidth: 120,
+    minWidth: 100,
     alignItems: "center",
   },
   applyBtnText: {
     color: colors.primary,
     fontWeight: "600",
     fontSize: 14,
+  },
+  cancelBtn: {
+    borderWidth: 1,
+    borderColor: colors.error,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  cancelBtnText: {
+    color: colors.error,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  disabled: {
+    opacity: 0.5,
   },
   activeBadge: {
     backgroundColor: "rgba(0,174,239,0.18)",
