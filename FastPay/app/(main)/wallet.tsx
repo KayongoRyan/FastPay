@@ -1,49 +1,44 @@
 import { Link } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { CardSubscriptionPanel } from "@/components/ui/CardSubscriptionPanel";
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
-import {
-  VirtualCardCarousel,
-  VirtualCardItem,
-} from "@/components/ui/VirtualCardCarousel";
+import { VirtualCardCarousel } from "@/components/ui/VirtualCardCarousel";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { tierToCardItem } from "@/lib/cards/tiers";
+import { useCardSubscriptionStore } from "@/store/cardSubscriptionStore";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
-
-const WALLET_CARDS: VirtualCardItem[] = [
-  {
-    id: "fastpay-rwf",
-    cardNumber: "2550 3456 7728 3504",
-    expiry: "19/30",
-    gradientColors: ["#1F5C52", "#0F3D38"],
-  },
-  {
-    id: "fastpay-usdt",
-    cardNumber: "4412 8890 1123 9087",
-    expiry: "06/28",
-    gradientColors: ["#163A6B", "#08182F"],
-  },
-  {
-    id: "fastpay-savings",
-    cardNumber: "9012 4567 3344 2100",
-    expiry: "12/29",
-    gradientColors: ["#0B4F6C", "#062E40"],
-  },
-];
 
 export default function WalletScreen() {
   const [sensitiveVisible, setSensitiveVisible] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
   const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
     useWalletStore();
+  const {
+    initialize: initSubscriptions,
+    isReady: subscriptionsReady,
+    activeTierId,
+    ownedTierIds,
+  } = useCardSubscriptionStore();
+
+  const ownedCards = useMemo(() => {
+    const order = ["standard", "bronze", "silver", "gold"] as const;
+    return order
+      .filter((tierId) => ownedTierIds.includes(tierId))
+      .map(tierToCardItem);
+  }, [ownedTierIds]);
 
   useEffect(() => {
-    if (user) void initialize();
-  }, [user, initialize]);
+    if (user) {
+      void initialize();
+      void initSubscriptions();
+    }
+  }, [user, initialize, initSubscriptions]);
 
-  if (!isReady || isLoading || !user) {
+  if (!isReady || isLoading || !user || !subscriptionsReady) {
     return (
       <TabScreenLayout scroll={false}>
         <Text style={styles.muted}>Loading...</Text>
@@ -57,10 +52,13 @@ export default function WalletScreen() {
 
       <VirtualCardCarousel
         holderName={user.fullName}
-        cards={WALLET_CARDS}
+        cards={ownedCards}
+        activeCardId={activeTierId}
         revealed={sensitiveVisible}
         onToggleReveal={() => setSensitiveVisible((v) => !v)}
       />
+
+      <CardSubscriptionPanel />
 
       <View style={styles.card}>
         <Text style={styles.label}>Stellar wallet</Text>

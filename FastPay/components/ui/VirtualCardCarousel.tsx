@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   NativeScrollEvent,
@@ -14,6 +14,8 @@ import { spacing } from "@/theme/spacing";
 
 export interface VirtualCardItem {
   id: string;
+  tierId?: string;
+  tierLabel?: string;
   cardNumber: string;
   expiry: string;
   gradientColors: [string, string];
@@ -24,6 +26,7 @@ interface VirtualCardCarouselProps {
   cards: VirtualCardItem[];
   revealed?: boolean;
   onToggleReveal?: () => void;
+  activeCardId?: string;
 }
 
 export function VirtualCardCarousel({
@@ -31,6 +34,7 @@ export function VirtualCardCarousel({
   cards,
   revealed,
   onToggleReveal,
+  activeCardId,
 }: VirtualCardCarouselProps) {
   const { width: screenWidth } = useWindowDimensions();
   const listRef = useRef<FlatList<VirtualCardItem>>(null);
@@ -38,6 +42,23 @@ export function VirtualCardCarousel({
 
   const cardWidth = screenWidth - spacing.lg * 2;
   const snapInterval = cardWidth + spacing.md;
+
+  useEffect(() => {
+    if (!activeCardId || cards.length === 0) {
+      return;
+    }
+
+    const index = cards.findIndex((card) => card.id === activeCardId);
+    if (index < 0) {
+      return;
+    }
+
+    setActiveIndex(index);
+    listRef.current?.scrollToOffset({
+      offset: index * snapInterval,
+      animated: true,
+    });
+  }, [activeCardId, cards, snapInterval]);
 
   const onScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / snapInterval);
@@ -65,6 +86,7 @@ export function VirtualCardCarousel({
               cardNumber={item.cardNumber}
               expiry={item.expiry}
               gradientColors={item.gradientColors}
+              tierLabel={item.tierLabel}
               revealed={revealed}
               onToggleReveal={onToggleReveal}
               hideDots
