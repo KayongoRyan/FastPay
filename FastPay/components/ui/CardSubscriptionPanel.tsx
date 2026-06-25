@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { CardApplicationModal } from "@/components/ui/CardApplicationModal";
 import {
   CARD_TIERS,
   CardTierId,
-  formatRwf,
+  PurchasableTierId,
   PURCHASABLE_TIERS,
 } from "@/lib/cards/tiers";
 import { useCardSubscriptionStore } from "@/store/cardSubscriptionStore";
@@ -12,23 +13,19 @@ import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
 export function CardSubscriptionPanel() {
-  const {
-    ownedTierIds,
-    activeTierId,
-    isPurchasing,
-    error,
-    purchaseTier,
-    applyTier,
-  } = useCardSubscriptionStore();
+  const { ownedTierIds, activeTierId, error, applyTier } =
+    useCardSubscriptionStore();
+  const [formTierId, setFormTierId] = useState<PurchasableTierId | null>(null);
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>Card subscriptions</Text>
       <Text style={styles.subtitle}>
-        Buy a tier, then apply the card design you want to use.
+        Apply for a tier, complete your payment profile, then use the card you
+        qualify for.
       </Text>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error && !formTierId ? <Text style={styles.error}>{error}</Text> : null}
 
       <TierRow
         tierId="standard"
@@ -47,12 +44,22 @@ export function CardSubscriptionPanel() {
             tierId={tierId}
             owned={owned}
             active={active}
-            isPurchasing={isPurchasing}
-            onApply={() => void applyTier(tierId)}
-            onPurchase={() => void purchaseTier(tierId)}
+            onApply={() => {
+              if (owned && !active) {
+                void applyTier(tierId);
+                return;
+              }
+              setFormTierId(tierId);
+            }}
           />
         );
       })}
+
+      <CardApplicationModal
+        tierId={formTierId}
+        visible={formTierId !== null}
+        onClose={() => setFormTierId(null)}
+      />
     </View>
   );
 }
@@ -61,19 +68,10 @@ interface TierRowProps {
   tierId: CardTierId;
   owned: boolean;
   active: boolean;
-  isPurchasing?: boolean;
   onApply: () => void;
-  onPurchase?: () => void;
 }
 
-function TierRow({
-  tierId,
-  owned,
-  active,
-  isPurchasing,
-  onApply,
-  onPurchase,
-}: TierRowProps) {
+function TierRow({ tierId, owned, active, onApply }: TierRowProps) {
   const tier = CARD_TIERS[tierId];
 
   return (
@@ -85,29 +83,21 @@ function TierRow({
         <View style={styles.rowInfo}>
           <Text style={styles.rowTitle}>{tier.label}</Text>
           <Text style={styles.rowDesc}>{tier.description}</Text>
-          <Text style={styles.rowPrice}>{tier.billingLabel}</Text>
+          <Text style={styles.rowRequirement}>{tier.requirementLabel}</Text>
         </View>
       </View>
 
       <View style={styles.actions}>
-        {owned ? (
-          active ? (
-            <View style={styles.activeBadge}>
-              <Text style={styles.activeBadgeText}>Applied</Text>
-            </View>
-          ) : (
-            <Pressable style={styles.applyBtn} onPress={onApply}>
-              <Text style={styles.applyBtnText}>Apply card</Text>
-            </Pressable>
-          )
+        {active ? (
+          <View style={styles.activeBadge}>
+            <Text style={styles.activeBadgeText}>Applied</Text>
+          </View>
         ) : (
-          <PrimaryButton
-            label={isPurchasing ? "Processing..." : `Buy ${formatRwf(tier.priceRwf)}`}
-            onPress={() => onPurchase?.()}
-            loading={isPurchasing}
-            style={styles.buyBtn}
-            labelStyle={styles.buyBtnLabel}
-          />
+          <Pressable style={styles.applyBtn} onPress={onApply}>
+            <Text style={styles.applyBtnText}>
+              {owned ? "Apply card" : "Apply"}
+            </Text>
+          </Pressable>
         )}
       </View>
     </View>
@@ -173,7 +163,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
-  rowPrice: {
+  rowRequirement: {
     color: colors.primary,
     fontSize: 13,
     fontWeight: "600",
@@ -182,21 +172,14 @@ const styles = StyleSheet.create({
   actions: {
     alignItems: "flex-start",
   },
-  buyBtn: {
-    minHeight: 42,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    alignSelf: "stretch",
-  },
-  buyBtnLabel: {
-    fontSize: 14,
-  },
   applyBtn: {
     borderWidth: 1,
     borderColor: colors.primary,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
+    minWidth: 120,
+    alignItems: "center",
   },
   applyBtnText: {
     color: colors.primary,

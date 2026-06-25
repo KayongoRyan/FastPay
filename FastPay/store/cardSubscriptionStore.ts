@@ -7,19 +7,25 @@ import {
   CardTierId,
   PurchasableTierId,
   tierToCardItem,
+  validateTierReceiveAmount,
 } from "@/lib/cards/tiers";
 
 const OWNED_KEY = "fastpay_card_owned_tiers";
 const ACTIVE_KEY = "fastpay_card_active_tier";
+const RECEIVE_KEY = "fastpay_card_tier_receive";
 
 interface CardSubscriptionState {
   ownedTierIds: CardTierId[];
   activeTierId: CardTierId;
+  tierReceiveAmounts: Partial<Record<CardTierId, number>>;
   isReady: boolean;
-  isPurchasing: boolean;
+  isSubmitting: boolean;
   error: string | null;
   initialize: () => Promise<void>;
-  purchaseTier: (tierId: PurchasableTierId) => Promise<void>;
+  submitTierApplication: (
+    tierId: PurchasableTierId,
+    monthlyReceiveRwf: number,
+  ) => Promise<boolean>;
   applyTier: (tierId: CardTierId) => Promise<void>;
   getOwnedCards: () => VirtualCardItem[];
 }
@@ -41,14 +47,16 @@ function parseOwnedTiers(raw: string | null): CardTierId[] {
 export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get) => ({
   ownedTierIds: ["standard"],
   activeTierId: "standard",
+  tierReceiveAmounts: {},
   isReady: false,
-  isPurchasing: false,
+  isSubmitting: false,
   error: null,
 
   initialize: async () => {
-    const [ownedRaw, activeRaw] = await Promise.all([
+    const [ownedRaw, activeRaw, receiveRaw] = await Promise.all([
       AsyncStorage.getItem(OWNED_KEY),
       AsyncStorage.getItem(ACTIVE_KEY),
+      AsyncStorage.getItem(RECEIVE_KEY),
     ]);
 
     const ownedTierIds = parseOwnedTiers(ownedRaw);
@@ -57,38 +65,65 @@ export const useCardSubscriptionStore = create<CardSubscriptionState>((set, get)
       ? activeCandidate
       : "standard";
 
-    set({ ownedTierIds, activeTierId, isReady: true, error: null });
+    let tierReceiveAmounts: Partial<Record<CardTierId, number>> = {};
+    if (receiveRaw) {
+      try {
+        tierReceiveAmounts = JSON.parse(receiveRaw) as Partial<
+          Record<CardTierId, number>
+        >;
+      } catch {
+        tierReceiveAmounts = {};
+      }
+    }
+
+    set({ ownedTierIds, activeTierId, tierReceiveAmounts, isReady: true, error: null });
   },
 
-  purchaseTier: async (tierId) => {
-    const { ownedTierIds, isPurchasing } = get();
-    if (isPurchasing) {
-      return;
+  submitTierApplication: async (tierId, monthlyReceiveRwf) => {
+    const { ownedTierIds, isSubmitting, tierReceiveAmounts } = get();
+    if (isSubmitting) {
+      return false;
     }
 
-    if (ownedTierIds.includes(tierId)) {
-      return;
+    const validationError = validateTierReceiveAmount(tierId, monthlyReceiveRwf);
+    if (validationError) {
+      set({ error: validationError });
+      return false;
     }
 
-    set({ isPurchasing: true, error: null });
+    set({ isSubmitting: true, error: null });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      const nextOwned = [...ownedTierIds, tierId];
-      await AsyncStorage.setItem(OWNED_KEY, JSON.stringify(nextOwned));
-      await AsyncStorage.setItem(ACTIVE_KEY, tierId);
+      const nextOwned = ownedTierIds.includes(tierId)
+        ? ownedTierIds
+        : [...ownedTierIds, tierId];
+      const nextReceive = {
+        ...tierReceiveAmounts,
+        [tierId]: monthlyReceiveRwf,
+      };
+
+      await Promise.all([
+        AsyncStorage.setItem(OWNED_KEY, JSON.stringify(nextOwned)),
+        AsyncStorage.setItem(ACTIVE_KEY, tierId),
+        AsyncStorage.setItem(RECEIVE_KEY, JSON.stringify(nextReceive)),
+      ]);
 
       set({
         ownedTierIds: nextOwned,
         activeTierId: tierId,
-        isPurchasing: false,
+        tierReceiveAmounts: nextReceive,
+        isSubmitting: false,
+        error: null,
       });
+      return true;
     } catch {
       set({
-        isPurchasing: false,
-        error: `Could not purchase ${CARD_TIERS[tierId].label} subscription`,
+        isSubmitting: false,
+        error: `Could not complete ${CARD_TIERS[tierId].label} application`,
       });
+      return false;
     }
   },
 
