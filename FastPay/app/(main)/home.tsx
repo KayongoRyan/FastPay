@@ -1,5 +1,5 @@
-import { Href, Link, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { Href, router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ArrowLeftRight,
@@ -9,13 +9,14 @@ import {
 } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
-import { VirtualCard } from "@/components/ui/VirtualCard";
+import { VirtualCardCarousel } from "@/components/ui/VirtualCardCarousel";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { tierToCardItem } from "@/lib/cards/tiers";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-const BALANCE = "200,450";
+const BALANCE = "130,490";
 
 const TRANSACTIONS = [
   {
@@ -51,6 +52,12 @@ const SERVICES = [
   { id: "more", label: "More", icon: MoreHorizontal, href: "/settings" as Href },
 ] as const;
 
+const HOME_CARDS = [
+  tierToCardItem("standard"),
+  tierToCardItem("bronze"),
+  tierToCardItem("silver"),
+];
+
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good Morning";
@@ -58,20 +65,12 @@ function getGreeting(): string {
   return "Good Evening";
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export default function HomeScreen() {
   const [sensitiveVisible, setSensitiveVisible] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
-  const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
-    useWalletStore();
+  const { initialize } = useWalletStore();
+
+  const displayName = useMemo(() => user?.fullName ?? "Future Pluto", [user?.fullName]);
 
   useEffect(() => {
     if (user) void initialize();
@@ -90,11 +89,14 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{getGreeting()},</Text>
-          <Text style={styles.name}>{user.fullName}</Text>
+          <Text style={styles.name}>{displayName}</Text>
         </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(user.fullName)}</Text>
-        </View>
+        <Image
+          source={{
+            uri: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop",
+          }}
+          style={styles.avatar}
+        />
       </View>
 
       <Text style={styles.balanceLabel}>Your Balance</Text>
@@ -102,8 +104,9 @@ export default function HomeScreen() {
         {sensitiveVisible ? `${BALANCE} RWF` : "•••••• RWF"}
       </Text>
 
-      <VirtualCard
-        holderName={user.fullName}
+      <VirtualCardCarousel
+        holderName={displayName}
+        cards={HOME_CARDS}
         revealed={sensitiveVisible}
         onToggleReveal={() => setSensitiveVisible((v) => !v)}
       />
@@ -135,32 +138,11 @@ export default function HomeScreen() {
             <Text style={styles.txTitle}>{tx.title}</Text>
             <Text style={styles.txDate}>{tx.date}</Text>
           </View>
-          <Text style={styles.txAmount}>{tx.amount}</Text>
+          <Text style={styles.txAmount}>
+            {sensitiveVisible ? `${tx.amount} RWF` : "•••• RWF"}
+          </Text>
         </View>
       ))}
-
-      {!wallet && walletReady ? (
-        <Pressable
-          style={[styles.walletCta, walletLoading && styles.disabled]}
-          disabled={walletLoading}
-          onPress={() => void createWallet()}
-        >
-          <Text style={styles.walletCtaText}>
-            {walletLoading ? "Creating wallet..." : "Create Stellar wallet"}
-          </Text>
-        </Pressable>
-      ) : null}
-
-      {wallet ? (
-        <View style={styles.offlineRow}>
-          <Link href="/offline/send" style={styles.offlineLink}>
-            Offline send
-          </Link>
-          <Link href="/offline/receive" style={styles.offlineLink}>
-            Offline receive
-          </Link>
-        </View>
-      ) : null}
     </TabScreenLayout>
   );
 }
@@ -188,14 +170,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    color: colors.white,
-    fontWeight: "700",
-    fontSize: 16,
+    backgroundColor: colors.inputBg,
   },
   balanceLabel: {
     color: colors.textMuted,
@@ -272,33 +247,5 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 14,
     fontWeight: "600",
-  },
-  walletCta: {
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-  },
-  walletCtaText: {
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  disabled: { opacity: 0.5 },
-  offlineRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
-  offlineLink: {
-    flex: 1,
-    color: colors.white,
-    textAlign: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingVertical: spacing.sm,
-    overflow: "hidden",
   },
 });
