@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -10,6 +10,7 @@ import {
 import { ChevronDown, Keyboard, X } from "lucide-react-native";
 
 import { BackHeader } from "@/components/ui/BackHeader";
+import { Input } from "@/components/ui/Input";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
@@ -22,23 +23,48 @@ import {
   getMobileMoneyProvider,
   MOBILE_MONEY_PROVIDERS,
   MobileMoneyProviderId,
+  ProviderPhones,
+  validateProviderPhone,
 } from "@/lib/buy/mobile-money";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
 const RWF_TO_USDT = 0.0000108245;
 
+const EMPTY_PHONES: ProviderPhones = {
+  mtn: "",
+  airtel: "",
+};
+
 export default function BuyScreen() {
-  useRequireAuth();
+  const { user } = useRequireAuth();
 
   const [amount, setAmount] = useState("10000");
   const [providerId, setProviderId] = useState<MobileMoneyProviderId>("mtn");
+  const [phones, setPhones] = useState<ProviderPhones>(EMPTY_PHONES);
   const [providerPickerOpen, setProviderPickerOpen] = useState(false);
   const [keypadOpen, setKeypadOpen] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const provider = getMobileMoneyProvider(providerId);
   const numericAmount = Number(amount) || 0;
   const usdtAmount = numericAmount * RWF_TO_USDT;
+  const activePhone = phones[providerId];
+
+  useEffect(() => {
+    if (!user?.phone) {
+      return;
+    }
+    setPhones((prev) => {
+      const next = { ...prev };
+      for (const id of Object.keys(next) as MobileMoneyProviderId[]) {
+        if (!next[id]) {
+          next[id] = user.phone ?? "";
+        }
+      }
+      return next;
+    });
+  }, [user?.phone]);
 
   const onKey = (key: string) => {
     if (key === "*") return;
@@ -47,6 +73,20 @@ export default function BuyScreen() {
 
   const onDelete = () =>
     setAmount((prev) => (prev.length <= 1 ? "0" : prev.slice(0, -1)));
+
+  const updatePhone = (value: string) => {
+    setPhones((prev) => ({ ...prev, [providerId]: value }));
+    setPhoneError(null);
+  };
+
+  const handleConvert = () => {
+    const error = validateProviderPhone(activePhone);
+    if (error) {
+      setPhoneError(error);
+      return;
+    }
+    setPhoneError(null);
+  };
 
   return (
     <TabScreenLayout scroll={false} style={styles.container}>
@@ -62,7 +102,10 @@ export default function BuyScreen() {
 
           <Pressable
             style={styles.amountWrap}
-            onPress={() => setKeypadOpen(true)}
+            onPress={() => {
+              setKeypadOpen(true);
+              setPhoneError(null);
+            }}
           >
             <Text style={styles.amount}>{formatAmount(numericAmount)} RWF</Text>
             {keypadOpen ? <View style={styles.cursor} /> : null}
@@ -82,7 +125,23 @@ export default function BuyScreen() {
             <ChevronDown color={colors.white} size={18} />
           </Pressable>
 
-          <PrimaryButton label="CONVERT" onPress={() => {}} style={styles.convertBtn} />
+          <Input
+            label={provider.phoneLabel}
+            value={activePhone}
+            onChangeText={updatePhone}
+            onFocus={() => setKeypadOpen(false)}
+            keyboardType="phone-pad"
+            placeholder={provider.phonePlaceholder}
+            autoComplete="tel"
+          />
+
+          {phoneError ? <Text style={styles.error}>{phoneError}</Text> : null}
+
+          <PrimaryButton
+            label="CONVERT"
+            onPress={handleConvert}
+            style={styles.convertBtn}
+          />
 
           {keypadOpen ? (
             <View style={styles.keypadWrap}>
@@ -129,6 +188,7 @@ export default function BuyScreen() {
                   onPress={() => {
                     setProviderId(item.id);
                     setProviderPickerOpen(false);
+                    setPhoneError(null);
                   }}
                 >
                   <Text style={styles.providerLabel}>{item.label}</Text>
@@ -219,9 +279,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingVertical: 12,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   paymentText: { color: colors.white, fontSize: 15, fontWeight: "600" },
+  error: {
+    color: colors.error,
+    fontSize: 13,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
+  },
   convertBtn: {
     marginBottom: 0,
   },
