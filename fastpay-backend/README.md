@@ -30,11 +30,11 @@ fastpay-backend/
 ## Quick start
 
 ```bash
-# Infrastructure
-npm run docker:up
-
 # Install
 npm install
+
+# Infrastructure (recommended — persistent Mongo + Redis)
+npm run docker:up
 
 # Core services (separate terminals)
 npm run start:auth          # :3001
@@ -43,6 +43,16 @@ npm run start:fraud        # :3011
 npm run start:payment      # :3003
 npm run start:gateway      # :3000
 ```
+
+### MongoDB connection errors (`ECONNREFUSED :27018`)
+
+Auth-service expects MongoDB on **localhost:27018** (Docker maps `mongo:27017` → host `27018`).
+
+1. **Preferred:** Start **Docker Desktop**, then run `npm run docker:up`.
+2. **No Docker:** `start:auth` auto-starts **in-memory MongoDB** on `:27018` and **in-memory Redis** on `:6380` when Docker services are down (data is lost when the process exits).
+
+Force in-memory Mongo: `FASTPAY_MEMORY_MONGO=true npm run start:auth`  
+Require Docker Mongo only: `FASTPAY_USE_DOCKER_MONGO=true npm run start:auth`
 
 ## MongoDB collections
 
