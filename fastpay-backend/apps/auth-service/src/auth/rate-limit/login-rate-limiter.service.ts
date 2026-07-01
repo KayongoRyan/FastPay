@@ -8,6 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
+import { createAuthRedisClient } from '../../create-redis-client';
+
 export interface RateLimitFailureResult {
   locked: boolean;
   attemptsRemaining: number;
@@ -15,7 +17,7 @@ export interface RateLimitFailureResult {
 
 @Injectable()
 export class LoginRateLimiterService implements OnModuleInit, OnModuleDestroy {
-  private readonly redis: Redis;
+  private redis!: Redis;
   private readonly maxAttempts: number;
   private readonly windowSeconds: number;
   private readonly lockoutSeconds: number;
@@ -38,17 +40,10 @@ export class LoginRateLimiterService implements OnModuleInit, OnModuleDestroy {
     this.registerWindowSeconds = this.configService.getOrThrow<number>(
       'auth.registerWindowSeconds',
     );
-
-    this.redis = new Redis({
-      host: this.configService.getOrThrow<string>('auth.redisHost'),
-      port: this.configService.getOrThrow<number>('auth.redisPort'),
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-    });
   }
 
   async onModuleInit(): Promise<void> {
-    await this.redis.connect();
+    this.redis = await createAuthRedisClient(this.configService);
   }
 
   async onModuleDestroy(): Promise<void> {

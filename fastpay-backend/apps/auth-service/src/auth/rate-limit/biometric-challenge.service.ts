@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 
+import { createAuthRedisClient } from '../../create-redis-client';
+
 interface StoredChallenge {
   userId: string;
   nonce: string;
@@ -10,7 +12,7 @@ interface StoredChallenge {
 
 @Injectable()
 export class BiometricChallengeService implements OnModuleInit, OnModuleDestroy {
-  private readonly redis: Redis;
+  private redis!: Redis;
   private readonly ttlSeconds: number;
 
   constructor(private readonly configService: ConfigService) {
@@ -18,17 +20,10 @@ export class BiometricChallengeService implements OnModuleInit, OnModuleDestroy 
       'auth.biometricChallengeTtlSeconds',
       60,
     );
-
-    this.redis = new Redis({
-      host: this.configService.getOrThrow<string>('auth.redisHost'),
-      port: this.configService.getOrThrow<number>('auth.redisPort'),
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-    });
   }
 
   async onModuleInit(): Promise<void> {
-    await this.redis.connect();
+    this.redis = await createAuthRedisClient(this.configService);
   }
 
   async onModuleDestroy(): Promise<void> {
