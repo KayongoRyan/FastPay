@@ -47,13 +47,13 @@ const QUICK_ACTIONS = [
     id: "transfer",
     label: "Transfer",
     icon: ArrowUpRight,
-    href: "/convert" as Href,
+    href: "/wallet/transfer" as Href,
   },
   {
     id: "receive",
     label: "Receive",
     icon: ArrowDown,
-    href: "/wallet/send-receive?mode=receive" as Href,
+    href: "/wallet/receive" as Href,
   },
   {
     id: "purchase",
@@ -255,8 +255,11 @@ export default function WalletScreen() {
         </Pressable>
       ) : (
         <View style={styles.linkRow}>
-          <Link href="/wallet/send-receive?mode=send" style={styles.link}>
-            Receive & Send
+          <Link href="/wallet/transfer" style={styles.link}>
+            Transfer
+          </Link>
+          <Link href="/wallet/receive" style={styles.link}>
+            Receive
           </Link>
         </View>
       )}
@@ -429,9 +432,12 @@ const styles = StyleSheet.create({
   buttonText: { color: colors.white, fontWeight: "600" },
   disabled: { opacity: 0.5 },
   linkRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   link: {
+    flex: 1,
     color: colors.white,
     textAlign: "center",
     borderWidth: 1,

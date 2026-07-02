@@ -24,7 +24,7 @@ export function VirtualCard({
   holderName,
   cardNumber = "2550 3456 7728 3504",
   expiry = "19/30",
-  qrHref = "/wallet/send-receive?mode=receive" as Href,
+  qrHref = "/wallet/receive" as Href,
   revealed: revealedProp,
   onToggleReveal,
   gradientColors = ["#1F5C52", "#0F3D38"],
