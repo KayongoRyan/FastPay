@@ -24,9 +24,38 @@ const TAB_ITEMS = [
 const PILL_HEIGHT = 58;
 const CENTER_SIZE = 62;
 
-export function MainTabBar({ state, navigation }: BottomTabBarProps) {
+function isTabBarHidden(state: BottomTabBarProps["state"]): boolean {
+  const focusedRoute = state.routes[state.index];
+  if (!focusedRoute) return false;
+
+  const nestedState = focusedRoute.state;
+  if (nestedState?.routes?.length) {
+    const nestedRoute = nestedState.routes[nestedState.index ?? 0];
+    if (nestedRoute?.name === "transfer") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function MainTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const activeRoute = state.routes[state.index]?.name;
+  const focusedRoute = state.routes[state.index];
+  const tabBarStyle = focusedRoute
+    ? descriptors[focusedRoute.key]?.options.tabBarStyle
+    : undefined;
+  const hideTabBar =
+    (typeof tabBarStyle === "object" &&
+      tabBarStyle !== null &&
+      "display" in tabBarStyle &&
+      tabBarStyle.display === "none") ||
+    isTabBarHidden(state);
+
+  if (hideTabBar) {
+    return null;
+  }
 
   return (
     <View
