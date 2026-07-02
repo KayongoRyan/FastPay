@@ -40,11 +40,14 @@ export function WalletGate({
     );
   }
 
-  return <>{children}</>;
+  return <View style={styles.content}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
+  content: {
+    flex: 1,
+  },
   empty: {
     gap: spacing.md,
     paddingVertical: spacing.lg,

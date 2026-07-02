@@ -1,16 +1,21 @@
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, Text } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BackHeader } from "@/components/ui/BackHeader";
 import { TransferPanel } from "@/components/wallet/TransferPanel";
 import { WalletGate } from "@/components/wallet/WalletGate";
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
+import { useHideTabBar } from "@/hooks/useHideTabBar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
+import { spacing } from "@/theme/spacing";
 
 export default function TransferScreen() {
+  useHideTabBar();
+  const insets = useSafeAreaInsets();
   const { user, isReady, isLoading } = useRequireAuth();
   const {
     wallet,
@@ -33,7 +38,11 @@ export default function TransferScreen() {
   }
 
   return (
-    <TabScreenLayout scroll={false} style={styles.container}>
+    <TabScreenLayout
+      scroll={false}
+      style={styles.container}
+      bottomInset={insets.bottom + spacing.md}
+    >
       <BackHeader title="Transfer" onBack={() => router.back()} />
       <WalletGate
         walletReady={walletReady}

@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { Keyboard, Smartphone, Wallet } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Input } from "@/components/ui/Input";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
@@ -20,6 +21,7 @@ import { radius, spacing } from "@/theme/spacing";
 type TransferMethod = "phone" | "wallet";
 
 export function TransferPanel() {
+  const insets = useSafeAreaInsets();
   const {
     isLoading,
     error,
@@ -38,6 +40,8 @@ export function TransferPanel() {
   const [localError, setLocalError] = useState<string | null>(null);
 
   const numericAmount = Number(amount) || 0;
+  const fabPadding = keypadOpen ? 0 : 72;
+  const scrollBottomPadding = insets.bottom + spacing.xl + fabPadding;
 
   const onKey = (key: string) => {
     if (key === "*") return;
@@ -101,7 +105,10 @@ export function TransferPanel() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollBottomPadding },
+        ]}
       >
         <Text style={styles.pageTag}>TRANSFER</Text>
         <Text style={styles.subtitle}>
@@ -229,7 +236,7 @@ export function TransferPanel() {
 
       {!keypadOpen ? (
         <Pressable
-          style={styles.keypadFab}
+          style={[styles.keypadFab, { bottom: insets.bottom + spacing.sm }]}
           onPress={() => setKeypadOpen(true)}
           hitSlop={8}
         >
@@ -389,7 +396,6 @@ const styles = StyleSheet.create({
   keypadFab: {
     position: "absolute",
     right: 0,
-    bottom: spacing.sm,
     width: 52,
     height: 52,
     borderRadius: 26,
