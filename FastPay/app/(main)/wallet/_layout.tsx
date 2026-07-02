@@ -12,6 +12,8 @@ export default function WalletLayout() {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="transfer" />
+      <Stack.Screen name="receive" />
       <Stack.Screen name="send-receive" />
     </Stack>
   );
