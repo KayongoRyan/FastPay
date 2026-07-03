@@ -30,6 +30,7 @@ export default function MainLayout() {
       <Tabs.Screen name="analytics" options={{ title: "Analytics" }} />
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />
       <Tabs.Screen name="buy" options={{ href: null, title: "Buy" }} />
+      <Tabs.Screen name="bills" options={{ href: null, title: "Bills" }} />
     </Tabs>
   );
 }
