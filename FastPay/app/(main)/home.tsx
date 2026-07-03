@@ -48,7 +48,7 @@ const TRANSACTIONS = [
 const SERVICES = [
   { id: "transfer", label: "Transfer", icon: ArrowLeftRight, href: "/wallet/transfer" as Href },
   { id: "voucher", label: "Voucher", icon: TicketPercent, href: "/buy" as Href },
-  { id: "bill", label: "Bill", icon: Receipt, href: "/analytics" as Href },
+  { id: "bill", label: "Bill", icon: Receipt, href: "/bills" as Href },
   { id: "more", label: "More", icon: MoreHorizontal, href: "/settings" as Href },
 ] as const;
 
