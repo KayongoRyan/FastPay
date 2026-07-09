@@ -31,8 +31,12 @@ function buildPath(values: number[]): string {
   return path;
 }
 
-export function ExpenseChart() {
-  const linePath = buildPath(DATA);
+export function ExpenseChart({ data }: { data?: number[] }) {
+  const values =
+    data && data.some((value) => value > 0)
+      ? data.map((value) => Math.max(value * 100, 8))
+      : [40, 55, 45, 70, 60, 85, 75];
+  const linePath = buildPath(values);
   const areaPath = `${linePath} L ${WIDTH} ${HEIGHT} L 0 ${HEIGHT} Z`;
 
   return (

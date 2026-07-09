@@ -1,8 +1,10 @@
 import { Href, router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import {
+  ArrowDownLeft,
   ArrowLeftRight,
+  ArrowUpRight,
   MoreHorizontal,
   Receipt,
   TicketPercent,
@@ -15,35 +17,6 @@ import { tierToCardItem } from "@/lib/cards/tiers";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
-
-const BALANCE = "130,490";
-
-const TRANSACTIONS = [
-  {
-    id: "1",
-    title: "Concert Tickets",
-    date: "27 05 2026",
-    amount: "45,000",
-    image:
-      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=120&h=120&fit=crop",
-  },
-  {
-    id: "2",
-    title: "Concert Tickets",
-    date: "27 05 2026",
-    amount: "45,000",
-    image:
-      "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=120&h=120&fit=crop",
-  },
-  {
-    id: "3",
-    title: "Concert Tickets",
-    date: "27 05 2026",
-    amount: "45,000",
-    image:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=120&h=120&fit=crop",
-  },
-];
 
 const SERVICES = [
   { id: "transfer", label: "Transfer", icon: ArrowLeftRight, href: "/wallet/transfer" as Href },
@@ -68,13 +41,26 @@ function getGreeting(): string {
 export default function HomeScreen() {
   const [sensitiveVisible, setSensitiveVisible] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
-  const { initialize } = useWalletStore();
+  const {
+    initialize,
+    refreshWalletData,
+    isRefreshing,
+    balanceRwfEstimate,
+    balanceXlmFormatted,
+    transactions,
+    wallet,
+    error: walletError,
+  } = useWalletStore();
 
   const displayName = useMemo(() => user?.fullName ?? "Future Pluto", [user?.fullName]);
 
   useEffect(() => {
     if (user) void initialize();
   }, [user, initialize]);
+
+  const onRefresh = useCallback(() => {
+    void refreshWalletData();
+  }, [refreshWalletData]);
 
   if (!isReady || isLoading || !user) {
     return (
@@ -85,7 +71,10 @@ export default function HomeScreen() {
   }
 
   return (
-    <TabScreenLayout>
+    <TabScreenLayout
+      refreshing={isRefreshing}
+      onRefresh={onRefresh}
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{getGreeting()},</Text>
@@ -101,8 +90,16 @@ export default function HomeScreen() {
 
       <Text style={styles.balanceLabel}>Your Balance</Text>
       <Text style={styles.balance}>
-        {sensitiveVisible ? `${BALANCE} RWF` : "•••••• RWF"}
+        {sensitiveVisible
+          ? wallet
+            ? `${balanceRwfEstimate} RWF`
+            : "Create wallet"
+          : "•••••• RWF"}
       </Text>
+      {sensitiveVisible && wallet ? (
+        <Text style={styles.balanceSub}>{balanceXlmFormatted} XLM</Text>
+      ) : null}
+      {walletError ? <Text style={styles.error}>{walletError}</Text> : null}
 
       <VirtualCardCarousel
         holderName={displayName}
@@ -131,24 +128,42 @@ export default function HomeScreen() {
       </View>
 
       <Text style={styles.sectionTitle}>Transactions</Text>
-      {TRANSACTIONS.map((tx) => (
-        <View key={tx.id} style={styles.txCard}>
-          <Image source={{ uri: tx.image }} style={styles.txThumb} />
-          <View style={styles.txInfo}>
-            <Text style={styles.txTitle}>{tx.title}</Text>
-            <Text style={styles.txDate}>{tx.date}</Text>
+      {!wallet ? (
+        <Text style={styles.muted}>Create a wallet to see payment history.</Text>
+      ) : transactions.length === 0 ? (
+        <Text style={styles.muted}>No transactions yet.</Text>
+      ) : (
+        transactions.slice(0, 5).map((tx) => (
+          <View key={tx.id} style={styles.txCard}>
+            <View style={styles.txIcon}>
+              {tx.direction === "out" ? (
+                <ArrowUpRight color={colors.error} size={18} />
+              ) : (
+                <ArrowDownLeft color={colors.success} size={18} />
+              )}
+            </View>
+            <View style={styles.txInfo}>
+              <Text style={styles.txTitle}>{tx.title}</Text>
+              <Text style={styles.txDate}>{tx.date}</Text>
+            </View>
+            <Text
+              style={[
+                styles.txAmount,
+                tx.direction === "in" ? styles.txAmountIn : styles.txAmountOut,
+              ]}
+            >
+              {sensitiveVisible ? tx.amount : "••••"}
+            </Text>
           </View>
-          <Text style={styles.txAmount}>
-            {sensitiveVisible ? `${tx.amount} RWF` : "•••• RWF"}
-          </Text>
-        </View>
-      ))}
+        ))
+      )}
     </TabScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
+  error: { color: colors.error, fontSize: 13, marginBottom: spacing.sm },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -181,7 +196,13 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 34,
     fontWeight: "700",
+    marginBottom: spacing.xs,
+  },
+  balanceSub: {
+    color: colors.textMuted,
+    fontSize: 14,
     marginBottom: spacing.lg,
+    marginTop: 4,
   },
   sectionTitle: {
     color: colors.white,
@@ -225,10 +246,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
-  txThumb: {
+  txIcon: {
     width: 44,
     height: 44,
     borderRadius: radius.sm,
+    backgroundColor: colors.inputBg,
+    alignItems: "center",
+    justifyContent: "center",
   },
   txInfo: {
     flex: 1,
@@ -244,8 +268,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   txAmount: {
-    color: colors.error,
     fontSize: 14,
     fontWeight: "600",
+  },
+  txAmountOut: {
+    color: colors.error,
+  },
+  txAmountIn: {
+    color: colors.success,
   },
 });

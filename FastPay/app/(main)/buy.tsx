@@ -16,6 +16,10 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
+  getMomoPaymentStatus,
+  initiateMomoPayment,
+} from "@/lib/api/momo";
+import {
   formatAmount,
   formatUsdt,
 } from "@/lib/convert/currencies";
@@ -26,6 +30,7 @@ import {
   ProviderPhones,
   validateProviderPhone,
 } from "@/lib/buy/mobile-money";
+import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
@@ -38,6 +43,7 @@ const EMPTY_PHONES: ProviderPhones = {
 
 export default function BuyScreen() {
   const { user } = useRequireAuth();
+  const { wallet, initialize } = useWalletStore();
 
   const [amount, setAmount] = useState("10000");
   const [providerId, setProviderId] = useState<MobileMoneyProviderId>("mtn");
@@ -45,11 +51,17 @@ export default function BuyScreen() {
   const [providerPickerOpen, setProviderPickerOpen] = useState(false);
   const [keypadOpen, setKeypadOpen] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const provider = getMobileMoneyProvider(providerId);
   const numericAmount = Number(amount) || 0;
   const usdtAmount = numericAmount * RWF_TO_USDT;
   const activePhone = phones[providerId];
+
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
 
   useEffect(() => {
     if (!user?.phone) {
@@ -79,13 +91,64 @@ export default function BuyScreen() {
     setPhoneError(null);
   };
 
-  const handleConvert = () => {
-    const error = validateProviderPhone(activePhone);
-    if (error) {
-      setPhoneError(error);
+  const handleConvert = async () => {
+    const validationError = validateProviderPhone(activePhone);
+    if (validationError) {
+      setPhoneError(validationError);
       return;
     }
+
+    if (!wallet?.publicKey) {
+      setPhoneError("Create a wallet before buying USDT.");
+      return;
+    }
+
     setPhoneError(null);
+    setPaymentStatus(null);
+    setSubmitting(true);
+
+    try {
+      const initiated = await initiateMomoPayment({
+        provider: providerId,
+        phone: activePhone,
+        amountRwf: numericAmount,
+        walletPublicKey: wallet.publicKey,
+      });
+
+      setPaymentStatus(initiated.message);
+
+      const started = Date.now();
+      while (Date.now() - started < 30_000) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const status = await getMomoPaymentStatus(initiated.paymentId);
+
+        if (status.status === "completed") {
+          setPaymentStatus(
+            status.message ??
+              `Credited ${status.usdtCredited?.toFixed(6) ?? formatUsdt(usdtAmount)} USDT`,
+          );
+          await useWalletStore.getState().refreshWalletData();
+          return;
+        }
+
+        if (status.status === "failed") {
+          setPhoneError(status.message ?? "Mobile money payment failed.");
+          return;
+        }
+
+        setPaymentStatus(status.message ?? "Processing mobile money payment...");
+      }
+
+      setPhoneError("Payment is still processing. Check again shortly.");
+    } catch (convertError) {
+      setPhoneError(
+        convertError instanceof Error
+          ? convertError.message
+          : "Payment could not be started.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -136,10 +199,14 @@ export default function BuyScreen() {
           />
 
           {phoneError ? <Text style={styles.error}>{phoneError}</Text> : null}
+          {paymentStatus ? (
+            <Text style={styles.status}>{paymentStatus}</Text>
+          ) : null}
 
           <PrimaryButton
-            label="CONVERT"
-            onPress={handleConvert}
+            label={submitting ? "Processing..." : "CONVERT"}
+            onPress={() => void handleConvert()}
+            loading={submitting}
             style={styles.convertBtn}
           />
 
@@ -287,6 +354,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,
+  },
+  status: {
+    color: colors.success,
+    fontSize: 13,
+    marginBottom: spacing.sm,
+    textAlign: "center",
   },
   convertBtn: {
     marginBottom: 0,

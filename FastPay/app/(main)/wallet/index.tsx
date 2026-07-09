@@ -71,8 +71,16 @@ export default function WalletScreen() {
   const [period, setPeriod] = useState<TrendingPeriod>("today");
   const [periodOpen, setPeriodOpen] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
-  const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
-    useWalletStore();
+  const {
+    wallet,
+    initialize,
+    createWallet,
+    isLoading: walletLoading,
+    isReady: walletReady,
+    balanceRwfEstimate,
+    balanceXlmFormatted,
+    refreshWalletData,
+  } = useWalletStore();
   const {
     initialize: initSubscriptions,
     isReady: subscriptionsReady,
@@ -111,8 +119,19 @@ export default function WalletScreen() {
   }
 
   return (
-    <TabScreenLayout scrollRef={scrollRef}>
+    <TabScreenLayout scrollRef={scrollRef} onRefresh={() => void refreshWalletData()}>
       <Text style={styles.title}>Wallet</Text>
+      {wallet ? (
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Available balance</Text>
+          <Text style={styles.balanceValue}>
+            {sensitiveVisible ? `${balanceRwfEstimate} RWF` : "•••••• RWF"}
+          </Text>
+          {sensitiveVisible ? (
+            <Text style={styles.balanceSub}>{balanceXlmFormatted} XLM</Text>
+          ) : null}
+        </View>
+      ) : null}
 
       <VirtualCardCarousel
         holderName={user.fullName}
@@ -274,6 +293,29 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "700",
     marginBottom: spacing.lg,
+  },
+  balanceCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.inputBg,
+  },
+  balanceLabel: {
+    color: colors.textMuted,
+    fontSize: 13,
+    marginBottom: spacing.xs,
+  },
+  balanceValue: {
+    color: colors.white,
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  balanceSub: {
+    color: colors.textMuted,
+    fontSize: 13,
+    marginTop: spacing.xs,
   },
   actions: {
     flexDirection: "row",

@@ -13,12 +13,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Input } from "@/components/ui/Input";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import type { RelayStatusResponse } from "@/lib/api/relay";
 import type { OfflineQrPayload } from "@/lib/offline/qr-payload";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
 type TransferMethod = "phone" | "wallet";
+type RelayUiState = "idle" | "polling" | "confirmed" | "failed";
 
 export function TransferPanel() {
   const insets = useSafeAreaInsets();
@@ -27,6 +29,7 @@ export function TransferPanel() {
     error,
     prepareOfflinePayment,
     relayOfflinePayment,
+    pollRelayStatus,
   } = useWalletStore();
 
   const [method, setMethod] = useState<TransferMethod>("phone");
@@ -36,7 +39,9 @@ export function TransferPanel() {
   const [destination, setDestination] = useState("");
   const [note, setNote] = useState("");
   const [qrPayload, setQrPayload] = useState<OfflineQrPayload | null>(null);
-  const [relayResult, setRelayResult] = useState<string | null>(null);
+  const [relayUiState, setRelayUiState] = useState<RelayUiState>("idle");
+  const [relayMessage, setRelayMessage] = useState<string | null>(null);
+  const [relayDetails, setRelayDetails] = useState<RelayStatusResponse | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const numericAmount = Number(amount) || 0;
@@ -53,7 +58,9 @@ export function TransferPanel() {
 
   const handleTransfer = async () => {
     setLocalError(null);
-    setRelayResult(null);
+    setRelayMessage(null);
+    setRelayDetails(null);
+    setRelayUiState("idle");
 
     const stellarDestination = destination.trim();
 
@@ -92,12 +99,37 @@ export function TransferPanel() {
   const handleRelayNow = async () => {
     if (!qrPayload) return;
 
-    const result = await relayOfflinePayment({
-      signedTxXDR: qrPayload.signedTxXDR,
-      recipientPhone: qrPayload.recipientPhone,
-    });
+    setRelayUiState("polling");
+    setRelayMessage("Submitting transfer to the network...");
+    setRelayDetails(null);
 
-    setRelayResult(`Transfer queued ${result.queueId} (~${result.estimatedSeconds}s)`);
+    try {
+      const result = await relayOfflinePayment({
+        signedTxXDR: qrPayload.signedTxXDR,
+        recipientPhone: qrPayload.recipientPhone,
+      });
+
+      const txHash = result.txHash ?? result.queueId;
+      setRelayMessage("Transfer queued. Waiting for confirmation...");
+
+      const status = await pollRelayStatus(txHash);
+      setRelayDetails(status);
+
+      if (status.status === "confirmed") {
+        setRelayUiState("confirmed");
+        setRelayMessage("Transfer confirmed on Stellar.");
+      } else {
+        setRelayUiState("failed");
+        setRelayMessage(status.lastError ?? "Transfer failed.");
+      }
+    } catch (relayError) {
+      setRelayUiState("failed");
+      setRelayMessage(
+        relayError instanceof Error
+          ? relayError.message
+          : "Transfer relay failed.",
+      );
+    }
   };
 
   return (
@@ -124,6 +156,7 @@ export function TransferPanel() {
               setMethod("phone");
               setLocalError(null);
               setQrPayload(null);
+              setRelayUiState("idle");
             }}
           />
           <MethodChip
@@ -134,6 +167,7 @@ export function TransferPanel() {
               setMethod("wallet");
               setLocalError(null);
               setQrPayload(null);
+              setRelayUiState("idle");
             }}
           />
         </View>
@@ -213,14 +247,41 @@ export function TransferPanel() {
               Share this QR for offline delivery, or relay now if you are online.
             </Text>
             <PrimaryButton
-              label="Relay now"
+              label={
+                relayUiState === "polling"
+                  ? "Confirming..."
+                  : "Relay now"
+              }
               onPress={() => void handleRelayNow()}
-              loading={isLoading}
+              loading={isLoading || relayUiState === "polling"}
             />
           </View>
         ) : null}
 
-        {relayResult ? <Text style={styles.success}>{relayResult}</Text> : null}
+        {relayMessage ? (
+          <View
+            style={[
+              styles.relayCard,
+              relayUiState === "confirmed" && styles.relayCardSuccess,
+              relayUiState === "failed" && styles.relayCardFailed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.relayMessage,
+                relayUiState === "confirmed" && styles.relayMessageSuccess,
+                relayUiState === "failed" && styles.relayMessageFailed,
+              ]}
+            >
+              {relayMessage}
+            </Text>
+            {relayDetails?.onChainTxHash ? (
+              <Text style={styles.relayMeta}>
+                On-chain: {relayDetails.onChainTxHash.slice(0, 12)}…
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {keypadOpen ? (
           <View style={styles.keypadWrap}>
@@ -390,6 +451,40 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
   },
+  relayCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    backgroundColor: colors.inputBg,
+    marginBottom: spacing.md,
+  },
+  relayCardSuccess: {
+    borderColor: "rgba(74,222,128,0.35)",
+    backgroundColor: "rgba(74,222,128,0.08)",
+  },
+  relayCardFailed: {
+    borderColor: "rgba(248,113,113,0.35)",
+    backgroundColor: "rgba(248,113,113,0.08)",
+  },
+  relayMessage: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  relayMessageSuccess: {
+    color: colors.success,
+  },
+  relayMessageFailed: {
+    color: colors.error,
+  },
+  relayMeta: {
+    color: colors.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: spacing.sm,
+  },
   keypadWrap: {
     marginTop: 12,
   },
@@ -407,12 +502,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-  },
-  success: {
-    color: colors.success,
-    fontSize: 13,
-    textAlign: "center",
-    marginBottom: spacing.sm,
   },
   error: {
     color: colors.error,

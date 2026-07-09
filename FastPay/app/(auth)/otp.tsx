@@ -1,11 +1,12 @@
 import { Href, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { BackHeader } from "@/components/ui/BackHeader";
 import { NumericKeypad } from "@/components/ui/NumericKeypad";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { Screen } from "@/components/ui/Screen";
+import { sendEmailOtp, verifyEmailOtp } from "@/lib/api/onboarding";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
@@ -13,6 +14,8 @@ const OTP_LENGTH = 6;
 
 export default function OtpScreen() {
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onKey = (key: string) => {
     if (code.length < OTP_LENGTH) {
@@ -22,6 +25,36 @@ export default function OtpScreen() {
 
   const onDelete = () => {
     setCode((prev) => prev.slice(0, -1));
+  };
+
+  const onContinue = async () => {
+    if (code.length !== OTP_LENGTH) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await verifyEmailOtp(code);
+      router.push("/(auth)/secure-account" as Href);
+    } catch (verifyError) {
+      setError(
+        verifyError instanceof Error ? verifyError.message : "Invalid code",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    setError(null);
+    try {
+      await sendEmailOtp();
+    } catch (resendError) {
+      setError(
+        resendError instanceof Error ? resendError.message : "Failed to resend",
+      );
+    }
   };
 
   return (
@@ -39,14 +72,18 @@ export default function OtpScreen() {
         </Text>
       </View>
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <PrimaryButton
-        label="Continue"
-        onPress={() => router.push("/(auth)/secure-account" as Href)}
-        disabled={code.length !== OTP_LENGTH}
+        label={loading ? "Verifying..." : "Continue"}
+        onPress={() => void onContinue()}
+        disabled={code.length !== OTP_LENGTH || loading}
         style={styles.button}
       />
 
-      <Text style={styles.resend}>Resend Code</Text>
+      <Pressable onPress={() => void onResend()}>
+        <Text style={styles.resend}>Resend Code</Text>
+      </Pressable>
 
       <NumericKeypad onKey={onKey} onDelete={onDelete} />
     </Screen>
@@ -92,6 +129,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: "center",
     fontSize: 14,
+    marginBottom: spacing.md,
+  },
+  error: {
+    color: colors.error,
+    textAlign: "center",
     marginBottom: spacing.md,
   },
 });

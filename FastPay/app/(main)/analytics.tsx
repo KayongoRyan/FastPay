@@ -1,23 +1,55 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import { ShoppingBag, Car, MoreHorizontal } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { ExpenseChart } from "@/components/ui/ExpenseChart";
-import { TokenListRow } from "@/components/ui/TokenListRow";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { aggregateAnalytics } from "@/lib/analytics/from-payments";
+import { fetchPaymentHistory } from "@/lib/api/stellar";
+import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-const CATEGORIES = [
-  { id: "1", title: "Shopping", date: "27 05 2026", amount: "12,450 RWF", icon: ShoppingBag },
-  { id: "2", title: "Transport", date: "26 05 2026", amount: "3,200 RWF", icon: Car },
-  { id: "3", title: "Other", date: "25 05 2026", amount: "14,808 RWF", icon: MoreHorizontal },
-];
+const CATEGORY_ICONS = [ShoppingBag, Car, MoreHorizontal];
 
 export default function AnalyticsScreen() {
   useRequireAuth();
+  const { wallet, initialize } = useWalletStore();
   const [tab, setTab] = useState<"expenses" | "income">("expenses");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState(() =>
+    aggregateAnalytics([]),
+  );
+
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (!wallet?.publicKey) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    void fetchPaymentHistory(wallet.publicKey)
+      .then((payments) => {
+        setAnalytics(aggregateAnalytics(payments));
+        setError(null);
+      })
+      .catch((fetchError) => {
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Failed to load analytics",
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [wallet?.publicKey]);
+
+  const categoryRows = useMemo(() => analytics.categoryRows, [analytics]);
 
   return (
     <TabScreenLayout>
@@ -46,10 +78,18 @@ export default function AnalyticsScreen() {
         Total {tab === "expenses" ? "Expenses" : "Income"}
       </Text>
       <Text style={styles.total}>
-        {tab === "expenses" ? "30,458" : "52,120"} RWF
+        {loading
+          ? "..."
+          : `${Math.round(
+              tab === "expenses"
+                ? analytics.expenseTotal
+                : analytics.incomeTotal,
+            ).toLocaleString()} RWF`}
       </Text>
 
-      <ExpenseChart />
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <ExpenseChart data={analytics.dailyTotals} />
 
       <View style={styles.weekLabels}>
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
@@ -59,20 +99,29 @@ export default function AnalyticsScreen() {
         ))}
       </View>
 
-      <Text style={styles.section}>Expenses by category</Text>
+      <Text style={styles.section}>Recent activity</Text>
 
-      {CATEGORIES.map((item) => (
-        <View key={item.id} style={styles.categoryRow}>
-          <View style={styles.categoryIcon}>
-            <item.icon color={colors.white} size={18} />
-          </View>
-          <View style={styles.categoryInfo}>
-            <Text style={styles.categoryTitle}>{item.title}</Text>
-            <Text style={styles.categoryDate}>{item.date}</Text>
-          </View>
-          <Text style={styles.categoryAmount}>{item.amount}</Text>
-        </View>
-      ))}
+      {!wallet ? (
+        <Text style={styles.empty}>Create a wallet to see analytics.</Text>
+      ) : categoryRows.length === 0 ? (
+        <Text style={styles.empty}>No payment activity yet.</Text>
+      ) : (
+        categoryRows.map((item, index) => {
+          const Icon = CATEGORY_ICONS[index % CATEGORY_ICONS.length];
+          return (
+            <View key={item.id} style={styles.categoryRow}>
+              <View style={styles.categoryIcon}>
+                <Icon color={colors.white} size={18} />
+              </View>
+              <View style={styles.categoryInfo}>
+                <Text style={styles.categoryTitle}>{item.title}</Text>
+                <Text style={styles.categoryDate}>{item.date}</Text>
+              </View>
+              <Text style={styles.categoryAmount}>{item.amount}</Text>
+            </View>
+          );
+        })
+      )}
     </TabScreenLayout>
   );
 }
@@ -104,6 +153,7 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.white },
   totalLabel: { color: colors.textMuted, fontSize: 14, marginBottom: 4 },
   total: { color: colors.white, fontSize: 32, fontWeight: "700", marginBottom: spacing.md },
+  error: { color: colors.error, fontSize: 13, marginBottom: spacing.md },
   weekLabels: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -116,6 +166,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: spacing.md,
+  },
+  empty: {
+    color: colors.textMuted,
+    fontSize: 14,
+    marginBottom: spacing.lg,
   },
   categoryRow: {
     flexDirection: "row",

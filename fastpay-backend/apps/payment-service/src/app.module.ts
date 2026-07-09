@@ -9,6 +9,8 @@ import offlineConfig from './config/offline.config';
 import servicesConfig from './config/services.config';
 import stellarConfig from './config/stellar.config';
 import { OfflineModule } from './offline/offline.module';
+import { PaymentsModule } from './payments/payments.module';
+import { MomoModule } from './momo/momo.module';
 
 const HealthController = createHealthController('payment-service');
 
@@ -31,6 +33,8 @@ const HealthController = createHealthController('payment-service');
       }),
     }),
     OfflineModule,
+    PaymentsModule,
+    MomoModule,
   ],
   controllers: [HealthController],
 })

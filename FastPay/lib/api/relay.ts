@@ -8,6 +8,7 @@ export interface RelaySubmission {
 export interface RelayResponse {
   accepted: boolean;
   queueId: string;
+  txHash?: string;
   estimatedSeconds: number;
 }
 
