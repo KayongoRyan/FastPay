@@ -22,5 +22,12 @@ npm run start:gateway
 cd fastpay_mobile
 flutter run
 ```
+Run full stack
+
+cd fastpay-backend
+npm run start:payment
+npm run start:blockchain
+npm run start:fraud
+npm run start:kyc
 
 See each folder's README for details.

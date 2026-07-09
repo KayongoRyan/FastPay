@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { ShoppingBag, Car, MoreHorizontal } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { ExpenseChart } from "@/components/ui/ExpenseChart";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { aggregateAnalytics } from "@/lib/analytics/from-payments";
-import { fetchPaymentHistory } from "@/lib/api/stellar";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -15,44 +15,40 @@ const CATEGORY_ICONS = [ShoppingBag, Car, MoreHorizontal];
 
 export default function AnalyticsScreen() {
   useRequireAuth();
-  const { wallet, initialize } = useWalletStore();
+  const {
+    wallet,
+    initialize,
+    refreshWalletData,
+    payments,
+    isRefreshing,
+    error: walletError,
+  } = useWalletStore();
   const [tab, setTab] = useState<"expenses" | "income">("expenses");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [analytics, setAnalytics] = useState(() =>
-    aggregateAnalytics([]),
-  );
 
   useEffect(() => {
     void initialize();
   }, [initialize]);
 
-  useEffect(() => {
-    if (!wallet?.publicKey) {
-      setLoading(false);
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      if (wallet?.publicKey) {
+        void refreshWalletData();
+      }
+    }, [wallet?.publicKey, refreshWalletData]),
+  );
 
-    setLoading(true);
-    void fetchPaymentHistory(wallet.publicKey)
-      .then((payments) => {
-        setAnalytics(aggregateAnalytics(payments));
-        setError(null);
-      })
-      .catch((fetchError) => {
-        setError(
-          fetchError instanceof Error
-            ? fetchError.message
-            : "Failed to load analytics",
-        );
-      })
-      .finally(() => setLoading(false));
-  }, [wallet?.publicKey]);
-
+  const analytics = useMemo(
+    () => aggregateAnalytics(payments),
+    [payments],
+  );
   const categoryRows = useMemo(() => analytics.categoryRows, [analytics]);
+  const loading = isRefreshing && payments.length === 0;
 
   return (
-    <TabScreenLayout>
+    <TabScreenLayout
+      refreshing={isRefreshing}
+      onRefresh={() => void refreshWalletData()}
+    >
       <Text style={styles.header}>STATISTICS</Text>
 
       <View style={styles.toggle}>
@@ -87,7 +83,7 @@ export default function AnalyticsScreen() {
             ).toLocaleString()} RWF`}
       </Text>
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {walletError ? <Text style={styles.error}>{walletError}</Text> : null}
 
       <ExpenseChart data={analytics.dailyTotals} />
 

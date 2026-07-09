@@ -38,6 +38,7 @@ interface WalletState {
   balanceRwfEstimate: string;
   balanceXlmFormatted: string;
   transactions: WalletTransaction[];
+  payments: PaymentHistoryItem[];
   mpcService: MpcWalletService | null;
   initialize: () => Promise<void>;
   createWallet: () => Promise<MpcWallet>;
@@ -77,6 +78,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   balanceRwfEstimate: '0',
   balanceXlmFormatted: '0.00',
   transactions: [],
+  payments: [],
   mpcService: null,
 
   initialize: async () => {
@@ -129,6 +131,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         balanceXlmFormatted: formatXlmBalance(nativeBalanceXlm),
         balanceRwfEstimate: formatRwfEstimateFromXlm(nativeBalanceXlm),
         transactions,
+        payments,
         isRefreshing: false,
       });
     } catch (error) {
