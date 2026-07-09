@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { MomoPayment, MomoPaymentSchema } from '@fastpay/schemas';
+import { MomoPayment, MomoPaymentSchema } from '@fastpay/schemas/payment/momo-payment.schema';
 
 import { MomoController } from './momo.controller';
 import { MomoService } from './momo.service';

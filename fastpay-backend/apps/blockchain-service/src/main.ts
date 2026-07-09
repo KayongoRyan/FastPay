@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const port = process.env.PORT ?? 3009;
+  const port = process.env.BLOCKCHAIN_SERVICE_PORT ?? 3009;
   await app.listen(port);
   console.log(`blockchain-service running on http://localhost:${port}`);
 }
