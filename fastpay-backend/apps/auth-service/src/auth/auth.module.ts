@@ -14,6 +14,8 @@ import { JwtStrategy } from './jwt.strategy';
 import { BiometricChallengeService } from './rate-limit/biometric-challenge.service';
 import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
 
+import { VerificationService } from './verification/verification.service';
+
 @Module({
   imports: [
     ConfigModule.forFeature(authConfig),
@@ -37,6 +39,7 @@ import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service
     LoginRateLimiterService,
     BiometricChallengeService,
     AuditLogService,
+    VerificationService,
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })

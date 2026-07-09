@@ -16,13 +16,18 @@ import { BiometricLoginDto } from './dto/biometric-login.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
 import { extractAuditContext } from './utils/request-context.util';
+import { VerificationService } from './verification/verification.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly verificationService: VerificationService,
+  ) {}
 
   @Post('register')
   register(@Body() dto: RegisterDto, @Req() req: Request) {
@@ -72,5 +77,20 @@ export class AuthController {
   @Get('me')
   me(@Req() req: Request & { user: AuthenticatedUser }) {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('verification/send-otp')
+  sendVerificationOtp(@Req() req: Request & { user: AuthenticatedUser }) {
+    return this.verificationService.sendEmailOtp(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('verification/verify-otp')
+  verifyEmailOtp(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Body() dto: VerifyOtpDto,
+  ) {
+    return this.verificationService.verifyEmailOtp(req.user.userId, dto.code);
   }
 }

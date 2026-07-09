@@ -2,6 +2,7 @@ import { ReactNode, RefObject } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -34,6 +35,8 @@ interface TabScreenLayoutProps {
   /** Override default bottom padding reserved for tab bar. */
   bottomInset?: number;
   scrollRef?: RefObject<ScrollView | null>;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 }
 
 export function TabScreenLayout({
@@ -43,6 +46,8 @@ export function TabScreenLayout({
   footer,
   bottomInset,
   scrollRef,
+  refreshing,
+  onRefresh,
 }: TabScreenLayoutProps) {
   const tabBarPadding = useTabBarPadding(bottomInset);
   const contentStyle = [
@@ -57,6 +62,11 @@ export function TabScreenLayout({
       contentContainerStyle={contentStyle}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing ?? false} onRefresh={onRefresh} />
+        ) : undefined
+      }
     >
       {children}
     </ScrollView>

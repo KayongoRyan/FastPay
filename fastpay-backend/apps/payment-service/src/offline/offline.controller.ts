@@ -47,6 +47,7 @@ export class OfflineController {
     return {
       accepted: true,
       queueId: result.queueId,
+      txHash: result.txHash,
       estimatedSeconds: this.estimatedSeconds,
     };
   }

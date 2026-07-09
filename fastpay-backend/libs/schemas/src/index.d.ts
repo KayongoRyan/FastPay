@@ -2,6 +2,7 @@ export * from './auth/user.schema';
 export * from './wallet/wallet.schema';
 export * from './payment/transaction.schema';
 export * from './payment/offline-relay.schema';
+export * from './payment/momo-payment.schema';
 export * from './family/family.schema';
 export * from './family/family-member.schema';
 export * from './family/family-savings-goal.schema';

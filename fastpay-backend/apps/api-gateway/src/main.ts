@@ -14,7 +14,10 @@ async function bootstrap() {
     { path: '/auth', target: config.get('gateway.authUrl') },
     { path: '/stellar', target: config.get('gateway.blockchainUrl') },
     { path: '/offline', target: config.get('gateway.paymentUrl') },
+    { path: '/payments', target: config.get('gateway.paymentUrl') },
+    { path: '/momo', target: config.get('gateway.paymentUrl') },
     { path: '/compliance', target: config.get('gateway.fraudUrl') },
+    { path: '/kyc', target: config.get('gateway.kycUrl') },
   ];
 
   for (const route of routes) {
