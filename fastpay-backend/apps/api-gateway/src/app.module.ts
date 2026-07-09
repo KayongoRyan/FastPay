@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { createHealthController } from '@fastpay/common';
 
 import gatewayConfig from './config/gateway.config';
+import { ProxyModule } from './proxy/proxy.module';
 
 const HealthController = createHealthController('api-gateway');
 
@@ -14,6 +15,7 @@ const HealthController = createHealthController('api-gateway');
       load: [gatewayConfig],
       envFilePath: ['.env', '../../.env'],
     }),
+    ProxyModule,
   ],
   controllers: [HealthController],
 })

@@ -46,6 +46,14 @@ async function parseError(response: Response, path: string): Promise<never> {
     }
   }
 
+  if (
+    response.status === 404 &&
+    path.startsWith('/payments/history')
+  ) {
+    message =
+      'Payment history API is unavailable. In fastpay-backend run: npm run start:payment && npm run start:gateway';
+  }
+
   throw new Error(message);
 }
 
