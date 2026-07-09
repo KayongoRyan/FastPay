@@ -26,7 +26,12 @@ async function bootstrap() {
       createProxyMiddleware({
         target: route.target,
         changeOrigin: true,
-        pathRewrite: (path) => `${route.path}${path}`,
+        pathRewrite: (path) => {
+          const pathname = path.split('?')[0] ?? path;
+          return pathname.startsWith(route.path)
+            ? pathname
+            : `${route.path}${pathname}`;
+        },
       }),
     );
   }
