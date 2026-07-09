@@ -6,7 +6,7 @@ import {
   MomoPayment,
   MomoPaymentDocument,
   MomoPaymentStatus,
-} from '@fastpay/schemas';
+} from '@fastpay/schemas/payment/momo-payment.schema';
 
 export interface InitiateMomoDto {
   provider: 'mtn' | 'airtel';
