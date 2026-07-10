@@ -2,6 +2,8 @@ import { getApiBaseUrl } from './config';
 
 type AccessTokenProvider = () => Promise<string | null>;
 
+const API_TIMEOUT_MS = __DEV__ ? 30_000 : 8_000;
+
 let accessTokenProvider: AccessTokenProvider | null = null;
 
 export function setAccessTokenProvider(provider: AccessTokenProvider | null): void {
@@ -57,6 +59,29 @@ async function parseError(response: Response, path: string): Promise<never> {
   throw new Error(message);
 }
 
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(
+        `Cannot reach API at ${getApiUrl()} (timed out after ${API_TIMEOUT_MS / 1000}s). ` +
+          'Ensure phone and PC are on the same Wi‑Fi, backend is running (npm run start:gateway), ' +
+          'and open http://<your-pc-ip>:3000/health in the phone browser.',
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function apiFetch<T>(
   method: 'GET' | 'POST',
   path: string,
@@ -67,12 +92,15 @@ async function apiFetch<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${getApiUrl()}${path}`, {
+    response = await fetchWithTimeout(`${getApiUrl()}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
     throw new Error(
       `Cannot reach API at ${getApiUrl()}. Start the backend gateway and try again.`,
     );

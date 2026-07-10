@@ -115,22 +115,26 @@ export const useAuthStore = create<AuthState>((set, get) => {
           return;
         }
 
-        set({ accessToken });
-        const user = await fetchCurrentUser();
-        await saveAuthSession(user, {
-          accessToken,
-          refreshToken,
-          expiresIn: '15m',
-        }, {
-          biometricProtected: user.biometricEnabled,
-        });
-
         set({
-          user,
           accessToken,
+          user: storedUser,
           isReady: true,
           isLoading: false,
         });
+
+        void (async () => {
+          try {
+            const user = await fetchCurrentUser();
+            await saveAuthSession(
+              user,
+              { accessToken, refreshToken, expiresIn: '15m' },
+              { biometricProtected: user.biometricEnabled },
+            );
+            set({ user });
+          } catch {
+            // Keep cached session if background refresh fails.
+          }
+        })();
       } catch {
         await clearAuthSession();
         set({
