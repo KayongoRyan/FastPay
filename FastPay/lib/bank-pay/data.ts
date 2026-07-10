@@ -74,20 +74,61 @@ export function getBeneficiaryById(
   return BENEFICIARIES.find((item) => item.id === id);
 }
 
-export function lookupMerchant(code: string): BankPayMerchant | undefined {
+export function lookupMerchant(code: string): BankPayMerchant | null {
   const normalized = code.trim().toUpperCase();
   if (!normalized) {
-    return undefined;
+    return null;
   }
-  return MERCHANTS.find((merchant) => merchant.code === normalized);
+
+  const known = MERCHANTS.find((merchant) => merchant.code === normalized);
+  if (known) {
+    return known;
+  }
+
+  return {
+    code: normalized,
+    name: buildDemoMerchantName(normalized),
+  };
+}
+
+const DEMO_PREFIXES = [
+  "Kigali",
+  "Rwanda",
+  "FastPay",
+  "Prime",
+  "Golden",
+  "Metro",
+  "Sunrise",
+  "Unity",
+];
+
+const DEMO_SUFFIXES = [
+  "Store",
+  "Shop",
+  "Services",
+  "Trading",
+  "Mart",
+  "Hub",
+  "Retail",
+  "Outlet",
+];
+
+function buildDemoMerchantName(code: string): string {
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) {
+    hash = (hash + code.charCodeAt(i) * (i + 1)) % 997;
+  }
+  const prefix = DEMO_PREFIXES[hash % DEMO_PREFIXES.length];
+  const suffix = DEMO_SUFFIXES[(hash * 7) % DEMO_SUFFIXES.length];
+  return `${prefix} ${suffix}`;
 }
 
 export function validateBankPayForm(values: BankPayFormValues): string | null {
   if (!values.beneficiaryId) {
     return "Select a beneficiary under Pay for.";
   }
-  if (!lookupMerchant(values.merchantCode)) {
-    return "Enter a valid merchant code.";
+  if (!values.merchantCode.trim()) {
+    return "Enter a merchant code.";
   }
   const amount = Number(values.amount);
   if (!Number.isFinite(amount) || amount <= 0) {
