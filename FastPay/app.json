@@ -44,7 +44,14 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow FastPay to scan offline payment QR codes."
+          "cameraPermission": "Allow FastPay to scan documents and payment QR codes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FastPay to upload ID and proof-of-address documents.",
+          "cameraPermission": "Allow FastPay to capture ID and proof-of-address documents."
         }
       ]
     ],
