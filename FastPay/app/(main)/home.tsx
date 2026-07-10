@@ -11,9 +11,14 @@ import {
 } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
+import { QuickLinkGrid } from "@/components/quickLinks";
 import { VirtualCardCarousel } from "@/components/ui/VirtualCardCarousel";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { tierToCardItem } from "@/lib/cards/tiers";
+import {
+  HOME_QUICK_LINKS,
+  MORE_QUICK_LINK,
+} from "@/lib/quick-links/data";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -126,6 +131,13 @@ export default function HomeScreen() {
           );
         })}
       </View>
+
+      <Text style={styles.sectionTitle}>Quick Links</Text>
+      <QuickLinkGrid
+        links={[...HOME_QUICK_LINKS, MORE_QUICK_LINK]}
+        useShortLabel
+        variant="row"
+      />
 
       <Text style={styles.sectionTitle}>Transactions</Text>
       {!wallet ? (
