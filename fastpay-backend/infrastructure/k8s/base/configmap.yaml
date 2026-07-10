@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fastpay-config
+  namespace: fastpay
+data:
+  MONGODB_URI: mongodb://mongo:27017/FastPay
+  MONGODB_DB_NAME: FastPay
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  RABBITMQ_URL: amqp://fastpay:fastpay@rabbitmq:5672
+  STELLAR_HORIZON_URL: http://mock-horizon:8090
+  STELLAR_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+  STELLAR_FRIENDBOT_URL: http://mock-horizon:8090/friendbot
+  AUTH_SERVICE_URL: http://auth-service:3001
+  WALLET_SERVICE_URL: http://wallet-service:3002
+  PAYMENT_SERVICE_URL: http://payment-service:3003
+  FAMILY_SERVICE_URL: http://family-service:3004
+  ESCROW_SERVICE_URL: http://escrow-service:3005
+  MERCHANT_SERVICE_URL: http://merchant-service:3006
+  TREASURY_SERVICE_URL: http://treasury-service:3007
+  BLOCKCHAIN_SERVICE_URL: http://blockchain-service:3009
+  FRAUD_SERVICE_URL: http://fraud-service:3011
+  KYC_SERVICE_URL: http://kyc-service:3012
+  CHAINALYSIS_MOCK_URL: http://fraud-service:3011/compliance/chainalysis
+  CHAINALYSIS_API_KEY: mock-api-key
+  OFFLINE_QUEUE_NAME: offline-tx
+  OFFLINE_ESTIMATED_SECONDS: "120"
+  OFFLINE_RETRY_ATTEMPTS: "5"
+  OFFLINE_RETRY_BACKOFF_MS: "5000"
+  JWT_ACCESS_EXPIRES_IN: 15m
+  JWT_REFRESH_EXPIRES_IN: 7d
+  BCRYPT_ROUNDS: "12"
+  AUTH_LOGIN_MAX_ATTEMPTS: "5"
+  AUTH_LOGIN_WINDOW_SECONDS: "900"
+  AUTH_LOGIN_LOCKOUT_SECONDS: "900"
+  AUTH_REGISTER_MAX_PER_IP: "10"
+  AUTH_REGISTER_WINDOW_SECONDS: "3600"
+  GATEWAY_PORT: "3000"
+  AUTH_SERVICE_PORT: "3001"
+  PAYMENT_SERVICE_PORT: "3003"
+  BLOCKCHAIN_SERVICE_PORT: "3009"
+  FRAUD_SERVICE_PORT: "3011"
+  KYC_SERVICE_PORT: "3012"

@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mock-horizon-script
+  namespace: fastpay
+data:
+  mock-horizon.js: |
+    const crypto = require('crypto');
+    const http = require('http');
+    const { URL } = require('url');
+    const port = Number(process.env.PORT ?? 8090);
+    const accounts = new Map();
+    function sendJson(res, statusCode, body) {
+      const payload = JSON.stringify(body);
+      res.writeHead(statusCode, {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      });
+      res.end(payload);
+    }
+    const server = http.createServer(async (req, res) => {
+      const url = new URL(req.url ?? '/', `http://localhost:${port}`);
+      if (url.pathname === '/health') {
+        return sendJson(res, 200, { status: 'ok' });
+      }
+      if (url.pathname.startsWith('/accounts/') && req.method === 'GET') {
+        const id = url.pathname.split('/')[2];
+        const acct = accounts.get(id) ?? { id, sequence: '1', balances: [{ asset_type: 'native', balance: '10000.0000000' }] };
+        return sendJson(res, 200, acct);
+      }
+      if (url.pathname === '/friendbot' && req.method === 'GET') {
+        const addr = url.searchParams.get('addr');
+        if (addr) accounts.set(addr, { id: addr, sequence: '1', balances: [{ asset_type: 'native', balance: '10000.0000000' }] });
+        return sendJson(res, 200, { success: true });
+      }
+      sendJson(res, 404, { error: 'not found' });
+    });
+    server.listen(port, () => console.log(`mock-horizon on :${port}`));
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-horizon
+  namespace: fastpay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mock-horizon
+  template:
+    metadata:
+      labels:
+        app: mock-horizon
+    spec:
+      containers:
+        - name: mock-horizon
+          image: node:20-alpine
+          command: ["node", "/app/mock-horizon.js"]
+          ports:
+            - containerPort: 8090
+          volumeMounts:
+            - name: script
+              mountPath: /app
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: script
+          configMap:
+            name: mock-horizon-script
+            items:
+              - key: mock-horizon.js
+                path: mock-horizon.js
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-horizon
+  namespace: fastpay
+spec:
+  selector:
+    app: mock-horizon
+  ports:
+    - port: 8090
+      targetPort: 8090

@@ -85,6 +85,55 @@ Canonical schemas: `libs/schemas/` — see `docs/schema/er-diagram.md`.
 | GET | `/auth/me` | Current user profile |
 
 Audit events are written to `audit_logs` on register, login, refresh, logout, and biometric enroll.
+
+| Path | Service |
+|------|---------|
 | `/stellar/*` | blockchain-service |
-| `/offline/*` | payment-service |
+| `/offline/*`, `/payments/*`, `/momo/*` | payment-service |
+| `/wallet/*` | wallet-service |
+| `/family/*` | family-service |
+| `/escrow/*` | escrow-service |
+| `/merchant/*` | merchant-service |
+| `/treasury/*` | treasury-service |
 | `/compliance/*` | fraud-service |
+| `/kyc/*` | kyc-service |
+
+## Local Kubernetes (Docker Desktop)
+
+Full stack in-cluster: MongoDB, Redis, RabbitMQ, mock Horizon, gateway + all services.
+
+### Prerequisites
+
+1. Enable **Kubernetes** in Docker Desktop
+2. Install ingress (one-time): `./infrastructure/k8s/scripts/setup-ingress.ps1`
+3. Optional hosts entry: `127.0.0.1 api.fastpay.local`
+
+### Deploy
+
+```powershell
+cd fastpay-backend
+npm run docker:build
+./infrastructure/k8s/scripts/deploy-local.ps1
+# or: npm run k8s:deploy (after image build)
+```
+
+### Access
+
+| Endpoint | URL |
+|----------|-----|
+| Gateway (NodePort) | `http://localhost:30000/health` |
+| Gateway (port-forward) | `./infrastructure/k8s/scripts/port-forward-gateway.ps1` → `:3000` |
+| Ingress | `http://api.fastpay.local/health` |
+| RabbitMQ UI | `kubectl port-forward -n fastpay svc/rabbitmq 15672:15672` (fastpay/fastpay) |
+
+Point Flutter/Expo `API_URL` to your PC IP on port **30000** (NodePort) or **3000** (port-forward).
+
+### Teardown
+
+```powershell
+./infrastructure/k8s/scripts/teardown-local.ps1
+```
+
+### Messaging (phase 2)
+
+RabbitMQ is deployed and `RABBITMQ_URL` is wired in ConfigMap. Offline relay still uses BullMQ on Redis — see `docs/messaging-phase2.md`.

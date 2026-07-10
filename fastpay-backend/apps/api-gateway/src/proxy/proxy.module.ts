@@ -12,18 +12,28 @@ type GatewayRoute = {
   path: string;
   targetKey:
     | 'authUrl'
-    | 'blockchainUrl'
+    | 'walletUrl'
     | 'paymentUrl'
+    | 'familyUrl'
+    | 'escrowUrl'
+    | 'merchantUrl'
+    | 'treasuryUrl'
+    | 'blockchainUrl'
     | 'fraudUrl'
     | 'kycUrl';
 };
 
 const ROUTES: GatewayRoute[] = [
   { path: 'auth', targetKey: 'authUrl' },
+  { path: 'wallet', targetKey: 'walletUrl' },
   { path: 'stellar', targetKey: 'blockchainUrl' },
   { path: 'offline', targetKey: 'paymentUrl' },
   { path: 'payments', targetKey: 'paymentUrl' },
   { path: 'momo', targetKey: 'paymentUrl' },
+  { path: 'family', targetKey: 'familyUrl' },
+  { path: 'escrow', targetKey: 'escrowUrl' },
+  { path: 'merchant', targetKey: 'merchantUrl' },
+  { path: 'treasury', targetKey: 'treasuryUrl' },
   { path: 'compliance', targetKey: 'fraudUrl' },
   { path: 'kyc', targetKey: 'kycUrl' },
 ];
