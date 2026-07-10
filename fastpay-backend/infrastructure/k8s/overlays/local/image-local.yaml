@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: api-gateway
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: auth-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: payment-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockchain-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: blockchain-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: fraud-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyc-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: kyc-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallet-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: wallet-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: family-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: family-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escrow-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: escrow-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: merchant-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: merchant-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: treasury-service
+  namespace: fastpay
+spec:
+  template:
+    spec:
+      containers:
+        - name: treasury-service
+          image: fastpay-backend:local
+          imagePullPolicy: Never

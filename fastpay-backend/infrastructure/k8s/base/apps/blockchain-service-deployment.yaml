@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blockchain-service
+  namespace: fastpay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blockchain-service
+  template:
+    metadata:
+      labels:
+        app: blockchain-service
+    spec:
+      initContainers:
+        - name: wait-horizon
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z mock-horizon 8090; do echo waiting for mock-horizon; sleep 2; done
+      containers:
+        - name: blockchain-service
+          image: fastpay-backend:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SERVICE
+              value: blockchain-service
+          envFrom:
+            - configMapRef:
+                name: fastpay-config
+          ports:
+            - containerPort: 3009
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blockchain-service
+  namespace: fastpay
+spec:
+  selector:
+    app: blockchain-service
+  ports:
+    - port: 3009
+      targetPort: 3009
