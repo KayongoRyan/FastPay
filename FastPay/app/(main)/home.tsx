@@ -50,11 +50,8 @@ export default function HomeScreen() {
     initialize,
     refreshWalletData,
     isRefreshing,
-    balanceRwfEstimate,
-    balanceXlmFormatted,
     transactions,
     wallet,
-    error: walletError,
   } = useWalletStore();
 
   const displayName = useMemo(() => user?.fullName ?? "Future Pluto", [user?.fullName]);
@@ -92,19 +89,6 @@ export default function HomeScreen() {
           style={styles.avatar}
         />
       </View>
-
-      <Text style={styles.balanceLabel}>Your Balance</Text>
-      <Text style={styles.balance}>
-        {sensitiveVisible
-          ? wallet
-            ? `${balanceRwfEstimate} RWF`
-            : "Create wallet"
-          : "•••••• RWF"}
-      </Text>
-      {sensitiveVisible && wallet ? (
-        <Text style={styles.balanceSub}>{balanceXlmFormatted} XLM</Text>
-      ) : null}
-      {walletError ? <Text style={styles.error}>{walletError}</Text> : null}
 
       <VirtualCardCarousel
         holderName={displayName}
@@ -175,7 +159,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   muted: { color: colors.textMuted },
-  error: { color: colors.error, fontSize: 13, marginBottom: spacing.sm },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -198,23 +181,6 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.inputBg,
-  },
-  balanceLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  balance: {
-    color: colors.white,
-    fontSize: 34,
-    fontWeight: "700",
-    marginBottom: spacing.xs,
-  },
-  balanceSub: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: spacing.lg,
-    marginTop: 4,
   },
   sectionTitle: {
     color: colors.white,
