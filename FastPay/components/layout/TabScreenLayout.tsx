@@ -1,6 +1,8 @@
-import { ReactNode, RefObject } from "react";
+import { ReactNode, RefObject, useEffect, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
+  KeyboardEvent,
   Platform,
   RefreshControl,
   ScrollView,
@@ -37,6 +39,8 @@ interface TabScreenLayoutProps {
   scrollRef?: RefObject<ScrollView | null>;
   refreshing?: boolean;
   onRefresh?: () => void;
+  /** Extra scroll padding while the software keyboard is open. */
+  adjustForKeyboard?: boolean;
 }
 
 export function TabScreenLayout({
@@ -48,11 +52,43 @@ export function TabScreenLayout({
   scrollRef,
   refreshing,
   onRefresh,
+  adjustForKeyboard = false,
 }: TabScreenLayoutProps) {
+  const insets = useSafeAreaInsets();
   const tabBarPadding = useTabBarPadding(bottomInset);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+
+  useEffect(() => {
+    if (!adjustForKeyboard) {
+      return;
+    }
+
+    const onShow = (event: KeyboardEvent) => {
+      setKeyboardInset(event.endCoordinates.height);
+    };
+    const onHide = () => setKeyboardInset(0);
+
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [adjustForKeyboard]);
+
   const contentStyle = [
     styles.content,
-    { paddingBottom: tabBarPadding },
+    {
+      paddingBottom:
+        tabBarPadding +
+        (adjustForKeyboard && Platform.OS !== "ios" ? keyboardInset : 0),
+    },
     style,
   ];
 
@@ -61,6 +97,10 @@ export function TabScreenLayout({
       ref={scrollRef}
       contentContainerStyle={contentStyle}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      automaticallyAdjustKeyboardInsets={
+        adjustForKeyboard && Platform.OS === "ios"
+      }
       showsVerticalScrollIndicator={false}
       refreshControl={
         onRefresh ? (
@@ -78,7 +118,8 @@ export function TabScreenLayout({
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
       >
         {body}
         {footer}

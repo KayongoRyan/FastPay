@@ -13,6 +13,8 @@ export function Input({ label, style, ...props }: InputProps) {
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         placeholderTextColor={colors.textSubtle}
+        cursorColor={colors.primary}
+        selectionColor="rgba(0,174,239,0.35)"
         style={[styles.input, style]}
         {...props}
       />
