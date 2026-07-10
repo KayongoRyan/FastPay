@@ -1,26 +1,22 @@
 import { Href, router } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
+import * as Haptics from "expo-haptics";
 
-import { BackHeader } from "@/components/ui/BackHeader";
-import { NumericKeypad } from "@/components/ui/NumericKeypad";
-import { PinDots } from "@/components/ui/PinDots";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { Screen } from "@/components/ui/Screen";
+import { PinEntryLayout } from "@/components/ui/PinEntryLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { verifyTransactionPin } from "@/lib/auth/storage";
 import { useBankPayStore } from "@/store/bankPayStore";
-import { colors } from "@/theme/colors";
-import { spacing } from "@/theme/spacing";
 
 const PIN_LENGTH = 4;
 
 export default function BankPayPinScreen() {
-  useRequireAuth();
+  const { user } = useRequireAuth();
   const draft = useBankPayStore((state) => state.draft);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
 
   useEffect(() => {
     if (!draft) {
@@ -28,119 +24,75 @@ export default function BankPayPinScreen() {
     }
   }, [draft]);
 
-  if (!draft) {
-    return null;
-  }
-
   const onKey = (key: string) => {
     if (pin.length < PIN_LENGTH) {
       setPin((prev) => prev + key);
       setError(null);
+      submittedRef.current = false;
     }
   };
 
   const onDelete = () => {
     setPin((prev) => prev.slice(0, -1));
     setError(null);
+    submittedRef.current = false;
   };
 
-  const handlePay = async () => {
-    if (pin.length !== PIN_LENGTH) {
+  const handlePay = useCallback(async () => {
+    if (pin.length !== PIN_LENGTH || submitting || submittedRef.current) {
       return;
     }
 
+    submittedRef.current = true;
     setSubmitting(true);
     try {
       const valid = await verifyTransactionPin(pin);
       if (!valid) {
-        setError("Incorrect PIN. Try again.");
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setError("Incorrect passcode. Try again.");
         setPin("");
+        submittedRef.current = false;
         return;
       }
 
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/bank-pay/success" as Href);
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [pin, submitting]);
+
+  useEffect(() => {
+    if (pin.length === PIN_LENGTH) {
+      void handlePay();
+    }
+  }, [pin.length, handlePay]);
+
+  if (!draft) {
+    return null;
+  }
 
   return (
-    <Screen>
-      <BackHeader title="Confirm payment" />
-
-      <Text style={styles.title}>Enter your PIN</Text>
-      <Text style={styles.subtitle}>
-        Use the 4-digit PIN you set when signing up
-      </Text>
-
-      <PinDots length={pin.length} filled={pin.length} />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <View style={styles.amountBox}>
-        <Text style={styles.amountLabel}>Amount</Text>
-        <Text style={styles.amount}>
-          {Number(draft.amount).toLocaleString()} RWF
-        </Text>
-        <Text style={styles.merchant}>{draft.merchantName}</Text>
-      </View>
-
-      <NumericKeypad onKey={onKey} onDelete={onDelete} />
-
-      <PrimaryButton
-        label="Pay"
-        onPress={() => void handlePay()}
-        loading={submitting}
-        disabled={pin.length !== PIN_LENGTH}
-        style={styles.button}
-      />
-    </Screen>
+    <PinEntryLayout
+      title="Payment"
+      subtitle="Enter your passcode"
+      userName={user?.fullName}
+      pin={pin}
+      onKey={onKey}
+      onDelete={onDelete}
+      error={error}
+      loading={submitting}
+      forgotPasscode={{
+        onPress: () =>
+          Alert.alert(
+            "Forgot passcode?",
+            "Contact support to reset your transaction PIN.",
+          ),
+      }}
+      secondaryAction={{
+        label: "Cancel payment",
+        onPress: () => router.back(),
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: "600",
-    textAlign: "center",
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  amountBox: {
-    alignItems: "center",
-    marginBottom: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  amountLabel: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginBottom: 4,
-  },
-  amount: {
-    color: colors.white,
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  merchant: {
-    color: colors.primary,
-    fontSize: 14,
-    marginTop: 4,
-    fontWeight: "600",
-  },
-  error: {
-    color: colors.error,
-    textAlign: "center",
-    marginBottom: spacing.sm,
-  },
-  button: {
-    marginTop: spacing.lg,
-  },
-});

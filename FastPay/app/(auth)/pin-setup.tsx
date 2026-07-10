@@ -1,115 +1,90 @@
 import { Href, router } from "expo-router";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
+import * as Haptics from "expo-haptics";
 
-import { FastPayLogo } from "@/components/FastPayLogo";
-import { NumericKeypad } from "@/components/ui/NumericKeypad";
-import { PinDots } from "@/components/ui/PinDots";
-import { PrimaryButton } from "@/components/ui/PrimaryButton";
-import { Screen } from "@/components/ui/Screen";
+import { PinEntryLayout } from "@/components/ui/PinEntryLayout";
 import { useAuthStore } from "@/store/authStore";
 import { saveTransactionPin } from "@/lib/auth/storage";
 import { useOnboardingStore } from "@/store/onboardingStore";
-import { colors } from "@/theme/colors";
-import { spacing } from "@/theme/spacing";
 
 const PIN_LENGTH = 4;
 
 export default function PinSetupScreen() {
   const register = useAuthStore((state) => state.register);
-  const error = useAuthStore((state) => state.error);
+  const authError = useAuthStore((state) => state.error);
   const { firstName, lastName, email, password, setPin } = useOnboardingStore();
   const [pin, setLocalPin] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittedRef = useRef(false);
+
+  const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
 
   const onKey = (key: string) => {
     if (pin.length < PIN_LENGTH) {
       setLocalPin((prev) => prev + key);
+      submittedRef.current = false;
     }
   };
 
   const onDelete = () => {
     setLocalPin((prev) => prev.slice(0, -1));
+    submittedRef.current = false;
   };
 
-  const onNext = async () => {
-    if (pin.length !== PIN_LENGTH) {
+  const onNext = useCallback(async () => {
+    if (pin.length !== PIN_LENGTH || submitting || submittedRef.current) {
       return;
     }
 
+    submittedRef.current = true;
     setPin(pin);
     await saveTransactionPin(pin);
 
     setSubmitting(true);
     try {
       await register({
-        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        fullName,
         email: email.trim(),
         password,
       });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/verify-email" as Href);
     } catch {
-      // error in store
+      submittedRef.current = false;
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [email, fullName, password, pin, register, setPin, submitting]);
+
+  useEffect(() => {
+    if (pin.length === PIN_LENGTH) {
+      void onNext();
+    }
+  }, [pin.length, onNext]);
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <FastPayLogo size={36} />
-      </View>
-
-      <Text style={styles.title}>Enter your Pin</Text>
-      <PinDots length={pin.length} filled={pin.length} />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <NumericKeypad onKey={onKey} onDelete={onDelete} />
-
-      <PrimaryButton
-        label="Next"
-        onPress={() => void onNext()}
-        loading={submitting}
-        disabled={pin.length !== PIN_LENGTH}
-        style={styles.button}
-      />
-
-      <Pressable style={styles.forgot}>
-        <Text style={styles.forgotText}>Forgot your pin?</Text>
-      </Pressable>
-    </Screen>
+    <PinEntryLayout
+      title="Create PIN"
+      subtitle="Enter your passcode"
+      userName={fullName || undefined}
+      pin={pin}
+      onKey={onKey}
+      onDelete={onDelete}
+      error={authError}
+      loading={submitting}
+      forgotPasscode={{
+        onPress: () =>
+          Alert.alert(
+            "Forgot passcode?",
+            "Choose a PIN you will remember. You need it to authorize payments.",
+          ),
+      }}
+      onBack={() => router.back()}
+      secondaryAction={{
+        label: "Back to sign up",
+        onPress: () => router.back(),
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    alignItems: "center",
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  title: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: spacing.sm,
-  },
-  button: {
-    marginTop: spacing.lg,
-  },
-  forgot: {
-    alignItems: "center",
-    paddingVertical: spacing.lg,
-  },
-  forgotText: {
-    color: colors.textMuted,
-    fontSize: 14,
-  },
-  error: {
-    color: colors.error,
-    textAlign: "center",
-    marginBottom: spacing.sm,
-  },
-});
