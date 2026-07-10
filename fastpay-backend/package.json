@@ -13,7 +13,7 @@
     "start:payment": "npm run start:dev -w @fastpay/payment-service",
     "start:blockchain": "npm run start:dev -w @fastpay/blockchain-service",
     "start:fraud": "npm run start:dev -w @fastpay/fraud-service",
-    "start:kyc": "npm run start:dev -w @fastpay/kyc-service",
+    "start:kyc": "npx --yes kill-port 3012 && npm run start:dev -w @fastpay/kyc-service",
     "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down"
   },

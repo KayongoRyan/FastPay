@@ -15,11 +15,26 @@ export class KycDocument {
   @Prop({ required: true })
   documentType!: string;
 
+  @Prop()
+  idSubtype?: string;
+
+  @Prop()
+  poaType?: string;
+
   @Prop({ required: true })
   s3Key!: string;
 
   @Prop({ enum: Object.values(KycVerificationStatus), default: KycVerificationStatus.PENDING })
   verificationStatus!: KycVerificationStatus;
+
+  @Prop()
+  confidenceScore?: number;
+
+  @Prop()
+  rejectionReason?: string;
+
+  @Prop({ type: Object })
+  extractedData?: Record<string, string>;
 
   @Prop({ type: Types.ObjectId, ref: 'User' })
   verifiedBy?: Types.ObjectId;
