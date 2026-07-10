@@ -28,7 +28,7 @@ function isTabBarHidden(state: BottomTabBarProps["state"]): boolean {
   const focusedRoute = state.routes[state.index];
   if (!focusedRoute) return false;
 
-  if (focusedRoute.name === "bills") {
+  if (focusedRoute.name === "bills" || focusedRoute.name === "quick-links") {
     return true;
   }
 
