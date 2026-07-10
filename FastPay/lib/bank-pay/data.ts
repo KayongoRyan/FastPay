@@ -1,0 +1,97 @@
+import type {
+  BankPayBeneficiary,
+  BankPayFormValues,
+  BankPayMerchant,
+} from "./types";
+
+export const BENEFICIARIES: BankPayBeneficiary[] = [
+  {
+    id: "ben_1",
+    name: "Rent — Kigali Heights",
+    category: "Housing",
+    fastPayCode: "FP-RNT-4821",
+  },
+  {
+    id: "ben_2",
+    name: "University Tuition",
+    category: "Education",
+    fastPayCode: "FP-EDU-9034",
+  },
+  {
+    id: "ben_3",
+    name: "Water & Electricity",
+    category: "Utilities",
+    fastPayCode: "FP-UTL-7712",
+  },
+  {
+    id: "ben_4",
+    name: "Health Insurance",
+    category: "Insurance",
+    fastPayCode: "FP-INS-5560",
+  },
+  {
+    id: "ben_5",
+    name: "Business Supplier",
+    category: "Business",
+    fastPayCode: "FP-BIZ-3389",
+  },
+];
+
+const MERCHANTS: BankPayMerchant[] = [
+  { code: "MRC001", name: "Kigali City Market" },
+  { code: "MRC002", name: "Rwanda Revenue Authority" },
+  { code: "MRC003", name: "REG Ltd" },
+  { code: "MRC004", name: "BK Merchant Services" },
+  { code: "MRC005", name: "IremboGov Payments" },
+  { code: "MRC006", name: "MTN MoMo Merchant Hub" },
+];
+
+export function formatFastPayAccountNumber(
+  userId: string,
+  publicKey?: string | null,
+): string {
+  const source = publicKey ?? userId;
+  const digits = source.replace(/\D/g, "").slice(-10);
+  const padded = digits.padStart(10, "0");
+  return `${padded.slice(0, 3)}-${padded.slice(3, 7)}-${padded.slice(7)}`;
+}
+
+export function formatFastPayCode(publicKey?: string | null): string {
+  if (!publicKey) {
+    return "—";
+  }
+  const compact = publicKey.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  const core = compact.slice(-8).padStart(8, "0");
+  return `FP-${core.slice(0, 4)}-${core.slice(4)}`;
+}
+
+export function getBeneficiaryById(
+  id: string | null,
+): BankPayBeneficiary | undefined {
+  if (!id) {
+    return undefined;
+  }
+  return BENEFICIARIES.find((item) => item.id === id);
+}
+
+export function lookupMerchant(code: string): BankPayMerchant | undefined {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) {
+    return undefined;
+  }
+  return MERCHANTS.find((merchant) => merchant.code === normalized);
+}
+
+export function validateBankPayForm(values: BankPayFormValues): string | null {
+  if (!values.beneficiaryId) {
+    return "Select a beneficiary under Pay for.";
+  }
+  if (!lookupMerchant(values.merchantCode)) {
+    return "Enter a valid merchant code.";
+  }
+  const amount = Number(values.amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "Enter a valid payment amount.";
+  }
+  return null;
+}

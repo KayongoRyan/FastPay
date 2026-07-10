@@ -29,7 +29,7 @@ export const QUICK_LINKS: QuickLinkItem[] = [
     id: "bank_pay",
     label: "Bank Pay",
     icon: Building2,
-    href: "/convert",
+    href: "/bank-pay",
     section: "pinned",
   },
   {

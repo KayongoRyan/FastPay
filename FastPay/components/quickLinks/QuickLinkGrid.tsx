@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { QuickLinkItem } from "@/lib/quick-links/data";
@@ -24,7 +24,7 @@ export function QuickLinkTile({
   return (
     <Pressable
       style={[styles.tile, isRow && styles.tileRow]}
-      onPress={() => router.push(link.href)}
+      onPress={() => router.push(link.href as Href)}
     >
       <View style={styles.iconWrap}>
         <Icon color={colors.white} size={22} />
