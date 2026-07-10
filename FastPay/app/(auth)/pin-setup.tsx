@@ -8,6 +8,7 @@ import { PinDots } from "@/components/ui/PinDots";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { Screen } from "@/components/ui/Screen";
 import { useAuthStore } from "@/store/authStore";
+import { saveTransactionPin } from "@/lib/auth/storage";
 import { useOnboardingStore } from "@/store/onboardingStore";
 import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
@@ -37,6 +38,7 @@ export default function PinSetupScreen() {
     }
 
     setPin(pin);
+    await saveTransactionPin(pin);
 
     setSubmitting(true);
     try {

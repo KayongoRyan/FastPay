@@ -10,6 +10,7 @@ const REFRESH_TOKEN_KEY = 'fastpay_refresh_token';
 const REFRESH_TOKEN_BIO_KEY = 'fastpay_refresh_token_bio';
 const USER_KEY = 'fastpay_auth_user';
 const BIOMETRIC_LOCK_KEY = 'fastpay_biometric_lock';
+const TRANSACTION_PIN_KEY = 'fastpay_transaction_pin';
 
 type SecureOptions = SecureStore.SecureStoreOptions | undefined;
 
@@ -96,6 +97,7 @@ export async function clearAuthSession(): Promise<void> {
     deleteSecureItem(REFRESH_TOKEN_BIO_KEY),
     deleteSecureItem(DEVICE_ID_KEY),
     deleteSecureItem(DEVICE_SECRET_KEY),
+    deleteSecureItem(TRANSACTION_PIN_KEY),
     AsyncStorage.multiRemove([USER_KEY, BIOMETRIC_LOCK_KEY]),
   ]);
 }
@@ -182,4 +184,21 @@ export function isAccessTokenExpired(
   }
 
   return Date.now() >= expiry - skewMs;
+}
+
+export async function saveTransactionPin(pin: string): Promise<void> {
+  await setSecureItem(TRANSACTION_PIN_KEY, pin);
+}
+
+export async function loadTransactionPin(): Promise<string | null> {
+  return getSecureItem(TRANSACTION_PIN_KEY);
+}
+
+export async function verifyTransactionPin(input: string): Promise<boolean> {
+  const stored = await loadTransactionPin();
+  if (!stored) {
+    return input.length === 4;
+  }
+
+  return stored === input;
 }

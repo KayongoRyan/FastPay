@@ -1,7 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { Href, router } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -23,6 +26,7 @@ import {
   validateBankPayForm,
 } from "@/lib/bank-pay/data";
 import type { BankPayBeneficiary } from "@/lib/bank-pay/types";
+import { useBankPayStore } from "@/store/bankPayStore";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -30,12 +34,14 @@ import { radius, spacing } from "@/theme/spacing";
 export default function BankPayScreen() {
   const { user } = useRequireAuth();
   const { wallet, initialize } = useWalletStore();
+  const setDraft = useBankPayStore((state) => state.setDraft);
+  const scrollRef = useRef<ScrollView>(null);
+  const amountSectionY = useRef(0);
 
   const [beneficiaryId, setBeneficiaryId] = useState<string | null>(null);
   const [merchantCode, setMerchantCode] = useState("");
   const [amount, setAmount] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     void initialize();
@@ -54,34 +60,50 @@ export default function BankPayScreen() {
   const beneficiary = getBeneficiaryById(beneficiaryId);
   const merchant = lookupMerchant(merchantCode);
 
+  const scrollAmountIntoView = () => {
+    scrollRef.current?.scrollTo({
+      y: Math.max(0, amountSectionY.current - spacing.lg),
+      animated: true,
+    });
+  };
+
+  const handleAmountFocus = () => {
+    scrollAmountIntoView();
+    setTimeout(scrollAmountIntoView, Platform.OS === "ios" ? 320 : 120);
+  };
+
   const handleSelectBeneficiary = (item: BankPayBeneficiary) => {
     setBeneficiaryId(item.id);
   };
 
-  const handlePayment = async () => {
+  const handlePayment = () => {
     const error = validateBankPayForm({ beneficiaryId, merchantCode, amount });
     if (error) {
       Alert.alert("Bank Pay", error);
       return;
     }
 
-    setSubmitting(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      Alert.alert(
-        "Payment accepted",
-        `RWF ${Number(amount).toLocaleString()} paid to ${merchant!.name} (${merchant!.code}) for ${beneficiary!.name}.`,
-        [{ text: "OK" }],
-      );
-      setMerchantCode("");
-      setAmount("");
-    } finally {
-      setSubmitting(false);
-    }
+    setDraft({
+      beneficiaryId: beneficiaryId!,
+      beneficiaryName: beneficiary!.name,
+      beneficiaryCategory: beneficiary!.category,
+      merchantCode: merchant!.code,
+      merchantName: merchant!.name,
+      amount,
+      payFromName: user?.fullName ?? "—",
+      payFromAccount: accountNumber,
+      payToCode,
+    });
+
+    router.push("/bank-pay/invoice" as Href);
   };
 
   return (
-    <TabScreenLayout bottomInset={spacing.xl}>
+    <TabScreenLayout
+      scrollRef={scrollRef}
+      bottomInset={spacing.xl}
+      adjustForKeyboard
+    >
       <BackHeader title="Bank Pay" />
 
       <ReadOnlyField
@@ -134,18 +156,25 @@ export default function BankPayScreen() {
         </View>
       ) : null}
 
-      <Input
-        label="Amount (RWF)"
-        value={amount}
-        onChangeText={setAmount}
-        placeholder="0"
-        keyboardType="decimal-pad"
-      />
+      <View
+        onLayout={(event) => {
+          amountSectionY.current = event.nativeEvent.layout.y;
+        }}
+      >
+        <Input
+          label="Amount (RWF)"
+          value={amount}
+          onChangeText={setAmount}
+          onFocus={handleAmountFocus}
+          placeholder="0"
+          keyboardType="decimal-pad"
+          returnKeyType="done"
+        />
+      </View>
 
       <PrimaryButton
         label="Make Payment"
-        onPress={() => void handlePayment()}
-        loading={submitting}
+        onPress={handlePayment}
         disabled={!beneficiary || !merchantCode.trim() || !amount.trim()}
         style={styles.submitBtn}
       />
