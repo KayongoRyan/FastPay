@@ -82,6 +82,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   mpcService: null,
 
   initialize: async () => {
+    if (get().isReady || get().isLoading) {
+      return;
+    }
+
     set({ isLoading: true, error: null });
 
     try {
@@ -97,7 +101,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       });
 
       if (wallet) {
-        await get().refreshWalletData();
+        void get().refreshWalletData();
       }
     } catch (error) {
       set({

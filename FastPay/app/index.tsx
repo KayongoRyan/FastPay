@@ -26,7 +26,7 @@ export default function SplashScreen() {
       }
 
       router.replace("/(auth)/login" as Href);
-    }, 1800);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [isReady, isLocked, user]);
