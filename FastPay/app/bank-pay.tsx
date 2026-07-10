@@ -69,8 +69,8 @@ export default function BankPayScreen() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 800));
       Alert.alert(
-        "Payment submitted",
-        `RWF ${Number(amount).toLocaleString()} sent to ${merchant!.name} for ${beneficiary!.name}.`,
+        "Payment accepted",
+        `RWF ${Number(amount).toLocaleString()} paid to ${merchant!.name} (${merchant!.code}) for ${beneficiary!.name}.`,
         [{ text: "OK" }],
       );
       setMerchantCode("");
@@ -132,8 +132,6 @@ export default function BankPayScreen() {
         <View style={styles.merchantNameBox}>
           <Text style={styles.merchantName}>{merchant.name}</Text>
         </View>
-      ) : merchantCode.trim().length >= 3 ? (
-        <Text style={styles.merchantHint}>No merchant found for this code</Text>
       ) : null}
 
       <Input
@@ -148,7 +146,7 @@ export default function BankPayScreen() {
         label="Make Payment"
         onPress={() => void handlePayment()}
         loading={submitting}
-        disabled={!beneficiary || !merchant || !amount.trim()}
+        disabled={!beneficiary || !merchantCode.trim() || !amount.trim()}
         style={styles.submitBtn}
       />
 
@@ -208,13 +206,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 14,
     fontWeight: "600",
-  },
-  merchantHint: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginTop: -spacing.sm,
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.sm,
   },
   submitBtn: {
     marginTop: spacing.sm,
