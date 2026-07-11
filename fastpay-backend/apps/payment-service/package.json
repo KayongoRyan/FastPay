@@ -9,6 +9,7 @@
     "start:prod": "node dist/apps/payment-service/src/main.js"
   },
   "dependencies": {
+    "@fastpay/common": "1.0.0",
     "@fastpay/mongo": "1.0.0",
     "@fastpay/schemas": "1.0.0",
     "@nestjs/bullmq": "^11.0.0",
@@ -25,5 +26,11 @@
     "mongoose": "^8.9.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "ioredis-mock": "^8.13.1",
+    "mongodb-memory-server": "^10.1.4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0"
   }
 }

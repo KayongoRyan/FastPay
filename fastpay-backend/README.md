@@ -113,9 +113,32 @@ Full stack in-cluster: MongoDB, Redis, RabbitMQ, mock Horizon, gateway + all ser
 ```powershell
 cd fastpay-backend
 npm run docker:build
+npm run docker:scan
 ./infrastructure/k8s/scripts/deploy-local.ps1
-# or: npm run k8s:deploy (after image build)
+# or: npm run k8s:deploy (after image build + scan)
 ```
+
+### Container security
+
+Images run as **non-root** (`node`, UID 1000) with production-only dependencies in the runtime layer. Base image is pinned by digest in [`Dockerfile`](Dockerfile).
+
+Before deploy:
+
+```powershell
+npm run docker:build
+npm run docker:scan   # fails on CRITICAL CVEs; writes SBOM to infrastructure/docker/sbom/
+```
+
+Refresh base digest when upgrading Node:
+
+```powershell
+docker inspect node:20-alpine --format "{{index .RepoDigests 0}}"
+# Update both FROM lines in Dockerfile
+```
+
+K8s app pods use `readOnlyRootFilesystem`, drop all capabilities, and mount `/tmp` as `emptyDir` for Node runtime temp files.
+
+**Production follow-up:** push to a private registry (GHCR/ECR), deploy by image digest (not `:latest`), and use `imagePullSecrets`.
 
 ### Access
 

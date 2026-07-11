@@ -6,6 +6,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -29,12 +30,13 @@ export class OfflineService {
   private readonly networkPassphrase: string;
   private readonly retryAttempts: number;
   private readonly retryBackoffMs: number;
+  private readonly inlineOfflineQueue: boolean;
 
   constructor(
     @InjectModel(OfflineRelay.name)
     private readonly offlineRelayModel: Model<OfflineRelayDocument>,
-    @InjectQueue('offline-tx')
-    private readonly offlineQueue: Queue<BroadcastJobData>,
+    @Optional() @InjectQueue('offline-tx')
+    private readonly offlineQueue: Queue<BroadcastJobData> | undefined,
     private readonly blockchainClient: BlockchainClient,
     private readonly configService: ConfigService,
   ) {
@@ -47,6 +49,7 @@ export class OfflineService {
     this.retryBackoffMs = this.configService.getOrThrow<number>(
       'offline.retryBackoffMs',
     );
+    this.inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
   }
 
   hashSignedXdr(signedXdr: string): string {
@@ -126,6 +129,13 @@ export class OfflineService {
     }
 
     try {
+      if (this.inlineOfflineQueue || !this.offlineQueue) {
+        setImmediate(() => {
+          void this.processInlineBroadcast(signedTxXDR, txHash);
+        });
+        return { queueId: txHash, txHash };
+      }
+
       const job = await this.offlineQueue.add(
         'broadcast',
         { signedXdr: signedTxXDR, txHash },
@@ -181,6 +191,41 @@ export class OfflineService {
     return this.offlineRelayModel
       .findOneAndUpdate({ txHash }, { $set: update }, { new: true })
       .exec();
+  }
+
+  private async processInlineBroadcast(
+    signedXdr: string,
+    txHash: string,
+  ): Promise<void> {
+    await this.updateStatus(
+      txHash,
+      OfflineRelayStatus.BROADCASTING,
+      undefined,
+      undefined,
+      0,
+    );
+
+    try {
+      const onChainTxHash = await this.blockchainClient.submit(signedXdr);
+      await this.updateStatus(
+        txHash,
+        OfflineRelayStatus.CONFIRMED,
+        onChainTxHash,
+      );
+      this.logger.log(
+        `Inline broadcast confirmed for ${txHash} -> on-chain ${onChainTxHash}`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await this.updateStatus(
+        txHash,
+        OfflineRelayStatus.FAILED,
+        undefined,
+        message,
+        1,
+      );
+      this.logger.error(`Inline broadcast failed for ${txHash}: ${message}`);
+    }
   }
 
   private isDuplicateKeyError(error: unknown): boolean {
