@@ -1,17 +1,13 @@
-import { Href, router } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import {
   ArrowDownLeft,
-  ArrowLeftRight,
   ArrowUpRight,
-  MoreHorizontal,
-  Receipt,
-  TicketPercent,
 } from "lucide-react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { QuickLinkGrid } from "@/components/quickLinks";
+import { ServiceIconGrid } from "@/components/services";
 import { VirtualCardCarousel } from "@/components/ui/VirtualCardCarousel";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { tierToCardItem } from "@/lib/cards/tiers";
@@ -19,16 +15,10 @@ import {
   HOME_QUICK_LINKS,
   MORE_QUICK_LINK,
 } from "@/lib/quick-links/data";
+import { PRIMARY_SERVICES } from "@/lib/services/data";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
-
-const SERVICES = [
-  { id: "transfer", label: "Transfer", icon: ArrowLeftRight, href: "/wallet/transfer" as Href },
-  { id: "voucher", label: "Voucher", icon: TicketPercent, href: "/buy" as Href },
-  { id: "bill", label: "Bill", icon: Receipt, href: "/bills" as Href },
-  { id: "more", label: "More", icon: MoreHorizontal, href: "/settings" as Href },
-] as const;
 
 const HOME_CARDS = [
   tierToCardItem("standard"),
@@ -98,23 +88,7 @@ export default function HomeScreen() {
       />
 
       <Text style={styles.sectionTitle}>Services</Text>
-      <View style={styles.services}>
-        {SERVICES.map((service) => {
-          const Icon = service.icon;
-          return (
-            <Pressable
-              key={service.id}
-              style={styles.service}
-              onPress={() => router.push(service.href)}
-            >
-              <View style={styles.serviceIcon}>
-                <Icon color={colors.white} size={22} />
-              </View>
-              <Text style={styles.serviceLabel}>{service.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <ServiceIconGrid services={PRIMARY_SERVICES} variant="row" />
 
       <Text style={styles.sectionTitle}>Quick Links</Text>
       <QuickLinkGrid
@@ -188,30 +162,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: spacing.lg,
     marginBottom: spacing.md,
-  },
-  services: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  service: {
-    alignItems: "center",
-    width: "22%",
-    gap: spacing.sm,
-  },
-  serviceIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.inputBg,
-  },
-  serviceLabel: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textAlign: "center",
   },
   txCard: {
     flexDirection: "row",

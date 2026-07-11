@@ -2,30 +2,107 @@ import { Href, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
-import type { QuickLinkItem } from "@/lib/quick-links/data";
-import { getQuickLinkLabel } from "@/lib/quick-links/data";
+import {
+  getServiceLabel,
+  type ServiceItem,
+} from "@/lib/services/data";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
-interface QuickLinkTileProps {
-  link: QuickLinkItem;
+interface ServiceIconGridProps {
+  services: ServiceItem[];
+  variant?: "row" | "grid" | "list";
+  columns?: number;
   useShortLabel?: boolean;
-  variant?: "grid" | "row";
+  onServicePress?: (service: ServiceItem) => void;
 }
 
-export function QuickLinkTile({
-  link,
-  useShortLabel = false,
+export function ServiceIconGrid({
+  services,
   variant = "grid",
-}: QuickLinkTileProps) {
-  const Icon = link.icon;
-  const label = getQuickLinkLabel(link, useShortLabel);
+  columns = 4,
+  useShortLabel = false,
+  onServicePress,
+}: ServiceIconGridProps) {
+  const handlePress = (service: ServiceItem) => {
+    if (onServicePress) {
+      onServicePress(service);
+      return;
+    }
+    if (service.href) {
+      router.push(service.href as Href);
+    }
+  };
+
+  if (variant === "row") {
+    return (
+      <View style={styles.row}>
+        {services.map((service) => (
+          <ServiceTile
+            key={service.id}
+            service={service}
+            useShortLabel={useShortLabel}
+            variant="row"
+            onPress={() => handlePress(service)}
+          />
+        ))}
+      </View>
+    );
+  }
+
+  if (variant === "list") {
+    return (
+      <View style={styles.list}>
+        {services.map((service, index) => (
+          <ServiceListRow
+            key={service.id}
+            service={service}
+            useShortLabel={useShortLabel}
+            isLast={index === services.length - 1}
+            onPress={() => handlePress(service)}
+          />
+        ))}
+      </View>
+    );
+  }
+
+  const width = `${100 / columns}%` as `${number}%`;
+
+  return (
+    <View style={styles.grid}>
+      {services.map((service) => (
+        <View key={service.id} style={[styles.cell, { width }]}>
+          <ServiceTile
+            service={service}
+            useShortLabel={useShortLabel}
+            variant="grid"
+            onPress={() => handlePress(service)}
+          />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function ServiceTile({
+  service,
+  useShortLabel,
+  variant,
+  onPress,
+}: {
+  service: ServiceItem;
+  useShortLabel: boolean;
+  variant: "row" | "grid";
+  onPress: () => void;
+}) {
+  const Icon = service.icon;
+  const label = getServiceLabel(service, useShortLabel);
   const isRow = variant === "row";
 
   return (
     <Pressable
       style={[styles.tile, isRow && styles.tileRow]}
-      onPress={() => router.push(link.href as Href)}
+      onPress={onPress}
     >
       <View style={styles.iconWrap}>
         <Icon color={colors.white} size={22} />
@@ -37,78 +114,24 @@ export function QuickLinkTile({
   );
 }
 
-interface QuickLinkGridProps {
-  links: QuickLinkItem[];
-  useShortLabel?: boolean;
-  columns?: number;
-  variant?: "grid" | "row" | "list";
-}
-
-export function QuickLinkGrid({
-  links,
-  useShortLabel = false,
-  columns = 4,
-  variant = "grid",
-}: QuickLinkGridProps) {
-  if (variant === "row") {
-    return (
-      <View style={styles.row}>
-        {links.map((link) => (
-          <QuickLinkTile
-            key={link.id}
-            link={link}
-            useShortLabel={useShortLabel}
-            variant="row"
-          />
-        ))}
-      </View>
-    );
-  }
-
-  if (variant === "list") {
-    return (
-      <View style={styles.list}>
-        {links.map((link, index) => (
-          <QuickLinkListRow
-            key={link.id}
-            link={link}
-            useShortLabel={useShortLabel}
-            isLast={index === links.length - 1}
-          />
-        ))}
-      </View>
-    );
-  }
-
-  const width = `${100 / columns}%` as `${number}%`;
-
-  return (
-    <View style={styles.grid}>
-      {links.map((link) => (
-        <View key={link.id} style={[styles.cell, { width }]}>
-          <QuickLinkTile link={link} useShortLabel={useShortLabel} variant="grid" />
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function QuickLinkListRow({
-  link,
+function ServiceListRow({
+  service,
   useShortLabel,
   isLast,
+  onPress,
 }: {
-  link: QuickLinkItem;
+  service: ServiceItem;
   useShortLabel: boolean;
   isLast: boolean;
+  onPress: () => void;
 }) {
-  const Icon = link.icon;
-  const label = getQuickLinkLabel(link, useShortLabel);
+  const Icon = service.icon;
+  const label = getServiceLabel(service, useShortLabel);
 
   return (
     <Pressable
       style={[styles.listRow, !isLast && styles.listRowDivider]}
-      onPress={() => router.push(link.href as Href)}
+      onPress={onPress}
     >
       <View style={styles.listIconWrap}>
         <Icon color={colors.white} size={22} />
@@ -166,7 +189,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.inputBg,
     overflow: "hidden",
-    marginBottom: spacing.lg,
   },
   listRow: {
     flexDirection: "row",
