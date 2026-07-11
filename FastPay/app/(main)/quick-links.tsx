@@ -19,9 +19,6 @@ export default function QuickLinksScreen() {
   return (
     <TabScreenLayout>
       <BackHeader title="Quick Links" />
-      <Text style={styles.subtitle}>
-        Bank pay, statements, utilities, tax, airtime, forex, and other shortcuts.
-      </Text>
 
       <Text style={styles.sectionTitle}>Pinned Features</Text>
       <QuickLinkGrid links={PINNED_QUICK_LINKS} variant="list" />
@@ -33,12 +30,6 @@ export default function QuickLinksScreen() {
 }
 
 const styles = StyleSheet.create({
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: spacing.lg,
-  },
   sectionTitle: {
     color: colors.white,
     fontSize: 17,
