@@ -4,6 +4,9 @@ import { Platform } from "react-native";
 import type { CapturedDocument } from "./types";
 
 const MIN_BYTES = 20_000;
+/** Keep under gateway/KYC JSON body limit after base64 encoding. */
+const MAX_BYTES = 10 * 1024 * 1024;
+const CAPTURE_QUALITY = 0.65;
 
 export async function requestCapturePermissions(): Promise<boolean> {
   if (Platform.OS === "web") {
@@ -18,7 +21,7 @@ export async function requestCapturePermissions(): Promise<boolean> {
 export async function captureDocumentFromCamera(): Promise<CapturedDocument | null> {
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: ["images"],
-    quality: 0.85,
+    quality: CAPTURE_QUALITY,
     base64: true,
     allowsEditing: true,
     aspect: [16, 10],
@@ -30,7 +33,7 @@ export async function captureDocumentFromCamera(): Promise<CapturedDocument | nu
 export async function pickDocumentFromGallery(): Promise<CapturedDocument | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
-    quality: 0.85,
+    quality: CAPTURE_QUALITY,
     base64: true,
     allowsEditing: true,
     aspect: [16, 10],
@@ -75,6 +78,9 @@ export function validateCapturedDocument(
   }
   if (document.byteLength < MIN_BYTES) {
     return "Photo is too small. Retake in brighter light and fill the frame.";
+  }
+  if (document.byteLength > MAX_BYTES) {
+    return "Photo is too large. Retake closer to the document or pick a smaller image.";
   }
   return null;
 }

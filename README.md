@@ -31,7 +31,7 @@ npm run start
 ### Option B — local Kubernetes
 
 ```bash
-cd fastpay-backend
+cd fastpay-backend 
 # Enable K8s in Docker Desktop, then:
 ./infrastructure/k8s/scripts/setup-ingress.ps1   # one-time
 ./infrastructure/k8s/scripts/deploy-local.ps1
