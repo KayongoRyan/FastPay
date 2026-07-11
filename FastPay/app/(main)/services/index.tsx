@@ -1,33 +1,26 @@
 import { StyleSheet, Text } from "react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
-import { QuickLinkGrid } from "@/components/quickLinks";
+import { ServiceIconGrid } from "@/components/services";
 import { BackHeader } from "@/components/ui/BackHeader";
 import { useHideTabBar } from "@/hooks/useHideTabBar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import {
-  MORE_FEATURE_LINKS,
-  PINNED_QUICK_LINKS,
-} from "@/lib/quick-links/data";
+import { MORE_PAGE_SERVICES } from "@/lib/services/data";
 import { colors } from "@/theme/colors";
 import { spacing } from "@/theme/spacing";
 
-export default function QuickLinksScreen() {
+export default function MoreServicesScreen() {
   useRequireAuth();
   useHideTabBar();
 
   return (
     <TabScreenLayout>
-      <BackHeader title="Quick Links" />
+      <BackHeader title="More Services" />
       <Text style={styles.subtitle}>
-        Bank pay, statements, utilities, tax, airtime, forex, and other shortcuts.
+        Transfer, vouchers, bills, family wallets, savings, escrow, insurance,
+        compliance, KYC, and offline payments.
       </Text>
-
-      <Text style={styles.sectionTitle}>Pinned Features</Text>
-      <QuickLinkGrid links={PINNED_QUICK_LINKS} variant="list" />
-
-      <Text style={styles.sectionTitle}>More Features</Text>
-      <QuickLinkGrid links={MORE_FEATURE_LINKS} variant="list" />
+      <ServiceIconGrid services={MORE_PAGE_SERVICES} variant="list" />
     </TabScreenLayout>
   );
 }
@@ -38,11 +31,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    color: colors.white,
-    fontSize: 17,
-    fontWeight: "600",
-    marginBottom: spacing.md,
   },
 });
