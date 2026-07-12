@@ -29,7 +29,7 @@ import {
   type LoginInput,
   type RegisterInput,
 } from '@/lib/auth';
-import { setAccessTokenProvider } from '@/lib/api/client';
+import { setAccessTokenProvider, setTokenRefresher } from '@/lib/api/client';
 
 interface AuthState {
   user: AuthUser | null;
@@ -51,6 +51,36 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => {
   setAccessTokenProvider(async () => get().accessToken);
+
+  setTokenRefresher(async () => {
+    const { accessToken, user, isLocked } = get();
+    if (isLocked) {
+      return null;
+    }
+
+    const refreshToken = await loadRefreshToken();
+
+    if (!refreshToken) {
+      return accessToken;
+    }
+
+    if (accessToken && !isAccessTokenExpired(accessToken)) {
+      return accessToken;
+    }
+
+    try {
+      const tokens = await refreshSession(refreshToken);
+      if (user) {
+        await saveAuthSession(user, tokens, {
+          biometricProtected: user.biometricEnabled,
+        });
+      }
+      set({ accessToken: tokens.accessToken });
+      return tokens.accessToken;
+    } catch {
+      return null;
+    }
+  });
 
   return {
     user: null,
@@ -132,7 +162,26 @@ export const useAuthStore = create<AuthState>((set, get) => {
             );
             set({ user });
           } catch {
-            // Keep cached session if background refresh fails.
+            const refreshed = await get().refreshIfNeeded();
+            if (!refreshed) {
+              return;
+            }
+
+            try {
+              const user = await fetchCurrentUser();
+              await saveAuthSession(
+                user,
+                {
+                  accessToken: get().accessToken!,
+                  refreshToken,
+                  expiresIn: '15m',
+                },
+                { biometricProtected: user.biometricEnabled },
+              );
+              set({ user });
+            } catch {
+              // Keep cached session if background refresh fails.
+            }
           }
         })();
       } catch {

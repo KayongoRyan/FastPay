@@ -1,17 +1,43 @@
 import { getApiBaseUrl } from './config';
 
 type AccessTokenProvider = () => Promise<string | null>;
+type TokenRefresher = () => Promise<string | null>;
 
 const API_TIMEOUT_MS = __DEV__ ? 30_000 : 8_000;
+const SESSION_EXPIRED_MESSAGE = 'Session expired. Please sign in again.';
 
 let accessTokenProvider: AccessTokenProvider | null = null;
+let tokenRefresher: TokenRefresher | null = null;
 
 export function setAccessTokenProvider(provider: AccessTokenProvider | null): void {
   accessTokenProvider = provider;
 }
 
+export function setTokenRefresher(refresher: TokenRefresher | null): void {
+  tokenRefresher = refresher;
+}
+
 export function getApiUrl(): string {
   return getApiBaseUrl();
+}
+
+async function resolveAccessToken(forceRefresh = false): Promise<string | null> {
+  if (!accessTokenProvider) {
+    return null;
+  }
+
+  if (!forceRefresh) {
+    const token = await accessTokenProvider();
+    if (token) {
+      return token;
+    }
+  }
+
+  if (!tokenRefresher) {
+    return accessTokenProvider();
+  }
+
+  return tokenRefresher();
 }
 
 async function buildHeaders(
@@ -21,11 +47,12 @@ async function buildHeaders(
     'Content-Type': 'application/json',
   };
 
-  if (authenticated && accessTokenProvider) {
-    const token = await accessTokenProvider();
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+  if (authenticated) {
+    const token = await resolveAccessToken();
+    if (!token) {
+      throw new Error(SESSION_EXPIRED_MESSAGE);
     }
+    headers.Authorization = `Bearer ${token}`;
   }
 
   return headers;
@@ -54,6 +81,10 @@ async function parseError(response: Response, path: string): Promise<never> {
   ) {
     message =
       'Payment history API is unavailable. In fastpay-backend run: npm run start:payment && npm run start:gateway';
+  }
+
+  if (response.status === 401 && message === 'Unauthorized') {
+    message = SESSION_EXPIRED_MESSAGE;
   }
 
   throw new Error(message);
@@ -87,6 +118,7 @@ async function apiFetch<T>(
   path: string,
   body?: unknown,
   authenticated = false,
+  retried = false,
 ): Promise<T> {
   const headers = await buildHeaders(authenticated);
 
@@ -104,6 +136,19 @@ async function apiFetch<T>(
     throw new Error(
       `Cannot reach API at ${getApiUrl()}. Start the backend gateway and try again.`,
     );
+  }
+
+  if (
+    !response.ok &&
+    authenticated &&
+    response.status === 401 &&
+    tokenRefresher &&
+    !retried
+  ) {
+    const refreshed = await resolveAccessToken(true);
+    if (refreshed) {
+      return apiFetch<T>(method, path, body, authenticated, true);
+    }
   }
 
   if (!response.ok) {
