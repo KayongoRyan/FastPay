@@ -7,8 +7,10 @@ export {
 export {
   initiateMomoPayment,
   getMomoPaymentStatus,
+  fetchMomoHistory,
   type InitiateMomoPaymentRequest,
   type MomoPaymentStatusResponse,
+  type MomoHistoryItem,
 } from './momo';
 export { sendEmailOtp, verifyEmailOtp } from './onboarding';
 export { uploadKycDocument, fetchKycStatus, type KycDocumentType } from './kyc';

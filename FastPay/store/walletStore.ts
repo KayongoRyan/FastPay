@@ -16,6 +16,7 @@ import {
   type PaymentHistoryItem,
 } from '@/lib/api/stellar';
 import { getRelayStatus, submitOfflineRelay, type RelayResponse, type RelayStatusResponse } from '@/lib/api';
+import { fetchMomoHistory, type MomoHistoryItem } from '@/lib/api/momo';
 import { buildUnsignedPayment } from '@/lib/stellar/build-payment';
 import { STELLAR_NETWORK_PASSPHRASE } from '@/lib/stellar/constants';
 import type { StellarBalanceEntry, WalletTransaction } from '@/lib/stellar/types';
@@ -39,6 +40,7 @@ interface WalletState {
   balanceXlmFormatted: string;
   transactions: WalletTransaction[];
   payments: PaymentHistoryItem[];
+  momoHistory: MomoHistoryItem[];
   mpcService: MpcWalletService | null;
   initialize: () => Promise<void>;
   createWallet: () => Promise<MpcWallet>;
@@ -79,6 +81,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   balanceXlmFormatted: '0.00',
   transactions: [],
   payments: [],
+  momoHistory: [],
   mpcService: null,
 
   initialize: async () => {
@@ -121,9 +124,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     set({ isRefreshing: true, error: null });
 
     try {
-      const [balances, payments] = await Promise.all([
+      const [balances, payments, momoHistory] = await Promise.all([
         fetchAccountBalances(wallet.publicKey),
         fetchPaymentHistory(wallet.publicKey),
+        fetchMomoHistory(wallet.publicKey).catch(() => [] as MomoHistoryItem[]),
       ]);
 
       const nativeBalanceXlm = getNativeBalance(balances);
@@ -136,6 +140,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         balanceRwfEstimate: formatRwfEstimateFromXlm(nativeBalanceXlm),
         transactions,
         payments,
+        momoHistory,
         isRefreshing: false,
       });
     } catch (error) {
@@ -189,6 +194,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         balanceRwfEstimate: '0',
         balanceXlmFormatted: '0.00',
         transactions: [],
+        payments: [],
+        momoHistory: [],
       });
     } catch (error) {
       set({
