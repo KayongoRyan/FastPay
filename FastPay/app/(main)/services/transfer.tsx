@@ -9,6 +9,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function TransferServiceScreen() {
   return (
@@ -63,17 +64,17 @@ export default function TransferServiceScreen() {
           {
             label: "FastPay to FastPay",
             detail: "Wallet-to-wallet, lowest fees",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.walletTransfer),
           },
           {
             label: "FastPay to MoMo",
             detail: "Top up MTN or Airtel",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy()),
           },
           {
             label: "Bank transfer",
             detail: "Send to any local bank account",
-            onPress: () => router.push("/quick-links/bank-pay"),
+            onPress: () => router.push(featureRoutes.bankPay),
           },
         ]}
       />
@@ -81,7 +82,7 @@ export default function TransferServiceScreen() {
         actions={[
           {
             label: "Start a transfer",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.walletTransfer),
           },
         ]}
       />

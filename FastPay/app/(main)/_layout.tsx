@@ -33,6 +33,8 @@ export default function MainLayout() {
       <Tabs.Screen name="bills" options={{ href: null, title: "Bills" }} />
       <Tabs.Screen name="quick-links" options={{ href: null, title: "Quick Links" }} />
       <Tabs.Screen name="services" options={{ href: null, title: "Services" }} />
+      <Tabs.Screen name="loan" options={{ href: null, title: "Loan" }} />
+      <Tabs.Screen name="irembo" options={{ href: null, title: "Irembo" }} />
     </Tabs>
   );
 }

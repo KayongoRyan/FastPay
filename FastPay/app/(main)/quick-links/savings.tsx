@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function SavingsScreen() {
   return (
@@ -76,17 +77,17 @@ export default function SavingsScreen() {
           {
             label: "Create a savings goal",
             detail: "Set a target and deadline",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("goals")),
           },
           {
             label: "Family Plan savings",
             detail: "Long-term children's funds",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("budget")),
           },
           {
             label: "View wallet balance",
             detail: "Check available funds",
-            onPress: () => router.push("/wallet"),
+            onPress: () => router.push(featureRoutes.wallet),
           },
         ]}
       />
@@ -94,7 +95,7 @@ export default function SavingsScreen() {
         actions={[
           {
             label: "Open savings goal",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("goals")),
           },
         ]}
       />

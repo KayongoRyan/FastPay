@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function StatementScreen() {
   return (
@@ -77,17 +78,17 @@ export default function StatementScreen() {
           {
             label: "Cash flow",
             detail: "Income & expenses this week",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
           {
             label: "Budget overview",
             detail: "Planned vs actual spending",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("budget")),
           },
           {
             label: "Savings goals",
             detail: "Track your progress",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("goals")),
           },
         ]}
       />
@@ -95,7 +96,7 @@ export default function StatementScreen() {
         actions={[
           {
             label: "Open Analytics",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
         ]}
       />

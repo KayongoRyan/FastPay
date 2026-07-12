@@ -24,9 +24,15 @@ interface AddBillModalProps {
   visible: boolean;
   onClose: () => void;
   onAdded?: (paidAt: string) => void;
+  initialCategoryId?: BillCategoryId;
 }
 
-export function AddBillModal({ visible, onClose, onAdded }: AddBillModalProps) {
+export function AddBillModal({
+  visible,
+  onClose,
+  onAdded,
+  initialCategoryId,
+}: AddBillModalProps) {
   const insets = useSafeAreaInsets();
   const { addPayment, isSaving } = useBillsStore();
 
@@ -42,11 +48,11 @@ export function AddBillModal({ visible, onClose, onAdded }: AddBillModalProps) {
     }
 
     setLabel("");
-    setCategoryId("rent");
+    setCategoryId(initialCategoryId ?? "rent");
     setAmount("");
     setPaidAt(toIsoDate(new Date()));
     setError(null);
-  }, [visible]);
+  }, [visible, initialCategoryId]);
 
   const handleSubmit = async () => {
     const validationError = validateAddBillForm({

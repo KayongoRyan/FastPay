@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 const RATES = [
   { pair: "USD / RWF", rate: "1,380.50", change: "+0.12%" },
@@ -74,17 +75,17 @@ export default function ForexScreen() {
           {
             label: "RWF to USDT",
             detail: "Most popular pair",
-            onPress: () => router.push("/convert"),
+            onPress: () => router.push(featureRoutes.convert),
           },
           {
             label: "USDT to RWF",
             detail: "Cash out to local currency",
-            onPress: () => router.push("/convert"),
+            onPress: () => router.push(featureRoutes.convert),
           },
           {
             label: "View rate history",
             detail: "Past 30 days",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
         ]}
       />
@@ -92,7 +93,7 @@ export default function ForexScreen() {
         actions={[
           {
             label: "Convert now",
-            onPress: () => router.push("/convert"),
+            onPress: () => router.push(featureRoutes.convert),
           },
         ]}
       />

@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function ComplianceScreen() {
   return (
@@ -76,17 +77,17 @@ export default function ComplianceScreen() {
           {
             label: "Complete KYC verification",
             detail: "Upload your national ID",
-            onPress: () => router.push("/kyc"),
+            onPress: () => router.push(featureRoutes.kyc),
           },
           {
             label: "View account limits",
             detail: "See your current tier",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.settings),
           },
           {
             label: "Download tax summary",
             detail: "Annual transaction report",
-            onPress: () => router.push("/quick-links/statement"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
         ]}
       />
@@ -94,7 +95,7 @@ export default function ComplianceScreen() {
         actions={[
           {
             label: "Verify my identity",
-            onPress: () => router.push("/kyc"),
+            onPress: () => router.push(featureRoutes.kyc),
           },
         ]}
       />

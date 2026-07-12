@@ -10,16 +10,17 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 const IREMBO_SERVICES = [
-  { name: "National ID application", fee: "From 5,000 RWF" },
-  { name: "Birth certificate", fee: "2,000 RWF" },
-  { name: "Police clearance", fee: "10,000 RWF" },
-  { name: "Land title search", fee: "5,000 RWF" },
-  { name: "Driving license renewal", fee: "15,000 RWF" },
+  { id: "national-id" as const, name: "National ID application", fee: "5,000 RWF" },
+  { id: "birth-certificate" as const, name: "Birth certificate", fee: "2,000 RWF" },
+  { id: "police-clearance" as const, name: "Police clearance", fee: "10,000 RWF" },
+  { id: "land-title" as const, name: "Land title search", fee: "5,000 RWF" },
+  { id: "driving-license" as const, name: "Driving license renewal", fee: "15,000 RWF" },
 ];
 
-export default function IremboScreen() {
+export default function IremboQuickLinkScreen() {
   return (
     <FeaturePageLayout
       title="Irembo"
@@ -41,11 +42,11 @@ export default function IremboScreen() {
         steps={[
           {
             title: "Browse services",
-            detail: "Find the government service you need on Irembo.",
+            detail: "Find the government service you need.",
           },
           {
             title: "Pay with FastPay",
-            detail: "Select FastPay as payment method at checkout.",
+            detail: "Complete payment from your wallet.",
           },
           {
             title: "Track your application",
@@ -63,25 +64,24 @@ export default function IremboScreen() {
       <FeatureInfoPanel
         title="How it works"
         lines={[
-          "Start your application on irembo.gov.rw",
-          "Choose FastPay when prompted for payment",
+          "Select a service and pay the listed fee",
           "Your receipt and reference are stored in-app",
           "Application status updates via SMS and email",
         ]}
       />
       <FeatureActionList
         title="Common services"
-        actions={IREMBO_SERVICES.slice(0, 4).map((service) => ({
+        actions={IREMBO_SERVICES.map((service) => ({
           label: service.name,
           detail: service.fee,
-          onPress: () => router.push("/settings"),
+          onPress: () => router.push(featureRoutes.iremboService(service.id)),
         }))}
       />
       <FeatureActions
         actions={[
           {
-            label: "Go to Irembo services",
-            onPress: () => router.push("/settings"),
+            label: "Browse Irembo services",
+            onPress: () => router.push(featureRoutes.iremboService()),
           },
         ]}
       />

@@ -10,11 +10,12 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 const LOAN_TYPES = [
-  { name: "Personal loan", range: "50K – 2M RWF", rate: "From 18% p.a." },
-  { name: "Business loan", range: "500K – 10M RWF", rate: "From 15% p.a." },
-  { name: "Salary advance", range: "Up to 1 month salary", rate: "From 12% p.a." },
+  { id: "personal" as const, name: "Personal loan", range: "50K – 2M RWF" },
+  { id: "business" as const, name: "Business loan", range: "500K – 10M RWF" },
+  { id: "salary" as const, name: "Salary advance", range: "Up to 1 month salary" },
 ];
 
 export default function GetLoanScreen() {
@@ -55,7 +56,7 @@ export default function GetLoanScreen() {
         title="Loan products"
         items={LOAN_TYPES.map((loan) => ({
           title: loan.name,
-          detail: `${loan.range} · ${loan.rate}`,
+          detail: loan.range,
         }))}
       />
       <FeatureInfoPanel
@@ -72,14 +73,14 @@ export default function GetLoanScreen() {
         actions={LOAN_TYPES.map((loan) => ({
           label: loan.name,
           detail: loan.range,
-          onPress: () => router.push("/settings"),
+          onPress: () => router.push(featureRoutes.loanApply(loan.id)),
         }))}
       />
       <FeatureActions
         actions={[
           {
             label: "Check my eligibility",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.loanApply("personal")),
           },
         ]}
       />

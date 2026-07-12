@@ -9,6 +9,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function SavingsGoalScreen() {
   return (
@@ -73,11 +74,11 @@ export default function SavingsGoalScreen() {
         actions={[
           {
             label: "Open savings goals",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("goals")),
           },
           {
             label: "Set up family plan",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("budget")),
             variant: "outline",
           },
         ]}

@@ -10,12 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
-
-const PLANS = [
-  { name: "Health Basic", price: "15,000 RWF/mo", coverage: "Outpatient + emergency" },
-  { name: "Motor Cover", price: "45,000 RWF/mo", coverage: "Third-party + theft" },
-  { name: "Device Shield", price: "8,000 RWF/mo", coverage: "Phone & laptop damage" },
-];
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function InsuranceScreen() {
   return (
@@ -53,10 +48,20 @@ export default function InsuranceScreen() {
       />
       <FeatureHighlights
         title="Available plans"
-        items={PLANS.map((plan) => ({
-          title: `${plan.name} — ${plan.price}`,
-          detail: plan.coverage,
-        }))}
+        items={[
+          {
+            title: "Health Basic — 15,000 RWF/mo",
+            detail: "Outpatient + emergency",
+          },
+          {
+            title: "Motor Cover — 45,000 RWF/mo",
+            detail: "Third-party + theft",
+          },
+          {
+            title: "Device Shield — 8,000 RWF/mo",
+            detail: "Phone & laptop damage",
+          },
+        ]}
       />
       <FeatureInfoPanel
         title="Policy benefits"
@@ -73,17 +78,17 @@ export default function InsuranceScreen() {
           {
             label: "Get a health quote",
             detail: "Individual and family plans",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.insurancePlans("health")),
           },
           {
             label: "Insure my vehicle",
             detail: "Motor third-party and comprehensive",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.insurancePlans("motor")),
           },
           {
             label: "My policies",
             detail: "View active coverage",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
         ]}
       />
@@ -91,7 +96,7 @@ export default function InsuranceScreen() {
         actions={[
           {
             label: "Browse insurance plans",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.insurancePlans()),
           },
         ]}
       />

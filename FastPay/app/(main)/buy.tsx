@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Modal,
@@ -43,6 +43,7 @@ const EMPTY_PHONES: ProviderPhones = {
 
 export default function BuyScreen() {
   const { user } = useRequireAuth();
+  const { provider: providerParam } = useLocalSearchParams<{ provider?: string }>();
   const { wallet, initialize } = useWalletStore();
 
   const [amount, setAmount] = useState("10000");
@@ -62,6 +63,12 @@ export default function BuyScreen() {
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    if (providerParam === "mtn" || providerParam === "airtel") {
+      setProviderId(providerParam);
+    }
+  }, [providerParam]);
 
   useEffect(() => {
     if (!user?.phone) {

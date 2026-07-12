@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function FamilyWalletScreen() {
   return (
@@ -74,14 +75,14 @@ export default function FamilyWalletScreen() {
         title="Family actions"
         actions={[
           {
-            label: "Invite a member",
-            detail: "Add spouse, parent, or child",
-            onPress: () => router.push("/settings"),
+            label: "Create family wallet",
+            detail: "Set up your household group",
+            onPress: () => router.push(featureRoutes.familySetup),
           },
           {
             label: "View family budget",
             detail: "Track household spending",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("budget")),
           },
         ]}
       />
@@ -89,7 +90,7 @@ export default function FamilyWalletScreen() {
         actions={[
           {
             label: "Create family wallet",
-            onPress: () => router.push("/settings"),
+            onPress: () => router.push(featureRoutes.familySetup),
           },
         ]}
       />
