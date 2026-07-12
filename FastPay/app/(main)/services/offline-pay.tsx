@@ -1,88 +1,99 @@
-import { Href, router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ArrowDownLeft, ArrowUpRight, WifiOff } from "lucide-react-native";
+import { router } from "expo-router";
+import { WifiOff } from "lucide-react-native";
 
-import { ServiceScreenShell } from "@/components/services";
-import { colors } from "@/theme/colors";
-import { radius, spacing } from "@/theme/spacing";
+import {
+  FeatureActionList,
+  FeatureActions,
+  FeatureHighlights,
+  FeatureInfoPanel,
+  FeaturePageLayout,
+  FeatureStatRow,
+  FeatureSteps,
+} from "@/components/feature";
 
 export default function OfflinePayScreen() {
   return (
-    <ServiceScreenShell
+    <FeaturePageLayout
       title="Offline Pay"
       icon={WifiOff}
-      description="Sign payments without internet and relay them when you are back online."
-      features={[
-        "Generate signed payment QR codes",
-        "Scan and store offline transactions",
-        "Auto-relay when connectivity returns",
-        "Works with Stellar-backed wallets",
-      ]}
+      tag="NO INTERNET NEEDED"
+      headline="Pay without connectivity"
+      description="Use QR codes and NFC tap-to-pay when you're offline — syncs automatically when you're back online."
+      accentColor="#FB923C"
     >
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.actionCard}
-          onPress={() => router.push("/offline/send" as Href)}
-        >
-          <View style={styles.actionIcon}>
-            <ArrowUpRight color={colors.white} size={22} />
-          </View>
-          <View style={styles.actionCopy}>
-            <Text style={styles.actionTitle}>Send offline</Text>
-            <Text style={styles.actionMeta}>Create a signed payment QR</Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={styles.actionCard}
-          onPress={() => router.push("/offline/receive" as Href)}
-        >
-          <View style={styles.actionIcon}>
-            <ArrowDownLeft color={colors.white} size={22} />
-          </View>
-          <View style={styles.actionCopy}>
-            <Text style={styles.actionTitle}>Receive offline</Text>
-            <Text style={styles.actionMeta}>Scan and relay when online</Text>
-          </View>
-        </Pressable>
-      </View>
-    </ServiceScreenShell>
+      <FeatureStatRow
+        stats={[
+          { label: "Methods", value: "QR + NFC" },
+          { label: "Offline limit", value: "50K RWF" },
+          { label: "Sync", value: "Automatic" },
+        ]}
+      />
+      <FeatureSteps
+        title="How offline pay works"
+        steps={[
+          {
+            title: "Generate your code",
+            detail: "Create a one-time QR or enable NFC before going offline.",
+          },
+          {
+            title: "Merchant scans or taps",
+            detail: "Payment is authorized locally on your device.",
+          },
+          {
+            title: "Auto-sync later",
+            detail: "Transaction settles when your phone reconnects.",
+          },
+        ]}
+      />
+      <FeatureHighlights
+        title="Offline features"
+        items={[
+          {
+            title: "QR receive codes",
+            detail: "Show a scannable code for merchants without internet.",
+          },
+          {
+            title: "NFC tap-to-pay",
+            detail: "Tap your phone on supported POS terminals.",
+          },
+          {
+            title: "Queued transactions",
+            detail: "Pending payments show in your wallet until synced.",
+          },
+        ]}
+      />
+      <FeatureInfoPanel
+        title="Important"
+        lines={[
+          "Offline limit is 50,000 RWF per transaction.",
+          "You need at least one online session every 7 days.",
+          "KYC verification required for offline payments.",
+          "Funds are reserved on your device until sync completes.",
+        ]}
+      />
+      <FeatureActionList
+        title="Offline actions"
+        actions={[
+          {
+            label: "Generate offline QR",
+            detail: "Create a receive code now",
+            onPress: () => router.push("/wallet/receive"),
+          },
+          {
+            label: "Enable NFC payments",
+            detail: "Set up tap-to-pay",
+            onPress: () => router.push("/settings"),
+          },
+        ]}
+      />
+      <FeatureActions
+        actions={[
+          {
+            label: "Set up offline pay",
+            onPress: () => router.push("/wallet/receive"),
+          },
+        ]}
+      />
+    </FeaturePageLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    marginTop: spacing.lg,
-    gap: spacing.sm,
-  },
-  actionCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    backgroundColor: colors.inputBg,
-  },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  actionCopy: {
-    flex: 1,
-  },
-  actionTitle: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  actionMeta: {
-    color: colors.textMuted,
-    fontSize: 13,
-    marginTop: 2,
-  },
-});

@@ -27,19 +27,19 @@ export const PRIMARY_SERVICES: ServiceItem[] = [
     id: "transfer",
     label: "Transfer",
     icon: ArrowLeftRight,
-    href: "/wallet/transfer",
+    href: "/services/transfer",
   },
   {
     id: "voucher",
     label: "Voucher",
     icon: TicketPercent,
-    href: "/buy",
+    href: "/services/voucher",
   },
   {
     id: "bill",
     label: "Bill",
     icon: Receipt,
-    href: "/bills",
+    href: "/services/bill",
   },
   {
     id: "more",
