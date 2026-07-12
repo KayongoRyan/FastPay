@@ -100,7 +100,13 @@ export function MainTabBar({ state, navigation, descriptors }: BottomTabBarProps
             <Pressable
               key={item.name}
               style={styles.tab}
-              onPress={() => navigation.navigate(item.name)}
+              onPress={() => {
+                if (item.name === "wallet") {
+                  navigation.navigate("wallet", { screen: "index" });
+                  return;
+                }
+                navigation.navigate(item.name);
+              }}
               hitSlop={6}
             >
               <Icon
