@@ -5,6 +5,7 @@ import { colors } from "@/theme/colors";
 export default function WalletLayout() {
   return (
     <Stack
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: colors.background },
