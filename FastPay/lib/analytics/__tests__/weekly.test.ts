@@ -26,6 +26,12 @@ import {
 } from "@/lib/analytics/monthly";
 import { evaluateGoal } from "@/lib/analytics/goals";
 import {
+  buildTimeline,
+  evaluateFamilyPlan,
+  getUnlockDate,
+  suggestChildName,
+} from "@/lib/analytics/family-plan";
+import {
   createEmptyPlan,
   evaluateWeeklyPlan,
 } from "@/lib/analytics/weekly-plan";
@@ -45,6 +51,8 @@ function runTests() {
   testValidatePercentages();
   testEvaluateBudgetHealth();
   testGoalProgress();
+  testFamilyPlanLockAndTimeline();
+  testSuggestChildName();
 }
 
 function testWeekBoundsStartOnMonday() {
@@ -355,6 +363,39 @@ function testGoalProgress() {
   });
   assert.equal(complete.progress, 1);
   assert.equal(complete.isComplete, true);
+}
+
+function testFamilyPlanLockAndTimeline() {
+  const plan = {
+    id: "f1",
+    name: "First child",
+    targetRwf: 1_000_000,
+    savedRwf: 100_000,
+    lockYears: 15 as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+  };
+
+  const unlock = getUnlockDate(plan.createdAt, plan.lockYears);
+  assert.equal(unlock.getFullYear(), 2041);
+
+  const locked = evaluateFamilyPlan(plan, new Date("2030-06-01T00:00:00.000Z"));
+  assert.equal(locked.isLocked, true);
+  assert.ok(locked.yearsRemaining > 0);
+
+  const unlocked = evaluateFamilyPlan(plan, new Date("2042-01-01T00:00:00.000Z"));
+  assert.equal(unlocked.isUnlocked, true);
+  assert.equal(unlocked.yearsRemaining, 0);
+
+  const timeline = buildTimeline(plan, new Date("2026-07-01T00:00:00.000Z"));
+  assert.equal(timeline[0].label, "Start");
+  assert.equal(timeline[timeline.length - 1].label, "Unlock");
+  assert.equal(timeline[timeline.length - 1].year, 2041);
+}
+
+function testSuggestChildName() {
+  assert.equal(suggestChildName(0), "First child");
+  assert.equal(suggestChildName(1), "Second child");
+  assert.equal(suggestChildName(5), "Child 6");
 }
 
 runTests();

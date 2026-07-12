@@ -6,6 +6,7 @@ import {
   AnalyticsModeTabs,
   BudgetBuilderCard,
   BudgetOverviewCard,
+  FamilyPlanCard,
   GoalsList,
   MonthPicker,
   WeekPicker,
@@ -32,6 +33,7 @@ import {
 import { evaluateWeeklyPlan, createEmptyPlan } from "@/lib/analytics/weekly-plan";
 import { useBillsStore } from "@/store/billsStore";
 import { useBudgetStore } from "@/store/budgetStore";
+import { useFamilyPlanStore } from "@/store/familyPlanStore";
 import { useWalletStore } from "@/store/walletStore";
 import { useWeeklyPlanStore } from "@/store/weeklyPlanStore";
 import { colors } from "@/theme/colors";
@@ -79,13 +81,24 @@ export default function AnalyticsScreen() {
     isReady: budgetReady,
     error: budgetError,
   } = useBudgetStore();
+  const {
+    initialize: initFamilyPlans,
+    plans: familyPlans,
+    addPlan: addFamilyPlan,
+    contribute: contributeFamilyPlan,
+    deletePlan: deleteFamilyPlan,
+    isSaving: familyPlanSaving,
+    isReady: familyPlanReady,
+    error: familyPlanError,
+  } = useFamilyPlanStore();
 
   useEffect(() => {
     void initialize();
     void initBills();
     void initPlans();
     void initBudget();
-  }, [initialize, initBills, initPlans, initBudget]);
+    void initFamilyPlans();
+  }, [initialize, initBills, initPlans, initBudget, initFamilyPlans]);
 
   useFocusEffect(
     useCallback(() => {
@@ -207,18 +220,26 @@ export default function AnalyticsScreen() {
         />
       ) : null}
 
-      {mode === "budget" && budgetReady ? (
+      {mode === "budget" && budgetReady && familyPlanReady ? (
         <BudgetSection
           budget={budget}
           budgetStatus={budgetStatus}
           budgetSaving={budgetSaving}
           budgetError={budgetError}
+          familyPlans={familyPlans}
+          familyPlanSaving={familyPlanSaving}
+          familyPlanError={familyPlanError}
           period={budget.period}
           isCurrentWeek={isCurrentWeek}
           isCurrentMonth={isCurrentMonth}
           weeklyBounds={weeklySummary.bounds}
           monthlyBounds={monthlySummary.bounds}
           onSaveBudget={(nextBudget) => void saveBudget(nextBudget)}
+          onAddFamilyPlan={(input) => void addFamilyPlan(input)}
+          onContributeFamilyPlan={(planId, amount) =>
+            void contributeFamilyPlan(planId, amount)
+          }
+          onDeleteFamilyPlan={(planId) => void deleteFamilyPlan(planId)}
           onPreviousWeek={() => setWeekAnchor((date) => shiftWeek(date, -1))}
           onNextWeek={() => {
             if (!isCurrentWeek) {
@@ -392,12 +413,18 @@ function BudgetSection({
   budgetStatus,
   budgetSaving,
   budgetError,
+  familyPlans,
+  familyPlanSaving,
+  familyPlanError,
   period,
   isCurrentWeek,
   isCurrentMonth,
   weeklyBounds,
   monthlyBounds,
   onSaveBudget,
+  onAddFamilyPlan,
+  onContributeFamilyPlan,
+  onDeleteFamilyPlan,
   onPreviousWeek,
   onNextWeek,
   onPreviousMonth,
@@ -407,12 +434,20 @@ function BudgetSection({
   budgetStatus: ReturnType<typeof evaluateBudget> | null;
   budgetSaving: boolean;
   budgetError: string | null;
+  familyPlans: ReturnType<typeof useFamilyPlanStore.getState>["plans"];
+  familyPlanSaving: boolean;
+  familyPlanError: string | null;
   period: "weekly" | "monthly";
   isCurrentWeek: boolean;
   isCurrentMonth: boolean;
   weeklyBounds: ReturnType<typeof getWeekBounds>;
   monthlyBounds: ReturnType<typeof getMonthBounds>;
   onSaveBudget: (budget: ReturnType<typeof useBudgetStore.getState>["budget"]) => void;
+  onAddFamilyPlan: (
+    input: Parameters<ReturnType<typeof useFamilyPlanStore.getState>["addPlan"]>[0],
+  ) => void;
+  onContributeFamilyPlan: (planId: string, amount: number) => void;
+  onDeleteFamilyPlan: (planId: string) => void;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onPreviousMonth: () => void;
@@ -450,6 +485,15 @@ function BudgetSection({
           periodLabel={period === "weekly" ? "week" : "month"}
         />
       ) : null}
+
+      <FamilyPlanCard
+        plans={familyPlans}
+        isSaving={familyPlanSaving}
+        error={familyPlanError}
+        onAddPlan={onAddFamilyPlan}
+        onContribute={onContributeFamilyPlan}
+        onDelete={onDeleteFamilyPlan}
+      />
     </>
   );
 }
