@@ -33,6 +33,10 @@ export const featureRoutes = {
   kyc: "/(auth)/kyc" as Href,
   offlineReceive: "/offline/receive" as Href,
   settings: "/settings" as Href,
+  support: "/support" as Href,
+  login: "/login" as Href,
+  forgotPasscode: (returnTo?: string) =>
+    withQuery("/forgot-passcode", { returnTo }),
 
   buy: (provider?: MobileMoneyProviderId) =>
     withQuery("/buy", { provider }),
@@ -57,5 +61,4 @@ export const featureRoutes = {
   familySetup: "/services/family-setup" as Href,
   voucher: "/services/voucher" as Href,
   escrowTransfer: "/wallet/transfer" as Href,
-  support: "/support" as Href,
 };

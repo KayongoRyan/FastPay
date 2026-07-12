@@ -55,6 +55,13 @@ export default function SettingsScreen() {
 
       <Pressable
         style={styles.rowBtn}
+        onPress={() => router.push(featureRoutes.forgotPasscode("/settings"))}
+      >
+        <Text style={styles.rowBtnText}>Reset transaction passcode</Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.rowBtn}
         onPress={() => router.push(featureRoutes.support)}
       >
         <Text style={styles.rowBtnText}>Help & Assistant</Text>

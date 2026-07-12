@@ -49,3 +49,9 @@ export async function biometricLogin(input: {
 }): Promise<AuthSession> {
   return apiPost<AuthSession>('/auth/biometric/login', input);
 }
+
+export async function verifyAccountPassword(
+  password: string,
+): Promise<{ verified: true }> {
+  return apiPostAuth<{ verified: true }>('/auth/verify-password', { password });
+}

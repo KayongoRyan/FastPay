@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { VerifyPasswordDto } from './dto/verify-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthenticatedUser } from './interfaces/jwt-payload.interface';
 import { extractAuditContext } from './utils/request-context.util';
@@ -77,6 +78,19 @@ export class AuthController {
   @Get('me')
   me(@Req() req: Request & { user: AuthenticatedUser }) {
     return this.authService.getProfile(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('verify-password')
+  verifyPassword(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Body() dto: VerifyPasswordDto,
+  ) {
+    return this.authService.verifyPassword(
+      req.user.userId,
+      dto.password,
+      extractAuditContext(req),
+    );
   }
 
   @UseGuards(JwtAuthGuard)

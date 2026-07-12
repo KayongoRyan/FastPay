@@ -375,6 +375,48 @@ export class AuthService {
     return { user: this.toAuthUser(user), tokens };
   }
 
+  async verifyPassword(
+    userId: string,
+    password: string,
+    context?: AuditContext,
+  ): Promise<{ verified: true }> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('+passwordHash')
+      .exec();
+
+    if (!user?.passwordHash) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.PASSCODE_RESET_FAILED,
+        userId,
+        context,
+        details: { reason: 'no_password' },
+      });
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    this.assertAccountUsable(user);
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.PASSCODE_RESET_FAILED,
+        userId,
+        context,
+        details: { reason: 'invalid_password' },
+      });
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.PASSCODE_RESET_VERIFY,
+      userId,
+      context,
+    });
+
+    return { verified: true };
+  }
+
   async getProfile(userId: string): Promise<AuthUserResponse> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {

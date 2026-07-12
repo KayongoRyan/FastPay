@@ -1,6 +1,5 @@
 import { Href, router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 
 import { PinEntryLayout } from "@/components/ui/PinEntryLayout";
@@ -73,13 +72,6 @@ export default function PinSetupScreen() {
       onDelete={onDelete}
       error={authError}
       loading={submitting}
-      forgotPasscode={{
-        onPress: () =>
-          Alert.alert(
-            "Forgot passcode?",
-            "Choose a PIN you will remember. You need it to authorize payments.",
-          ),
-      }}
       onBack={() => router.back()}
       secondaryAction={{
         label: "Back to sign up",

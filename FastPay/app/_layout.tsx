@@ -28,6 +28,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(main)" />
         <Stack.Screen name="bank-pay" options={{ animation: "slide_from_right" }} />
+        <Stack.Screen name="forgot-passcode" options={{ animation: "slide_from_right" }} />
         <Stack.Screen name="biometric-unlock" />
         <Stack.Screen name="offline/send" options={{ headerShown: true, title: "Offline Send", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
         <Stack.Screen name="offline/receive" options={{ headerShown: true, title: "Offline Receive", headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.white }} />
