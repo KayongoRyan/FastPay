@@ -2,56 +2,128 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
 import {
+  createDefaultFamilySettings,
+  createFamilyContributionId,
   createFamilyPlanId,
+  evaluateFamilyIncomeAllocation,
   evaluateFamilyPlan,
+  getYearlyIncomeRwf,
+  validateFamilyContribution,
   type FamilyChildPlan,
+  type FamilyContribution,
+  type FamilyPlanData,
+  type FamilyPlanSettings,
   type LockPeriodYears,
+  type YearlyIncomePercent,
 } from "@/lib/analytics/family-plan";
+import type { WeeklyFinanceSources } from "@/lib/analytics/weekly";
 
 const STORAGE_KEY = "fastpay_family_plans";
 
 interface FamilyPlanState {
+  settings: FamilyPlanSettings;
   plans: FamilyChildPlan[];
+  contributions: FamilyContribution[];
   isReady: boolean;
   isSaving: boolean;
   error: string | null;
   initialize: () => Promise<void>;
+  saveSettings: (settings: FamilyPlanSettings) => Promise<void>;
   addPlan: (input: {
     name: string;
     targetRwf: number;
     lockYears: LockPeriodYears;
   }) => Promise<void>;
-  contribute: (planId: string, amountRwf: number) => Promise<void>;
+  contribute: (
+    planId: string,
+    amountRwf: number,
+    sources: WeeklyFinanceSources,
+  ) => Promise<boolean>;
   withdraw: (planId: string, amountRwf: number) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<void>;
 }
 
-function parsePlans(raw: string | null): FamilyChildPlan[] {
+function parseStored(raw: string | null): FamilyPlanData {
   if (!raw) {
-    return [];
+    return {
+      settings: createDefaultFamilySettings(),
+      plans: [],
+      contributions: [],
+    };
   }
 
   try {
-    const parsed = JSON.parse(raw) as FamilyChildPlan[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw) as Partial<FamilyPlanData> | FamilyChildPlan[];
+
+    if (Array.isArray(parsed)) {
+      return {
+        settings: createDefaultFamilySettings(),
+        plans: parsed,
+        contributions: [],
+      };
+    }
+
+    return {
+      settings: parsed.settings ?? createDefaultFamilySettings(),
+      plans: Array.isArray(parsed.plans) ? parsed.plans : [],
+      contributions: Array.isArray(parsed.contributions)
+        ? parsed.contributions
+        : [],
+    };
   } catch {
-    return [];
+    return {
+      settings: createDefaultFamilySettings(),
+      plans: [],
+      contributions: [],
+    };
   }
 }
 
-async function persist(plans: FamilyChildPlan[]) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
+async function persist(data: FamilyPlanData) {
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getAllocation(
+  settings: FamilyPlanSettings,
+  contributions: FamilyContribution[],
+  sources: WeeklyFinanceSources,
+) {
+  const yearlyIncomeRwf = getYearlyIncomeRwf(sources);
+  return evaluateFamilyIncomeAllocation({
+    yearlyIncomeRwf,
+    yearlyPercent: settings.yearlyIncomePercent,
+    contributions,
+  });
 }
 
 export const useFamilyPlanStore = create<FamilyPlanState>((set, get) => ({
+  settings: createDefaultFamilySettings(),
   plans: [],
+  contributions: [],
   isReady: false,
   isSaving: false,
   error: null,
 
   initialize: async () => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    set({ plans: parsePlans(raw), isReady: true, error: null });
+    const data = parseStored(raw);
+    set({ ...data, isReady: true, error: null });
+  },
+
+  saveSettings: async (settings) => {
+    set({ isSaving: true, error: null });
+
+    try {
+      const data = {
+        settings,
+        plans: get().plans,
+        contributions: get().contributions,
+      };
+      await persist(data);
+      set({ settings, isSaving: false });
+    } catch {
+      set({ isSaving: false, error: "Could not save family plan settings." });
+    }
   },
 
   addPlan: async (input) => {
@@ -67,31 +139,61 @@ export const useFamilyPlanStore = create<FamilyPlanState>((set, get) => ({
         createdAt: new Date().toISOString(),
       };
       const plans = [...get().plans, plan];
-      await persist(plans);
+      const data = {
+        settings: get().settings,
+        plans,
+        contributions: get().contributions,
+      };
+      await persist(data);
       set({ plans, isSaving: false });
     } catch {
       set({ isSaving: false, error: "Could not create family plan." });
     }
   },
 
-  contribute: async (planId, amountRwf) => {
+  contribute: async (planId, amountRwf, sources) => {
     const amount = Math.max(amountRwf, 0);
     if (amount <= 0) {
-      return;
+      return false;
+    }
+
+    const allocation = getAllocation(
+      get().settings,
+      get().contributions,
+      sources,
+    );
+    const validation = validateFamilyContribution(amount, allocation);
+    if (!validation.valid) {
+      set({ error: validation.message ?? "Contribution not allowed." });
+      return false;
     }
 
     set({ isSaving: true, error: null });
 
     try {
+      const contribution: FamilyContribution = {
+        id: createFamilyContributionId(),
+        planId,
+        amountRwf: amount,
+        contributedAt: new Date().toISOString(),
+      };
       const plans = get().plans.map((plan) =>
         plan.id === planId
           ? { ...plan, savedRwf: plan.savedRwf + amount }
           : plan,
       );
-      await persist(plans);
-      set({ plans, isSaving: false });
+      const contributions = [...get().contributions, contribution];
+      const data = {
+        settings: get().settings,
+        plans,
+        contributions,
+      };
+      await persist(data);
+      set({ plans, contributions, isSaving: false, error: null });
+      return true;
     } catch {
       set({ isSaving: false, error: "Could not add savings." });
+      return false;
     }
   },
 
@@ -120,7 +222,12 @@ export const useFamilyPlanStore = create<FamilyPlanState>((set, get) => ({
           ? { ...item, savedRwf: Math.max(item.savedRwf - amount, 0) }
           : item,
       );
-      await persist(plans);
+      const data = {
+        settings: get().settings,
+        plans,
+        contributions: get().contributions,
+      };
+      await persist(data);
       set({ plans, isSaving: false, error: null });
       return true;
     } catch {
@@ -134,10 +241,17 @@ export const useFamilyPlanStore = create<FamilyPlanState>((set, get) => ({
 
     try {
       const plans = get().plans.filter((plan) => plan.id !== planId);
-      await persist(plans);
+      const data = {
+        settings: get().settings,
+        plans,
+        contributions: get().contributions,
+      };
+      await persist(data);
       set({ plans, isSaving: false });
     } catch {
       set({ isSaving: false, error: "Could not delete family plan." });
     }
   },
 }));
+
+export type { YearlyIncomePercent };

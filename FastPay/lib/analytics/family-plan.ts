@@ -1,6 +1,18 @@
 export const LOCK_PERIOD_OPTIONS = [15, 20, 25, 30] as const;
 
+import type { WeeklyFinanceSources } from "@/lib/analytics/weekly";
+import { normalizeAllSources } from "@/lib/analytics/weekly";
+
 export type LockPeriodYears = (typeof LOCK_PERIOD_OPTIONS)[number];
+
+export const YEARLY_INCOME_PERCENT_OPTIONS = [5, 10, 15, 20, 25, 30] as const;
+
+export type YearlyIncomePercent =
+  (typeof YEARLY_INCOME_PERCENT_OPTIONS)[number];
+
+export interface FamilyPlanSettings {
+  yearlyIncomePercent: YearlyIncomePercent;
+}
 
 export interface FamilyChildPlan {
   id: string;
@@ -9,6 +21,35 @@ export interface FamilyChildPlan {
   savedRwf: number;
   lockYears: LockPeriodYears;
   createdAt: string;
+}
+
+export interface FamilyContribution {
+  id: string;
+  planId: string;
+  amountRwf: number;
+  contributedAt: string;
+}
+
+export interface FamilyPlanData {
+  settings: FamilyPlanSettings;
+  plans: FamilyChildPlan[];
+  contributions: FamilyContribution[];
+}
+
+export interface FamilyIncomeAllocation {
+  yearlyIncomeRwf: number;
+  yearlyPercent: number;
+  yearlyAllowanceRwf: number;
+  contributedYtdRwf: number;
+  remainingAllowanceRwf: number;
+  deductedFromIncomeRwf: number;
+  availableIncomeRwf: number;
+}
+
+export interface AdjustedPeriodIncome {
+  grossIncomeRwf: number;
+  familyPlanDeductionRwf: number;
+  availableIncomeRwf: number;
 }
 
 export interface TimelineMilestone {
@@ -43,6 +84,141 @@ const CHILD_NAME_PRESETS = [
 
 export function createFamilyPlanId(): string {
   return `family-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function createDefaultFamilySettings(): FamilyPlanSettings {
+  return { yearlyIncomePercent: 10 };
+}
+
+export function createFamilyContributionId(): string {
+  return `fcontrib-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function getYearlyIncomeRwf(
+  sources: WeeklyFinanceSources,
+  year: number = new Date().getFullYear(),
+): number {
+  const transactions = normalizeAllSources(sources);
+
+  return transactions
+    .filter(
+      (tx) =>
+        tx.direction === "income" &&
+        new Date(tx.occurredAt).getFullYear() === year,
+    )
+    .reduce((sum, tx) => sum + tx.amountRwf, 0);
+}
+
+export function filterContributionsYtd(
+  contributions: FamilyContribution[],
+  year: number = new Date().getFullYear(),
+): FamilyContribution[] {
+  return contributions.filter(
+    (item) => new Date(item.contributedAt).getFullYear() === year,
+  );
+}
+
+export function filterContributionsInRange(
+  contributions: FamilyContribution[],
+  start: Date,
+  end: Date,
+): FamilyContribution[] {
+  const startMs = start.getTime();
+  const endMs = end.getTime();
+
+  return contributions.filter((item) => {
+    const at = new Date(item.contributedAt).getTime();
+    return at >= startMs && at <= endMs;
+  });
+}
+
+export function totalContributed(
+  contributions: FamilyContribution[],
+): number {
+  return contributions.reduce((sum, item) => sum + item.amountRwf, 0);
+}
+
+export function computeYearlyFamilyAllowance(
+  yearlyIncomeRwf: number,
+  yearlyPercent: number,
+): number {
+  return Math.round((Math.max(yearlyIncomeRwf, 0) * yearlyPercent) / 100);
+}
+
+export function evaluateFamilyIncomeAllocation(input: {
+  yearlyIncomeRwf: number;
+  yearlyPercent: number;
+  contributions: FamilyContribution[];
+  year?: number;
+}): FamilyIncomeAllocation {
+  const year = input.year ?? new Date().getFullYear();
+  const ytdContributions = filterContributionsYtd(input.contributions, year);
+  const contributedYtdRwf = totalContributed(ytdContributions);
+  const yearlyAllowanceRwf = computeYearlyFamilyAllowance(
+    input.yearlyIncomeRwf,
+    input.yearlyPercent,
+  );
+  const remainingAllowanceRwf = Math.max(
+    yearlyAllowanceRwf - contributedYtdRwf,
+    0,
+  );
+
+  return {
+    yearlyIncomeRwf: input.yearlyIncomeRwf,
+    yearlyPercent: input.yearlyPercent,
+    yearlyAllowanceRwf,
+    contributedYtdRwf,
+    remainingAllowanceRwf,
+    deductedFromIncomeRwf: contributedYtdRwf,
+    availableIncomeRwf: Math.max(input.yearlyIncomeRwf - contributedYtdRwf, 0),
+  };
+}
+
+export function applyPeriodIncomeDeduction(
+  grossIncomeRwf: number,
+  contributions: FamilyContribution[],
+  start: Date,
+  end: Date,
+): AdjustedPeriodIncome {
+  const periodContributions = filterContributionsInRange(
+    contributions,
+    start,
+    end,
+  );
+  const familyPlanDeductionRwf = totalContributed(periodContributions);
+
+  return {
+    grossIncomeRwf,
+    familyPlanDeductionRwf,
+    availableIncomeRwf: Math.max(grossIncomeRwf - familyPlanDeductionRwf, 0),
+  };
+}
+
+export function validateFamilyContribution(
+  amountRwf: number,
+  allocation: FamilyIncomeAllocation,
+): { valid: boolean; message?: string } {
+  const amount = Math.max(amountRwf, 0);
+
+  if (amount <= 0) {
+    return { valid: false, message: "Enter an amount greater than 0." };
+  }
+
+  if (allocation.yearlyAllowanceRwf <= 0) {
+    return {
+      valid: false,
+      message: "No yearly income available to allocate. Record income first.",
+    };
+  }
+
+  if (amount > allocation.remainingAllowanceRwf) {
+    return {
+      valid: false,
+      message: `Only ${allocation.remainingAllowanceRwf.toLocaleString()} RWF left from your ${allocation.yearlyPercent}% yearly income allocation.`,
+    };
+  }
+
+  return { valid: true };
 }
 
 export function suggestChildName(existingCount: number): string {

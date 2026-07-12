@@ -10,16 +10,24 @@ import {
   suggestChildName,
   totalFamilyLocked,
   totalFamilySaved,
+  validateFamilyContribution,
+  YEARLY_INCOME_PERCENT_OPTIONS,
   type FamilyChildPlan,
+  type FamilyIncomeAllocation,
+  type FamilyPlanSettings,
   type LockPeriodYears,
+  type YearlyIncomePercent,
 } from "@/lib/analytics/family-plan";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
 interface FamilyPlanCardProps {
   plans: FamilyChildPlan[];
+  settings: FamilyPlanSettings;
+  incomeAllocation: FamilyIncomeAllocation;
   isSaving?: boolean;
   error?: string | null;
+  onSaveSettings: (settings: FamilyPlanSettings) => void;
   onAddPlan: (input: {
     name: string;
     targetRwf: number;
@@ -40,8 +48,11 @@ const FAMILY_COLORS = {
 
 export function FamilyPlanCard({
   plans,
+  settings,
+  incomeAllocation,
   isSaving = false,
   error,
+  onSaveSettings,
   onAddPlan,
   onContribute,
   onDelete,
@@ -72,9 +83,64 @@ export function FamilyPlanCard({
     <View style={styles.card}>
       <Text style={styles.title}>Family Plan</Text>
       <Text style={styles.subtitle}>
-        Long-term savings for your children. Funds stay locked until the year you
-        choose (15, 20, 25, or 30 years).
+        Long-term savings for your children. Set a yearly % of income — each
+        deposit is removed from your available income immediately.
       </Text>
+
+      <View style={styles.incomeCard}>
+        <Text style={styles.incomeCardTitle}>Yearly income allocation</Text>
+        <Text style={styles.fieldLabel}>
+          Percent of yearly income for family plan
+        </Text>
+        <View style={styles.percentRow}>
+          {YEARLY_INCOME_PERCENT_OPTIONS.map((percent) => (
+            <Pressable
+              key={percent}
+              style={[
+                styles.percentBtn,
+                settings.yearlyIncomePercent === percent && styles.percentBtnActive,
+              ]}
+              onPress={() =>
+                onSaveSettings({ yearlyIncomePercent: percent as YearlyIncomePercent })
+              }
+            >
+              <Text
+                style={[
+                  styles.percentBtnText,
+                  settings.yearlyIncomePercent === percent &&
+                    styles.percentBtnTextActive,
+                ]}
+              >
+                {percent}%
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.incomeStats}>
+          <IncomeStat
+            label="Yearly income"
+            value={`${incomeAllocation.yearlyIncomeRwf.toLocaleString()} RWF`}
+          />
+          <IncomeStat
+            label={`${incomeAllocation.yearlyPercent}% allowed`}
+            value={`${incomeAllocation.yearlyAllowanceRwf.toLocaleString()} RWF`}
+          />
+          <IncomeStat
+            label="Removed from income"
+            value={`${incomeAllocation.deductedFromIncomeRwf.toLocaleString()} RWF`}
+            tone="deduction"
+          />
+        </View>
+
+        <Text style={styles.availableIncome}>
+          Available income: {incomeAllocation.availableIncomeRwf.toLocaleString()} RWF
+        </Text>
+        <Text style={styles.remainingAllowance}>
+          {incomeAllocation.remainingAllowanceRwf.toLocaleString()} RWF left to add
+          this year
+        </Text>
+      </View>
 
       <View style={styles.summaryRow}>
         <SummaryStat label="Total saved" value={`${totalSaved.toLocaleString()} RWF`} />
@@ -155,6 +221,7 @@ export function FamilyPlanCard({
           <FamilyChildRow
             key={plan.id}
             plan={plan}
+            incomeAllocation={incomeAllocation}
             isSaving={isSaving}
             onContribute={onContribute}
             onDelete={onDelete}
@@ -167,28 +234,36 @@ export function FamilyPlanCard({
 
 function FamilyChildRow({
   plan,
+  incomeAllocation,
   isSaving,
   onContribute,
   onDelete,
 }: {
   plan: FamilyChildPlan;
+  incomeAllocation: FamilyIncomeAllocation;
   isSaving: boolean;
   onContribute: (planId: string, amountRwf: number) => void;
   onDelete: (planId: string) => void;
 }) {
   const [amount, setAmount] = useState("");
   const [showContribute, setShowContribute] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const status = evaluateFamilyPlan(plan);
 
   const handleContribute = () => {
     const value = Math.max(Number(amount.replace(/,/g, "")) || 0, 0);
-    if (value <= 0) {
+    const validation = validateFamilyContribution(value, incomeAllocation);
+    if (!validation.valid) {
+      setLocalError(validation.message ?? "Contribution not allowed.");
       return;
     }
+    setLocalError(null);
     onContribute(plan.id, value);
     setAmount("");
     setShowContribute(false);
   };
+
+  const previewAmount = Math.max(Number(amount.replace(/,/g, "")) || 0, 0);
 
   return (
     <View style={styles.childCard}>
@@ -290,10 +365,20 @@ function FamilyChildRow({
           <Input
             label="Add savings (RWF)"
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={(value) => {
+              setAmount(value);
+              setLocalError(null);
+            }}
             keyboardType="numeric"
             placeholder="0"
           />
+          {previewAmount > 0 ? (
+            <Text style={styles.deductionPreview}>
+              {previewAmount.toLocaleString()} RWF will be removed from your
+              available income immediately.
+            </Text>
+          ) : null}
+          {localError ? <Text style={styles.error}>{localError}</Text> : null}
           <View style={styles.contributeActions}>
             <Pressable
               style={styles.cancelBtn}
@@ -334,6 +419,30 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function IncomeStat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "deduction";
+}) {
+  return (
+    <View style={styles.incomeStat}>
+      <Text style={styles.incomeStatLabel}>{label}</Text>
+      <Text
+        style={[
+          styles.incomeStatValue,
+          tone === "deduction" && styles.incomeStatDeduction,
+        ]}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
@@ -354,6 +463,83 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginBottom: spacing.sm,
+  },
+  incomeCard: {
+    borderWidth: 1,
+    borderColor: "rgba(167,139,250,0.25)",
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    backgroundColor: FAMILY_COLORS.bg,
+    marginBottom: spacing.sm,
+  },
+  incomeCardTitle: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
+  },
+  percentRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  percentBtn: {
+    minWidth: 52,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    backgroundColor: colors.inputBg,
+  },
+  percentBtnActive: {
+    backgroundColor: FAMILY_COLORS.accent,
+    borderColor: FAMILY_COLORS.accent,
+  },
+  percentBtnText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  percentBtnTextActive: {
+    color: colors.white,
+  },
+  incomeStats: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  incomeStat: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(167,139,250,0.15)",
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+  },
+  incomeStatLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+  },
+  incomeStatValue: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 4,
+  },
+  incomeStatDeduction: {
+    color: colors.error,
+  },
+  availableIncome: {
+    color: colors.success,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  remainingAllowance: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 4,
   },
   summaryRow: {
     flexDirection: "row",
@@ -592,6 +778,12 @@ const styles = StyleSheet.create({
   },
   contributeBlock: {
     marginTop: spacing.xs,
+  },
+  deductionPreview: {
+    color: colors.error,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+    lineHeight: 18,
   },
   contributeActions: {
     flexDirection: "row",

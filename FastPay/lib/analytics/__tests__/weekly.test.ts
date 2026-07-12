@@ -27,9 +27,11 @@ import {
 import { evaluateGoal } from "@/lib/analytics/goals";
 import {
   buildTimeline,
+  evaluateFamilyIncomeAllocation,
   evaluateFamilyPlan,
   getUnlockDate,
   suggestChildName,
+  validateFamilyContribution,
 } from "@/lib/analytics/family-plan";
 import {
   createEmptyPlan,
@@ -53,6 +55,7 @@ function runTests() {
   testGoalProgress();
   testFamilyPlanLockAndTimeline();
   testSuggestChildName();
+  testFamilyIncomeAllocation();
 }
 
 function testWeekBoundsStartOnMonday() {
@@ -396,6 +399,33 @@ function testSuggestChildName() {
   assert.equal(suggestChildName(0), "First child");
   assert.equal(suggestChildName(1), "Second child");
   assert.equal(suggestChildName(5), "Child 6");
+}
+
+function testFamilyIncomeAllocation() {
+  const allocation = evaluateFamilyIncomeAllocation({
+    yearlyIncomeRwf: 1_000_000,
+    yearlyPercent: 20,
+    contributions: [
+      {
+        id: "c1",
+        planId: "f1",
+        amountRwf: 50_000,
+        contributedAt: "2026-07-01T00:00:00.000Z",
+      },
+    ],
+    year: 2026,
+  });
+
+  assert.equal(allocation.yearlyAllowanceRwf, 200_000);
+  assert.equal(allocation.contributedYtdRwf, 50_000);
+  assert.equal(allocation.remainingAllowanceRwf, 150_000);
+  assert.equal(allocation.availableIncomeRwf, 950_000);
+
+  const validation = validateFamilyContribution(200_000, allocation);
+  assert.equal(validation.valid, false);
+
+  const ok = validateFamilyContribution(100_000, allocation);
+  assert.equal(ok.valid, true);
 }
 
 runTests();
