@@ -9,16 +9,39 @@ interface BudgetOverviewCardProps {
   periodLabel: string;
 }
 
+const SPEND_COLORS = {
+  on_track: {
+    accent: colors.primary,
+    bg: "rgba(0,174,239,0.12)",
+    track: "rgba(0,174,239,0.2)",
+    label: "#7DD3FC",
+  },
+  warning: {
+    accent: "#F59E0B",
+    bg: "rgba(245,158,11,0.12)",
+    track: "rgba(245,158,11,0.22)",
+    label: "#FCD34D",
+  },
+  over_budget: {
+    accent: colors.error,
+    bg: "rgba(248,113,113,0.12)",
+    track: "rgba(248,113,113,0.22)",
+    label: "#FCA5A5",
+  },
+} as const;
+
+const SAVINGS_COLORS = {
+  accent: colors.success,
+  bg: "rgba(74,222,128,0.12)",
+  track: "rgba(74,222,128,0.22)",
+  label: "#86EFAC",
+} as const;
+
 export function BudgetOverviewCard({
   status,
   periodLabel,
 }: BudgetOverviewCardProps) {
-  const spendBarColor =
-    status.health === "over_budget"
-      ? colors.error
-      : status.health === "warning"
-        ? "#F59E0B"
-        : colors.primary;
+  const spendTheme = SPEND_COLORS[status.health];
 
   return (
     <View style={styles.card}>
@@ -48,7 +71,7 @@ export function BudgetOverviewCard({
           label="Spending budget"
           progress={Math.min(status.spendProgress, 1)}
           detail={`${Math.round(status.spendProgress * 100)}% used · ${status.spendRemainingRwf.toLocaleString()} RWF left`}
-          color={spendBarColor}
+          theme={spendTheme}
         />
       ) : null}
 
@@ -57,7 +80,7 @@ export function BudgetOverviewCard({
           label="Savings allocation"
           progress={Math.min(status.savingsProgress, 1)}
           detail={`${status.savingsActualRwf.toLocaleString()} / ${status.savingsPlannedRwf.toLocaleString()} RWF`}
-          color={colors.success}
+          theme={SAVINGS_COLORS}
         />
       ) : null}
 
@@ -89,26 +112,46 @@ function ProgressBlock({
   label,
   progress,
   detail,
-  color,
+  theme,
 }: {
   label: string;
   progress: number;
   detail: string;
-  color: string;
+  theme: {
+    accent: string;
+    bg: string;
+    track: string;
+    label: string;
+  };
 }) {
   return (
-    <View style={styles.progressBlock}>
+    <View
+      style={[
+        styles.progressBlock,
+        {
+          backgroundColor: theme.bg,
+          borderLeftColor: theme.accent,
+        },
+      ]}
+    >
       <View style={styles.progressHeader}>
-        <Text style={styles.progressLabel}>{label}</Text>
-        <Text style={styles.progressDetail}>{detail}</Text>
+        <View style={styles.progressLabelRow}>
+          <View style={[styles.colorDot, { backgroundColor: theme.accent }]} />
+          <Text style={[styles.progressLabel, { color: theme.label }]}>
+            {label}
+          </Text>
+        </View>
+        <Text style={[styles.progressDetail, { color: theme.label }]}>
+          {detail}
+        </Text>
       </View>
-      <View style={styles.progressTrack}>
+      <View style={[styles.progressTrack, { backgroundColor: theme.track }]}>
         <View
           style={[
             styles.progressFill,
             {
               width: `${progress * 100}%` as `${number}%`,
-              backgroundColor: color,
+              backgroundColor: theme.accent,
             },
           ]}
         />
@@ -192,25 +235,40 @@ const styles = StyleSheet.create({
   },
   progressBlock: {
     marginTop: spacing.sm,
+    borderRadius: radius.sm,
+    borderLeftWidth: 3,
+    padding: spacing.sm,
   },
   progressHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: spacing.xs,
+    alignItems: "center",
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
-  progressLabel: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: "500",
+  progressLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    flexShrink: 1,
   },
-  progressDetail: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  progressTrack: {
+  colorDot: {
+    width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.pillTrack,
+  },
+  progressLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  progressDetail: {
+    fontSize: 12,
+    fontWeight: "500",
+    flexShrink: 0,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 5,
     overflow: "hidden",
   },
   progressFill: {
