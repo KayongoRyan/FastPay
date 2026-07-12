@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 const BANKS = [
   { name: "Bank of Kigali", code: "BK" },
@@ -68,18 +69,18 @@ export default function BankPayScreen() {
         ]}
       />
       <FeatureActionList
-        title="Recent banks"
-        actions={BANKS.slice(0, 3).map((bank) => ({
+        title="Start transfer"
+        actions={BANKS.map((bank) => ({
           label: bank.name,
-          detail: "Send money now",
-          onPress: () => router.push("/wallet/transfer"),
+          detail: "Open bank pay form",
+          onPress: () => router.push(featureRoutes.bankPay),
         }))}
       />
       <FeatureActions
         actions={[
           {
             label: "New bank transfer",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.bankPay),
           },
         ]}
       />

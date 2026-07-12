@@ -9,6 +9,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function BillServiceScreen() {
   return (
@@ -61,19 +62,21 @@ export default function BillServiceScreen() {
         title="Quick bill actions"
         actions={[
           {
-            label: "Pay utilities",
-            detail: "Electricity and water",
-            onPress: () => router.push("/quick-links/utilities"),
+            label: "Pay electricity",
+            detail: "REG utility bill",
+            onPress: () =>
+              router.push(featureRoutes.bills({ category: "electricity", add: true })),
+          },
+          {
+            label: "Pay water",
+            detail: "WASAC utility bill",
+            onPress: () =>
+              router.push(featureRoutes.bills({ category: "water", add: true })),
           },
           {
             label: "Pay tax",
             detail: "RRA and government fees",
-            onPress: () => router.push("/quick-links/pay-tax"),
-          },
-          {
-            label: "View all bills",
-            detail: "Open bill manager",
-            onPress: () => router.push("/bills"),
+            onPress: () => router.push(featureRoutes.bills({ add: true })),
           },
         ]}
       />
@@ -81,7 +84,7 @@ export default function BillServiceScreen() {
         actions={[
           {
             label: "Open bill manager",
-            onPress: () => router.push("/bills"),
+            onPress: () => router.push(featureRoutes.bills()),
           },
         ]}
       />

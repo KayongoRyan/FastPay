@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function UtilitiesScreen() {
   return (
@@ -75,26 +76,29 @@ export default function UtilitiesScreen() {
         actions={[
           {
             label: "Pay electricity (REG)",
-            detail: "Enter meter number",
-            onPress: () => router.push("/bills"),
+            detail: "Add electricity bill",
+            onPress: () =>
+              router.push(featureRoutes.bills({ category: "electricity", add: true })),
           },
           {
             label: "Pay water (WASAC)",
-            detail: "Enter customer ID",
-            onPress: () => router.push("/bills"),
+            detail: "Add water bill",
+            onPress: () =>
+              router.push(featureRoutes.bills({ category: "water", add: true })),
           },
           {
             label: "View utility history",
-            detail: "Past payments",
-            onPress: () => router.push("/bills"),
+            detail: "Past payments in bill manager",
+            onPress: () => router.push(featureRoutes.bills()),
           },
         ]}
       />
       <FeatureActions
         actions={[
           {
-            label: "Pay utility bill",
-            onPress: () => router.push("/bills"),
+            label: "Pay electricity bill",
+            onPress: () =>
+              router.push(featureRoutes.bills({ category: "electricity", add: true })),
           },
         ]}
       />

@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function OfflinePayScreen() {
   return (
@@ -77,12 +78,12 @@ export default function OfflinePayScreen() {
           {
             label: "Generate offline QR",
             detail: "Create a receive code now",
-            onPress: () => router.push("/wallet/receive"),
+            onPress: () => router.push(featureRoutes.walletReceive),
           },
           {
-            label: "Enable NFC payments",
-            detail: "Set up tap-to-pay",
-            onPress: () => router.push("/settings"),
+            label: "Relay offline payment",
+            detail: "Scan and sync when back online",
+            onPress: () => router.push(featureRoutes.offlineReceive),
           },
         ]}
       />
@@ -90,7 +91,7 @@ export default function OfflinePayScreen() {
         actions={[
           {
             label: "Set up offline pay",
-            onPress: () => router.push("/wallet/receive"),
+            onPress: () => router.push(featureRoutes.walletReceive),
           },
         ]}
       />

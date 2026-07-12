@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 const TAX_TYPES = [
   { name: "Income tax (PAYE)", authority: "RRA" },
@@ -73,18 +74,18 @@ export default function PayTaxScreen() {
         actions={TAX_TYPES.map((tax) => ({
           label: tax.name,
           detail: `Pay via ${tax.authority}`,
-          onPress: () => router.push("/bills"),
+          onPress: () => router.push(featureRoutes.bills({ add: true })),
         }))}
       />
       <FeatureActions
         actions={[
           {
             label: "Pay tax",
-            onPress: () => router.push("/bills"),
+            onPress: () => router.push(featureRoutes.bills({ add: true })),
           },
           {
             label: "View tax history",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
             variant: "outline",
           },
         ]}

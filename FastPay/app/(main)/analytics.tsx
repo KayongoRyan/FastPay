@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 
 import {
   AnalyticsModeTabs,
@@ -52,6 +52,7 @@ const financeSources = (
 
 export default function AnalyticsScreen() {
   useRequireAuth();
+  const { mode: modeParam } = useLocalSearchParams<{ mode?: string }>();
   const [mode, setMode] = useState<AnalyticsMode>("cashflow");
   const [tab, setTab] = useState<"expenses" | "income">("expenses");
   const [weekAnchor, setWeekAnchor] = useState(() => new Date());
@@ -99,6 +100,16 @@ export default function AnalyticsScreen() {
     isReady: familyPlanReady,
     error: familyPlanError,
   } = useFamilyPlanStore();
+
+  useEffect(() => {
+    if (
+      modeParam === "cashflow" ||
+      modeParam === "budget" ||
+      modeParam === "goals"
+    ) {
+      setMode(modeParam);
+    }
+  }, [modeParam]);
 
   useEffect(() => {
     void initialize();

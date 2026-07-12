@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function EscrowScreen() {
   return (
@@ -77,12 +78,12 @@ export default function EscrowScreen() {
           {
             label: "Create new escrow",
             detail: "Start a protected transaction",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.walletTransfer),
           },
           {
-            label: "View active escrows",
+            label: "View transaction history",
             detail: "Track pending deals",
-            onPress: () => router.push("/analytics"),
+            onPress: () => router.push(featureRoutes.analytics("cashflow")),
           },
         ]}
       />
@@ -90,7 +91,7 @@ export default function EscrowScreen() {
         actions={[
           {
             label: "Start escrow payment",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.walletTransfer),
           },
         ]}
       />

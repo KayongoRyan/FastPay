@@ -10,13 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
-
-const AIRTIME_BUNDLES = [
-  { name: "MTN 1,000 RWF", detail: "Voice + SMS bundle" },
-  { name: "MTN 5,000 RWF", detail: "All-net minutes pack" },
-  { name: "Airtel 2,000 RWF", detail: "Daily data + voice" },
-  { name: "Airtel 10,000 RWF", detail: "Monthly mega bundle" },
-];
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function AirtimeScreen() {
   return (
@@ -54,10 +48,12 @@ export default function AirtimeScreen() {
       />
       <FeatureHighlights
         title="Popular bundles"
-        items={AIRTIME_BUNDLES.map((bundle) => ({
-          title: bundle.name,
-          detail: bundle.detail,
-        }))}
+        items={[
+          { title: "MTN 1,000 RWF", detail: "Voice + SMS bundle" },
+          { title: "MTN 5,000 RWF", detail: "All-net minutes pack" },
+          { title: "Airtel 2,000 RWF", detail: "Daily data + voice" },
+          { title: "Airtel 10,000 RWF", detail: "Monthly mega bundle" },
+        ]}
       />
       <FeatureInfoPanel
         title="Airtime tips"
@@ -74,25 +70,30 @@ export default function AirtimeScreen() {
           {
             label: "MTN airtime",
             detail: "Top up any MTN number",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy("mtn")),
           },
           {
             label: "Airtel airtime",
             detail: "Top up any Airtel number",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy("airtel")),
           },
           {
             label: "Data bundles",
             detail: "Internet packages",
-            onPress: () => router.push("/services/voucher"),
+            onPress: () => router.push(featureRoutes.voucher),
           },
         ]}
       />
       <FeatureActions
         actions={[
           {
-            label: "Buy airtime now",
-            onPress: () => router.push("/buy"),
+            label: "Buy MTN airtime",
+            onPress: () => router.push(featureRoutes.buy("mtn")),
+          },
+          {
+            label: "Buy Airtel airtime",
+            onPress: () => router.push(featureRoutes.buy("airtel")),
+            variant: "outline",
           },
         ]}
       />

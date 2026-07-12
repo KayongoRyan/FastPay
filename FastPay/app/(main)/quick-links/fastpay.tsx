@@ -9,6 +9,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function FastPayTransferScreen() {
   return (
@@ -73,11 +74,11 @@ export default function FastPayTransferScreen() {
         actions={[
           {
             label: "Send money now",
-            onPress: () => router.push("/wallet/transfer"),
+            onPress: () => router.push(featureRoutes.walletTransfer),
           },
           {
             label: "Request payment",
-            onPress: () => router.push("/wallet/receive"),
+            onPress: () => router.push(featureRoutes.walletReceive),
             variant: "outline",
           },
         ]}

@@ -9,6 +9,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function VoucherServiceScreen() {
   return (
@@ -72,12 +73,12 @@ export default function VoucherServiceScreen() {
       <FeatureActions
         actions={[
           {
-            label: "Browse vouchers",
-            onPress: () => router.push("/quick-links/airtime"),
+            label: "Buy airtime",
+            onPress: () => router.push(featureRoutes.buy("mtn")),
           },
           {
             label: "Buy MoMo top-up",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy()),
             variant: "outline",
           },
         ]}

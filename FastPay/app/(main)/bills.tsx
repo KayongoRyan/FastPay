@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
@@ -30,15 +30,30 @@ import { radius, spacing } from "@/theme/spacing";
 export default function BillsScreen() {
   useHideTabBar();
   useRequireAuth();
+  const { category, add } = useLocalSearchParams<{
+    category?: string;
+    add?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const payments = useBillsStore((s) => s.payments);
   const { initialize, isReady, removePayment } = useBillsStore();
   const [selectedMonthKey, setSelectedMonthKey] = useState("");
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [initialCategory, setInitialCategory] = useState<BillCategoryId | undefined>();
 
   useEffect(() => {
     void initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    const validCategories = Object.keys(BILL_CATEGORIES) as BillCategoryId[];
+    if (category && validCategories.includes(category as BillCategoryId)) {
+      setInitialCategory(category as BillCategoryId);
+    }
+    if (add === "1") {
+      setAddModalOpen(true);
+    }
+  }, [category, add]);
 
   const billMonths = useMemo(() => groupPaymentsByMonth(payments), [payments]);
 
@@ -109,6 +124,7 @@ export default function BillsScreen() {
           visible={addModalOpen}
           onClose={() => setAddModalOpen(false)}
           onAdded={handleBillAdded}
+          initialCategoryId={initialCategory}
         />
       </TabScreenLayout>
     );
@@ -222,6 +238,7 @@ export default function BillsScreen() {
         visible={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         onAdded={handleBillAdded}
+        initialCategoryId={initialCategory}
       />
     </TabScreenLayout>
   );

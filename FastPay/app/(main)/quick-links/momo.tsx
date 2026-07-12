@@ -10,6 +10,7 @@ import {
   FeatureStatRow,
   FeatureSteps,
 } from "@/components/feature";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 
 export default function MomoScreen() {
   return (
@@ -76,12 +77,12 @@ export default function MomoScreen() {
           {
             label: "MTN MoMo top-up",
             detail: "Send to MTN mobile money",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy("mtn")),
           },
           {
             label: "Airtel Money top-up",
             detail: "Send to Airtel wallet",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy("airtel")),
           },
         ]}
       />
@@ -89,7 +90,7 @@ export default function MomoScreen() {
         actions={[
           {
             label: "Top up now",
-            onPress: () => router.push("/buy"),
+            onPress: () => router.push(featureRoutes.buy("mtn")),
           },
         ]}
       />
