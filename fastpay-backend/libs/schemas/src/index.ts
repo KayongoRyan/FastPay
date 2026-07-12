@@ -16,4 +16,20 @@ export * from './kyc/kyc-document.schema';
 
 export * from './audit/audit-log.schema';
 
+export {
+  KnowledgeChunk,
+  KnowledgeChunkSchema,
+  KnowledgeChunkScope,
+  KnowledgeChunkCategory,
+  type KnowledgeChunkDocument,
+} from './assistant/knowledge-chunk.schema';
+
+export {
+  ChatConversation,
+  ChatConversationSchema,
+  ChatMessageEntry,
+  ChatMessageEntrySchema,
+  type ChatConversationDocument,
+} from './assistant/chat-conversation.schema';
+
 export { COLLECTION_REGISTRY, type CollectionRegistryEntry } from './registry';

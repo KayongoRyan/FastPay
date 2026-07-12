@@ -20,4 +20,7 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'approval_requests', service: 'family-service', description: 'Parent/child tx approvals' },
   { collection: 'kyc_documents', service: 'kyc-service', description: 'KYC document references' },
   { collection: 'audit_logs', service: 'audit-service', description: 'Security and activity audit trail' },
+  { collection: 'knowledge_chunks', service: 'assistant-service', description: 'RAG knowledge chunks and embeddings' },
+  { collection: 'chat_conversations', service: 'assistant-service', description: 'Assistant chat history per user' },
+  { collection: 'momo_payments', service: 'payment-service', description: 'Mobile money top-up payments' },
 ];
