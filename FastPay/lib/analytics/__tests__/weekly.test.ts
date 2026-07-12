@@ -14,6 +14,18 @@ import {
   normalizeWalletPayment,
 } from "@/lib/analytics/weekly";
 import {
+  allocateBudget,
+  createDefaultBudget,
+  evaluateBudget,
+  validatePercentages,
+} from "@/lib/analytics/budget";
+import {
+  buildMonthlySummary,
+  getMonthBounds,
+  getMonthKey,
+} from "@/lib/analytics/monthly";
+import { evaluateGoal } from "@/lib/analytics/goals";
+import {
   createEmptyPlan,
   evaluateWeeklyPlan,
 } from "@/lib/analytics/weekly-plan";
@@ -27,6 +39,12 @@ function runTests() {
   testWeeklySummaryTotals();
   testPlanEvaluationStates();
   testEmptyWeek();
+  testMonthBounds();
+  testMonthlySummaryTotals();
+  testAllocateBudget();
+  testValidatePercentages();
+  testEvaluateBudgetHealth();
+  testGoalProgress();
 }
 
 function testWeekBoundsStartOnMonday() {
@@ -224,6 +242,119 @@ function testFilterTransactionsInWeek() {
   const bounds = getWeekBounds(new Date("2026-07-12T12:00:00"));
   const filtered = filterTransactionsInWeek(txs, bounds);
   assert.equal(filtered.length, 0);
+}
+
+function testMonthBounds() {
+  const bounds = getMonthBounds(new Date("2026-07-15T12:00:00"));
+  assert.equal(bounds.start.getDate(), 1);
+  assert.equal(bounds.end.getDate(), 31);
+  assert.equal(bounds.start.getMonth(), 6);
+  assert.equal(bounds.daysInMonth, 31);
+  assert.equal(getMonthKey(new Date("2026-07-15T12:00:00")), "2026-07");
+}
+
+function testMonthlySummaryTotals() {
+  const sources = {
+    payments: [
+      {
+        id: "in1",
+        txHash: "h5",
+        status: "confirmed",
+        amount: "4",
+        asset: "XLM",
+        direction: "in" as const,
+        counterparty: "GDEF",
+        createdAt: "2026-07-05T12:00:00.000Z",
+      },
+    ],
+    bills: [
+      {
+        id: "b2",
+        categoryId: "rent" as const,
+        label: "Rent",
+        amountRwf: 50000,
+        paidAt: "2026-07-01",
+      },
+    ],
+    momoPayments: [],
+  };
+
+  const summary = buildMonthlySummary(sources, new Date("2026-07-15T12:00:00"));
+  assert.equal(summary.incomeTotalRwf, 6000);
+  assert.equal(summary.expenseTotalRwf, 50000);
+  assert.equal(summary.netRwf, -44000);
+  assert.equal(summary.incomeByDay[4], 6000);
+}
+
+function testAllocateBudget() {
+  const budget = createDefaultBudget();
+  budget.incomeBaseRwf = 100_000;
+
+  const allocations = allocateBudget(budget.incomeBaseRwf, budget.buckets);
+  assert.equal(allocations.length, 3);
+  assert.equal(allocations[0].plannedRwf, 50_000);
+  assert.equal(allocations[1].plannedRwf, 30_000);
+  assert.equal(allocations[2].plannedRwf, 20_000);
+  assert.equal(allocations[2].isSavings, true);
+}
+
+function testValidatePercentages() {
+  const valid = validatePercentages(createDefaultBudget().buckets);
+  assert.equal(valid.valid, true);
+  assert.equal(valid.total, 100);
+
+  const invalid = validatePercentages([
+    { id: "a", name: "A", percent: 50 },
+    { id: "b", name: "B", percent: 40 },
+  ]);
+  assert.equal(invalid.valid, false);
+  assert.equal(invalid.total, 90);
+}
+
+function testEvaluateBudgetHealth() {
+  const budget = createDefaultBudget();
+  budget.incomeBaseRwf = 100_000;
+
+  const onTrack = evaluateBudget(budget, {
+    incomeTotalRwf: 100_000,
+    expenseTotalRwf: 60_000,
+    netRwf: 40_000,
+  });
+  assert.equal(onTrack.health, "on_track");
+  assert.equal(onTrack.spendAllowanceRwf, 80_000);
+  assert.equal(onTrack.savingsPlannedRwf, 20_000);
+
+  const overBudget = evaluateBudget(budget, {
+    incomeTotalRwf: 100_000,
+    expenseTotalRwf: 90_000,
+    netRwf: 10_000,
+  });
+  assert.equal(overBudget.health, "over_budget");
+}
+
+function testGoalProgress() {
+  const inProgress = evaluateGoal({
+    id: "g1",
+    name: "Laptop",
+    type: "short",
+    targetRwf: 100_000,
+    savedRwf: 25_000,
+    createdAt: "2026-07-01T00:00:00.000Z",
+  });
+  assert.equal(inProgress.progress, 0.25);
+  assert.equal(inProgress.remainingRwf, 75_000);
+  assert.equal(inProgress.isComplete, false);
+
+  const complete = evaluateGoal({
+    id: "g2",
+    name: "Emergency",
+    type: "long",
+    targetRwf: 50_000,
+    savedRwf: 50_000,
+    createdAt: "2026-07-01T00:00:00.000Z",
+  });
+  assert.equal(complete.progress, 1);
+  assert.equal(complete.isComplete, true);
 }
 
 runTests();

@@ -3,13 +3,26 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 
 import {
+  AnalyticsModeTabs,
+  BudgetBuilderCard,
+  BudgetOverviewCard,
+  GoalsList,
+  MonthPicker,
   WeekPicker,
   WeeklyPlanCard,
   WeeklyTransactionRow,
+  type AnalyticsMode,
 } from "@/components/analytics";
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { ExpenseChart } from "@/components/ui/ExpenseChart";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { evaluateBudget } from "@/lib/analytics/budget";
+import {
+  buildMonthlySummary,
+  getMonthBounds,
+  shiftMonth,
+} from "@/lib/analytics/monthly";
+import { suggestContribution } from "@/lib/analytics/goals";
 import {
   buildWeeklySummary,
   getWeekBounds,
@@ -18,15 +31,24 @@ import {
 } from "@/lib/analytics/weekly";
 import { evaluateWeeklyPlan, createEmptyPlan } from "@/lib/analytics/weekly-plan";
 import { useBillsStore } from "@/store/billsStore";
+import { useBudgetStore } from "@/store/budgetStore";
 import { useWalletStore } from "@/store/walletStore";
 import { useWeeklyPlanStore } from "@/store/weeklyPlanStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
+const financeSources = (
+  payments: ReturnType<typeof useWalletStore.getState>["payments"],
+  bills: ReturnType<typeof useBillsStore.getState>["payments"],
+  momoHistory: ReturnType<typeof useWalletStore.getState>["momoHistory"],
+) => ({ payments, bills, momoPayments: momoHistory });
+
 export default function AnalyticsScreen() {
   useRequireAuth();
+  const [mode, setMode] = useState<AnalyticsMode>("cashflow");
   const [tab, setTab] = useState<"expenses" | "income">("expenses");
   const [weekAnchor, setWeekAnchor] = useState(() => new Date());
+  const [monthAnchor, setMonthAnchor] = useState(() => new Date());
 
   const {
     wallet,
@@ -45,12 +67,25 @@ export default function AnalyticsScreen() {
     isSaving: planSaving,
     isReady: plansReady,
   } = useWeeklyPlanStore();
+  const {
+    initialize: initBudget,
+    budget,
+    goals,
+    saveBudget,
+    addGoal,
+    contributeToGoal,
+    deleteGoal,
+    isSaving: budgetSaving,
+    isReady: budgetReady,
+    error: budgetError,
+  } = useBudgetStore();
 
   useEffect(() => {
     void initialize();
     void initBills();
     void initPlans();
-  }, [initialize, initBills, initPlans]);
+    void initBudget();
+  }, [initialize, initBills, initPlans, initBudget]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,47 +95,82 @@ export default function AnalyticsScreen() {
     }, [wallet?.publicKey, refreshWalletData]),
   );
 
-  const summary = useMemo(
-    () =>
-      buildWeeklySummary(
-        { payments, bills, momoPayments: momoHistory },
-        weekAnchor,
-      ),
-    [payments, bills, momoHistory, weekAnchor],
+  const sources = useMemo(
+    () => financeSources(payments, bills, momoHistory),
+    [payments, bills, momoHistory],
   );
 
+  const weeklySummary = useMemo(
+    () => buildWeeklySummary(sources, weekAnchor),
+    [sources, weekAnchor],
+  );
+
+  const monthlySummary = useMemo(
+    () => buildMonthlySummary(sources, monthAnchor),
+    [sources, monthAnchor],
+  );
+
+  const budgetSummary = useMemo(() => {
+    if (budget.period === "weekly") {
+      return buildWeeklySummary(sources, weekAnchor);
+    }
+    return buildMonthlySummary(sources, monthAnchor);
+  }, [budget.period, sources, weekAnchor, monthAnchor]);
+
   const currentWeekKey = useMemo(() => getWeekBounds(new Date()).weekKey, []);
-  const isCurrentWeek = summary.bounds.weekKey === currentWeekKey;
+  const currentMonthKey = useMemo(() => getMonthBounds(new Date()).monthKey, []);
+  const isCurrentWeek = weeklySummary.bounds.weekKey === currentWeekKey;
+  const isCurrentMonth = monthlySummary.bounds.monthKey === currentMonthKey;
 
   const plan = useMemo(
     () =>
       plansReady
-        ? (plans[summary.bounds.weekKey] ?? createEmptyPlan(summary.bounds.weekKey))
+        ? (plans[weeklySummary.bounds.weekKey] ??
+            createEmptyPlan(weeklySummary.bounds.weekKey))
         : null,
-    [plans, plansReady, summary.bounds.weekKey],
+    [plans, plansReady, weeklySummary.bounds.weekKey],
   );
 
   const planStatus = useMemo(
+    () => (plan ? evaluateWeeklyPlan(weeklySummary, plan) : null),
+    [weeklySummary, plan],
+  );
+
+  const budgetStatus = useMemo(
     () =>
-      plan
-        ? evaluateWeeklyPlan(summary, plan)
+      budgetReady
+        ? evaluateBudget(budget, {
+            incomeTotalRwf: budgetSummary.incomeTotalRwf,
+            expenseTotalRwf: budgetSummary.expenseTotalRwf,
+            netRwf: budgetSummary.netRwf,
+          })
         : null,
-    [summary, plan],
+    [budget, budgetReady, budgetSummary],
+  );
+
+  const goalInsight = useMemo(
+    () => suggestContribution(weeklySummary.netRwf, goals),
+    [weeklySummary.netRwf, goals],
   );
 
   const tabTransactions =
     tab === "expenses"
-      ? summary.expenseTransactions
-      : summary.incomeTransactions;
+      ? weeklySummary.expenseTransactions
+      : weeklySummary.incomeTransactions;
 
   const tabTotal =
-    tab === "expenses" ? summary.expenseTotalRwf : summary.incomeTotalRwf;
+    tab === "expenses"
+      ? weeklySummary.expenseTotalRwf
+      : weeklySummary.incomeTotalRwf;
 
   const chartData = normalizeDailyChartValues(
-    tab === "expenses" ? summary.expenseByDay : summary.incomeByDay,
+    tab === "expenses"
+      ? weeklySummary.expenseByDay
+      : weeklySummary.incomeByDay,
   );
 
-  const loading = isRefreshing && payments.length === 0 && momoHistory.length === 0;
+  const loading =
+    isRefreshing && payments.length === 0 && momoHistory.length === 0;
 
   return (
     <TabScreenLayout
@@ -109,32 +179,136 @@ export default function AnalyticsScreen() {
     >
       <Text style={styles.header}>STATISTICS</Text>
 
+      <AnalyticsModeTabs mode={mode} onChange={setMode} />
+
+      {mode === "cashflow" ? (
+        <CashFlowSection
+          weeklySummary={weeklySummary}
+          isCurrentWeek={isCurrentWeek}
+          tab={tab}
+          setTab={setTab}
+          tabTransactions={tabTransactions}
+          tabTotal={tabTotal}
+          chartData={chartData}
+          loading={loading}
+          wallet={wallet}
+          walletError={walletError}
+          goalInsight={goalInsight}
+          plan={plan}
+          planStatus={planStatus}
+          planSaving={planSaving}
+          onSavePlan={(nextPlan) => void savePlan(nextPlan)}
+          onPreviousWeek={() => setWeekAnchor((date) => shiftWeek(date, -1))}
+          onNextWeek={() => {
+            if (!isCurrentWeek) {
+              setWeekAnchor((date) => shiftWeek(date, 1));
+            }
+          }}
+        />
+      ) : null}
+
+      {mode === "budget" && budgetReady ? (
+        <BudgetSection
+          budget={budget}
+          budgetStatus={budgetStatus}
+          budgetSaving={budgetSaving}
+          budgetError={budgetError}
+          period={budget.period}
+          isCurrentWeek={isCurrentWeek}
+          isCurrentMonth={isCurrentMonth}
+          weeklyBounds={weeklySummary.bounds}
+          monthlyBounds={monthlySummary.bounds}
+          onSaveBudget={(nextBudget) => void saveBudget(nextBudget)}
+          onPreviousWeek={() => setWeekAnchor((date) => shiftWeek(date, -1))}
+          onNextWeek={() => {
+            if (!isCurrentWeek) {
+              setWeekAnchor((date) => shiftWeek(date, 1));
+            }
+          }}
+          onPreviousMonth={() => setMonthAnchor((date) => shiftMonth(date, -1))}
+          onNextMonth={() => {
+            if (!isCurrentMonth) {
+              setMonthAnchor((date) => shiftMonth(date, 1));
+            }
+          }}
+        />
+      ) : null}
+
+      {mode === "goals" && budgetReady ? (
+        <GoalsList
+          goals={goals}
+          monthlyNetRwf={monthlySummary.netRwf}
+          isSaving={budgetSaving}
+          onAddGoal={(input) => void addGoal(input)}
+          onContribute={(goalId, amount) => void contributeToGoal(goalId, amount)}
+          onDelete={(goalId) => void deleteGoal(goalId)}
+        />
+      ) : null}
+    </TabScreenLayout>
+  );
+}
+
+function CashFlowSection({
+  weeklySummary,
+  isCurrentWeek,
+  tab,
+  setTab,
+  tabTransactions,
+  tabTotal,
+  chartData,
+  loading,
+  wallet,
+  walletError,
+  goalInsight,
+  plan,
+  planStatus,
+  planSaving,
+  onSavePlan,
+  onPreviousWeek,
+  onNextWeek,
+}: {
+  weeklySummary: ReturnType<typeof buildWeeklySummary>;
+  isCurrentWeek: boolean;
+  tab: "expenses" | "income";
+  setTab: (tab: "expenses" | "income") => void;
+  tabTransactions: ReturnType<typeof buildWeeklySummary>["expenseTransactions"];
+  tabTotal: number;
+  chartData: number[];
+  loading: boolean;
+  wallet: ReturnType<typeof useWalletStore.getState>["wallet"];
+  walletError: string | null;
+  goalInsight: string | null;
+  plan: ReturnType<typeof createEmptyPlan> | null;
+  planStatus: ReturnType<typeof evaluateWeeklyPlan> | null;
+  planSaving: boolean;
+  onSavePlan: (plan: ReturnType<typeof createEmptyPlan>) => void;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
+}) {
+  return (
+    <>
       <WeekPicker
-        bounds={summary.bounds}
+        bounds={weeklySummary.bounds}
         isCurrentWeek={isCurrentWeek}
-        onPrevious={() => setWeekAnchor((date) => shiftWeek(date, -1))}
-        onNext={() => {
-          if (!isCurrentWeek) {
-            setWeekAnchor((date) => shiftWeek(date, 1));
-          }
-        }}
+        onPrevious={onPreviousWeek}
+        onNext={onNextWeek}
       />
 
       <View style={styles.summaryRow}>
         <SummaryCard
           label="Income"
-          value={summary.incomeTotalRwf}
+          value={weeklySummary.incomeTotalRwf}
           tone="income"
         />
         <SummaryCard
           label="Expenses"
-          value={summary.expenseTotalRwf}
+          value={weeklySummary.expenseTotalRwf}
           tone="expense"
         />
         <SummaryCard
           label="Net"
-          value={summary.netRwf}
-          tone={summary.netRwf >= 0 ? "income" : "expense"}
+          value={weeklySummary.netRwf}
+          tone={weeklySummary.netRwf >= 0 ? "income" : "expense"}
         />
       </View>
 
@@ -165,11 +339,16 @@ export default function AnalyticsScreen() {
       </Text>
 
       {walletError ? <Text style={styles.error}>{walletError}</Text> : null}
+      {goalInsight ? (
+        <View style={styles.insightChip}>
+          <Text style={styles.insightText}>{goalInsight}</Text>
+        </View>
+      ) : null}
 
       <ExpenseChart data={chartData} />
 
       <View style={styles.weekLabels}>
-        {summary.bounds.dayLabels.map((day) => (
+        {weeklySummary.bounds.dayLabels.map((day) => (
           <Text key={day} style={styles.day}>
             {day}
           </Text>
@@ -201,10 +380,77 @@ export default function AnalyticsScreen() {
           plan={plan}
           status={planStatus}
           isSaving={planSaving}
-          onSave={(nextPlan) => void savePlan(nextPlan)}
+          onSave={onSavePlan}
         />
       ) : null}
-    </TabScreenLayout>
+    </>
+  );
+}
+
+function BudgetSection({
+  budget,
+  budgetStatus,
+  budgetSaving,
+  budgetError,
+  period,
+  isCurrentWeek,
+  isCurrentMonth,
+  weeklyBounds,
+  monthlyBounds,
+  onSaveBudget,
+  onPreviousWeek,
+  onNextWeek,
+  onPreviousMonth,
+  onNextMonth,
+}: {
+  budget: ReturnType<typeof useBudgetStore.getState>["budget"];
+  budgetStatus: ReturnType<typeof evaluateBudget> | null;
+  budgetSaving: boolean;
+  budgetError: string | null;
+  period: "weekly" | "monthly";
+  isCurrentWeek: boolean;
+  isCurrentMonth: boolean;
+  weeklyBounds: ReturnType<typeof getWeekBounds>;
+  monthlyBounds: ReturnType<typeof getMonthBounds>;
+  onSaveBudget: (budget: ReturnType<typeof useBudgetStore.getState>["budget"]) => void;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
+  onPreviousMonth: () => void;
+  onNextMonth: () => void;
+}) {
+  return (
+    <>
+      {period === "weekly" ? (
+        <WeekPicker
+          bounds={weeklyBounds}
+          isCurrentWeek={isCurrentWeek}
+          onPrevious={onPreviousWeek}
+          onNext={onNextWeek}
+        />
+      ) : (
+        <MonthPicker
+          bounds={monthlyBounds}
+          isCurrentMonth={isCurrentMonth}
+          onPrevious={onPreviousMonth}
+          onNext={onNextMonth}
+        />
+      )}
+
+      {budgetError ? <Text style={styles.error}>{budgetError}</Text> : null}
+
+      <BudgetBuilderCard
+        budget={budget}
+        isSaving={budgetSaving}
+        onSave={onSaveBudget}
+      />
+
+      {budgetStatus ? (
+        <BudgetOverviewCard
+          status={budgetStatus}
+          periodLabel={period === "weekly" ? "week" : "month"}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -300,6 +546,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   error: { color: colors.error, fontSize: 13, marginBottom: spacing.md },
+  insightChip: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  insightText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
   weekLabels: {
     flexDirection: "row",
     justifyContent: "space-between",
