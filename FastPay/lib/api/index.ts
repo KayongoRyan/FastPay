@@ -1,4 +1,4 @@
-export { apiGet, apiGetAuth, apiPost, apiPostAuth, getApiUrl, setAccessTokenProvider } from './client';
+export { apiGet, apiGetAuth, apiPost, apiPostAuth, getApiUrl, setAccessTokenProvider, setTokenRefresher } from './client';
 export {
   sendChatMessage,
   type ChatAction,
