@@ -6,6 +6,7 @@ import {
   AnalyticsModeTabs,
   BudgetBuilderCard,
   BudgetOverviewCard,
+  FamilyPlanCard,
   GoalsList,
   MonthPicker,
   WeekPicker,
@@ -17,6 +18,11 @@ import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { ExpenseChart } from "@/components/ui/ExpenseChart";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { evaluateBudget } from "@/lib/analytics/budget";
+import {
+  applyPeriodIncomeDeduction,
+  evaluateFamilyIncomeAllocation,
+  getYearlyIncomeRwf,
+} from "@/lib/analytics/family-plan";
 import {
   buildMonthlySummary,
   getMonthBounds,
@@ -32,6 +38,7 @@ import {
 import { evaluateWeeklyPlan, createEmptyPlan } from "@/lib/analytics/weekly-plan";
 import { useBillsStore } from "@/store/billsStore";
 import { useBudgetStore } from "@/store/budgetStore";
+import { useFamilyPlanStore } from "@/store/familyPlanStore";
 import { useWalletStore } from "@/store/walletStore";
 import { useWeeklyPlanStore } from "@/store/weeklyPlanStore";
 import { colors } from "@/theme/colors";
@@ -79,13 +86,27 @@ export default function AnalyticsScreen() {
     isReady: budgetReady,
     error: budgetError,
   } = useBudgetStore();
+  const {
+    initialize: initFamilyPlans,
+    settings: familySettings,
+    plans: familyPlans,
+    contributions: familyContributions,
+    saveSettings: saveFamilySettings,
+    addPlan: addFamilyPlan,
+    contribute: contributeFamilyPlan,
+    deletePlan: deleteFamilyPlan,
+    isSaving: familyPlanSaving,
+    isReady: familyPlanReady,
+    error: familyPlanError,
+  } = useFamilyPlanStore();
 
   useEffect(() => {
     void initialize();
     void initBills();
     void initPlans();
     void initBudget();
-  }, [initialize, initBills, initPlans, initBudget]);
+    void initFamilyPlans();
+  }, [initialize, initBills, initPlans, initBudget, initFamilyPlans]);
 
   useFocusEffect(
     useCallback(() => {
@@ -136,16 +157,57 @@ export default function AnalyticsScreen() {
     [weeklySummary, plan],
   );
 
+  const familyIncomeAllocation = useMemo(
+    () =>
+      evaluateFamilyIncomeAllocation({
+        yearlyIncomeRwf: getYearlyIncomeRwf(sources),
+        yearlyPercent: familySettings.yearlyIncomePercent,
+        contributions: familyContributions,
+      }),
+    [sources, familySettings.yearlyIncomePercent, familyContributions],
+  );
+
+  const weeklyAdjustedIncome = useMemo(
+    () =>
+      applyPeriodIncomeDeduction(
+        weeklySummary.incomeTotalRwf,
+        familyContributions,
+        weeklySummary.bounds.start,
+        weeklySummary.bounds.end,
+      ),
+    [weeklySummary, familyContributions],
+  );
+
+  const budgetAdjustedIncome = useMemo(() => {
+    const bounds =
+      budget.period === "weekly"
+        ? weeklySummary.bounds
+        : monthlySummary.bounds;
+    const grossIncome =
+      budget.period === "weekly"
+        ? weeklySummary.incomeTotalRwf
+        : monthlySummary.incomeTotalRwf;
+
+    return applyPeriodIncomeDeduction(
+      grossIncome,
+      familyContributions,
+      budget.period === "weekly" ? bounds.start : monthlySummary.bounds.start,
+      budget.period === "weekly" ? bounds.end : monthlySummary.bounds.end,
+    );
+  }, [budget.period, weeklySummary, monthlySummary, familyContributions]);
+
   const budgetStatus = useMemo(
     () =>
       budgetReady
         ? evaluateBudget(budget, {
-            incomeTotalRwf: budgetSummary.incomeTotalRwf,
+            incomeTotalRwf: budgetAdjustedIncome.availableIncomeRwf,
             expenseTotalRwf: budgetSummary.expenseTotalRwf,
-            netRwf: budgetSummary.netRwf,
+            netRwf:
+              budgetAdjustedIncome.availableIncomeRwf -
+              budgetSummary.expenseTotalRwf,
           })
         : null,
-    [budget, budgetReady, budgetSummary],
+    [budget, budgetReady, budgetSummary, budgetAdjustedIncome],
   );
 
   const goalInsight = useMemo(
@@ -184,6 +246,7 @@ export default function AnalyticsScreen() {
       {mode === "cashflow" ? (
         <CashFlowSection
           weeklySummary={weeklySummary}
+          adjustedIncome={weeklyAdjustedIncome}
           isCurrentWeek={isCurrentWeek}
           tab={tab}
           setTab={setTab}
@@ -207,18 +270,30 @@ export default function AnalyticsScreen() {
         />
       ) : null}
 
-      {mode === "budget" && budgetReady ? (
+      {mode === "budget" && budgetReady && familyPlanReady ? (
         <BudgetSection
           budget={budget}
           budgetStatus={budgetStatus}
           budgetSaving={budgetSaving}
           budgetError={budgetError}
+          familyPlans={familyPlans}
+          familySettings={familySettings}
+          familyIncomeAllocation={familyIncomeAllocation}
+          familyPlanSaving={familyPlanSaving}
+          familyPlanError={familyPlanError}
           period={budget.period}
+          adjustedIncome={budgetAdjustedIncome}
           isCurrentWeek={isCurrentWeek}
           isCurrentMonth={isCurrentMonth}
           weeklyBounds={weeklySummary.bounds}
           monthlyBounds={monthlySummary.bounds}
           onSaveBudget={(nextBudget) => void saveBudget(nextBudget)}
+          onSaveFamilySettings={(settings) => void saveFamilySettings(settings)}
+          onAddFamilyPlan={(input) => void addFamilyPlan(input)}
+          onContributeFamilyPlan={(planId, amount) =>
+            void contributeFamilyPlan(planId, amount, sources)
+          }
+          onDeleteFamilyPlan={(planId) => void deleteFamilyPlan(planId)}
           onPreviousWeek={() => setWeekAnchor((date) => shiftWeek(date, -1))}
           onNextWeek={() => {
             if (!isCurrentWeek) {
@@ -250,6 +325,7 @@ export default function AnalyticsScreen() {
 
 function CashFlowSection({
   weeklySummary,
+  adjustedIncome,
   isCurrentWeek,
   tab,
   setTab,
@@ -268,6 +344,7 @@ function CashFlowSection({
   onNextWeek,
 }: {
   weeklySummary: ReturnType<typeof buildWeeklySummary>;
+  adjustedIncome: ReturnType<typeof applyPeriodIncomeDeduction>;
   isCurrentWeek: boolean;
   tab: "expenses" | "income";
   setTab: (tab: "expenses" | "income") => void;
@@ -297,7 +374,7 @@ function CashFlowSection({
       <View style={styles.summaryRow}>
         <SummaryCard
           label="Income"
-          value={weeklySummary.incomeTotalRwf}
+          value={adjustedIncome.availableIncomeRwf}
           tone="income"
         />
         <SummaryCard
@@ -307,10 +384,21 @@ function CashFlowSection({
         />
         <SummaryCard
           label="Net"
-          value={weeklySummary.netRwf}
-          tone={weeklySummary.netRwf >= 0 ? "income" : "expense"}
+          value={adjustedIncome.availableIncomeRwf - weeklySummary.expenseTotalRwf}
+          tone={
+            adjustedIncome.availableIncomeRwf - weeklySummary.expenseTotalRwf >= 0
+              ? "income"
+              : "expense"
+          }
         />
       </View>
+
+      {adjustedIncome.familyPlanDeductionRwf > 0 ? (
+        <Text style={styles.familyDeduction}>
+          Family plan: -{adjustedIncome.familyPlanDeductionRwf.toLocaleString()} RWF
+          removed from income this week
+        </Text>
+      ) : null}
 
       <View style={styles.toggle}>
         <Pressable
@@ -392,12 +480,22 @@ function BudgetSection({
   budgetStatus,
   budgetSaving,
   budgetError,
+  familyPlans,
+  familySettings,
+  familyIncomeAllocation,
+  familyPlanSaving,
+  familyPlanError,
   period,
+  adjustedIncome,
   isCurrentWeek,
   isCurrentMonth,
   weeklyBounds,
   monthlyBounds,
   onSaveBudget,
+  onSaveFamilySettings,
+  onAddFamilyPlan,
+  onContributeFamilyPlan,
+  onDeleteFamilyPlan,
   onPreviousWeek,
   onNextWeek,
   onPreviousMonth,
@@ -407,12 +505,26 @@ function BudgetSection({
   budgetStatus: ReturnType<typeof evaluateBudget> | null;
   budgetSaving: boolean;
   budgetError: string | null;
+  familyPlans: ReturnType<typeof useFamilyPlanStore.getState>["plans"];
+  familySettings: ReturnType<typeof useFamilyPlanStore.getState>["settings"];
+  familyIncomeAllocation: ReturnType<typeof evaluateFamilyIncomeAllocation>;
+  familyPlanSaving: boolean;
+  familyPlanError: string | null;
   period: "weekly" | "monthly";
+  adjustedIncome: ReturnType<typeof applyPeriodIncomeDeduction>;
   isCurrentWeek: boolean;
   isCurrentMonth: boolean;
   weeklyBounds: ReturnType<typeof getWeekBounds>;
   monthlyBounds: ReturnType<typeof getMonthBounds>;
   onSaveBudget: (budget: ReturnType<typeof useBudgetStore.getState>["budget"]) => void;
+  onSaveFamilySettings: (
+    settings: ReturnType<typeof useFamilyPlanStore.getState>["settings"],
+  ) => void;
+  onAddFamilyPlan: (
+    input: Parameters<ReturnType<typeof useFamilyPlanStore.getState>["addPlan"]>[0],
+  ) => void;
+  onContributeFamilyPlan: (planId: string, amount: number) => void;
+  onDeleteFamilyPlan: (planId: string) => void;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   onPreviousMonth: () => void;
@@ -450,6 +562,25 @@ function BudgetSection({
           periodLabel={period === "weekly" ? "week" : "month"}
         />
       ) : null}
+
+      {adjustedIncome.familyPlanDeductionRwf > 0 ? (
+        <Text style={styles.familyDeduction}>
+          Family plan: -{adjustedIncome.familyPlanDeductionRwf.toLocaleString()} RWF
+          removed from income this {period === "weekly" ? "week" : "month"}
+        </Text>
+      ) : null}
+
+      <FamilyPlanCard
+        plans={familyPlans}
+        settings={familySettings}
+        incomeAllocation={familyIncomeAllocation}
+        isSaving={familyPlanSaving}
+        error={familyPlanError}
+        onSaveSettings={onSaveFamilySettings}
+        onAddPlan={onAddFamilyPlan}
+        onContribute={onContributeFamilyPlan}
+        onDelete={onDeleteFamilyPlan}
+      />
     </>
   );
 }
@@ -546,6 +677,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   error: { color: colors.error, fontSize: 13, marginBottom: spacing.md },
+  familyDeduction: {
+    color: colors.error,
+    fontSize: 12,
+    marginBottom: spacing.md,
+  },
   insightChip: {
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: radius.sm,

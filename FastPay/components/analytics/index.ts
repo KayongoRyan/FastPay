@@ -2,6 +2,7 @@ export { AnalyticsModeTabs } from "./AnalyticsModeTabs";
 export type { AnalyticsMode } from "./AnalyticsModeTabs";
 export { BudgetBuilderCard } from "./BudgetBuilderCard";
 export { BudgetOverviewCard } from "./BudgetOverviewCard";
+export { FamilyPlanCard } from "./FamilyPlanCard";
 export { GoalCard } from "./GoalCard";
 export { GoalsList } from "./GoalsList";
 export { MonthPicker } from "./MonthPicker";
