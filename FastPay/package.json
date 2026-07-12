@@ -7,7 +7,8 @@
     "start-web": "expo start --web",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "npx --yes tsx lib/analytics/__tests__/weekly.test.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.0",
+    "tsx": "^4.23.0",
     "typescript": "~5.9.2"
   },
   "private": true

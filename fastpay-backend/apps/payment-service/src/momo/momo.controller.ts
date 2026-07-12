@@ -12,6 +12,11 @@ export class MomoController {
     return this.momoService.initiate(dto);
   }
 
+  @Get('history/:walletPublicKey')
+  getHistory(@Param('walletPublicKey') walletPublicKey: string) {
+    return this.momoService.getHistory(walletPublicKey);
+  }
+
   @Get(':paymentId/status')
   getStatus(@Param('paymentId') paymentId: string) {
     return this.momoService.getStatus(paymentId);

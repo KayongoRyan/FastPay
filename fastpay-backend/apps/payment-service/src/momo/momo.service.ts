@@ -58,6 +58,29 @@ export class MomoService {
     };
   }
 
+  async getHistory(walletPublicKey: string) {
+    const payments = await this.momoPaymentModel
+      .find({
+        walletPublicKey,
+        status: MomoPaymentStatus.COMPLETED,
+      })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .exec();
+
+    return payments.map((payment) => ({
+      paymentId: payment._id.toString(),
+      provider: payment.provider,
+      phone: payment.phone,
+      amountRwf: payment.amountRwf,
+      status: payment.status,
+      usdtCredited: payment.usdtCredited,
+      createdAt:
+        (payment as MomoPayment & { createdAt?: Date }).createdAt?.toISOString() ??
+        new Date().toISOString(),
+    }));
+  }
+
   private async simulateProviderFlow(paymentId: string) {
     await this.delay(1500);
     await this.momoPaymentModel.findByIdAndUpdate(paymentId, {

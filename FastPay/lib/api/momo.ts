@@ -26,6 +26,16 @@ export interface MomoPaymentStatusResponse {
   message?: string;
 }
 
+export interface MomoHistoryItem {
+  paymentId: string;
+  provider: MomoProvider;
+  phone: string;
+  amountRwf: number;
+  status: MomoPaymentStatus;
+  usdtCredited?: number;
+  createdAt: string;
+}
+
 export async function initiateMomoPayment(
   payload: InitiateMomoPaymentRequest,
 ): Promise<InitiateMomoPaymentResponse> {
@@ -37,5 +47,13 @@ export async function getMomoPaymentStatus(
 ): Promise<MomoPaymentStatusResponse> {
   return apiGet<MomoPaymentStatusResponse>(
     `/momo/${encodeURIComponent(paymentId)}/status`,
+  );
+}
+
+export async function fetchMomoHistory(
+  walletPublicKey: string,
+): Promise<MomoHistoryItem[]> {
+  return apiGet<MomoHistoryItem[]>(
+    `/momo/history/${encodeURIComponent(walletPublicKey)}`,
   );
 }
