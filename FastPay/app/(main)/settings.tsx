@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 import { useAuthStore } from "@/store/authStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -50,6 +51,13 @@ export default function SettingsScreen() {
         <Text style={styles.rowBtnText}>
           {user.biometricEnabled ? `Disable ${biometricLabel}` : `Enable ${biometricLabel}`}
         </Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.rowBtn}
+        onPress={() => router.push(featureRoutes.support)}
+      >
+        <Text style={styles.rowBtnText}>Help & Assistant</Text>
       </Pressable>
 
       <Pressable

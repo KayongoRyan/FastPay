@@ -57,4 +57,5 @@ export const featureRoutes = {
   familySetup: "/services/family-setup" as Href,
   voucher: "/services/voucher" as Href,
   escrowTransfer: "/wallet/transfer" as Href,
+  support: "/support" as Href,
 };

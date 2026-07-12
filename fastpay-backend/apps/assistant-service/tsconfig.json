@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": "../../",
+    "paths": {
+      "@fastpay/common": ["libs/common/src"],
+      "@fastpay/common/*": ["libs/common/src/*"],
+      "@fastpay/mongo": ["libs/mongo/src"],
+      "@fastpay/mongo/*": ["libs/mongo/src/*"],
+      "@fastpay/schemas": ["libs/schemas/dist"],
+      "@fastpay/schemas/*": ["libs/schemas/dist/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "scripts/**/*"
+  ]
+}

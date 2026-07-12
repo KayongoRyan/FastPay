@@ -12,4 +12,5 @@ export default registerAs('gateway', () => ({
     process.env.BLOCKCHAIN_SERVICE_URL ?? 'http://localhost:3009',
   fraudUrl: process.env.FRAUD_SERVICE_URL ?? 'http://localhost:3011',
   kycUrl: process.env.KYC_SERVICE_URL ?? 'http://localhost:3012',
+  assistantUrl: process.env.ASSISTANT_SERVICE_URL ?? 'http://localhost:3016',
 }));

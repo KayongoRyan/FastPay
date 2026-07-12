@@ -1,5 +1,12 @@
 export { apiGet, apiGetAuth, apiPost, apiPostAuth, getApiUrl, setAccessTokenProvider } from './client';
 export {
+  sendChatMessage,
+  type ChatAction,
+  type ChatResponsePayload,
+  type ChatSource,
+  type BudgetSnapshotPayload,
+} from './chat';
+export {
   fetchAccountBalances,
   fetchPaymentHistory,
   type PaymentHistoryItem,

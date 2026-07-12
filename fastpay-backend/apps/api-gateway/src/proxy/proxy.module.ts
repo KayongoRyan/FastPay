@@ -20,7 +20,8 @@ type GatewayRoute = {
     | 'treasuryUrl'
     | 'blockchainUrl'
     | 'fraudUrl'
-    | 'kycUrl';
+    | 'kycUrl'
+    | 'assistantUrl';
 };
 
 const ROUTES: GatewayRoute[] = [
@@ -36,6 +37,7 @@ const ROUTES: GatewayRoute[] = [
   { path: 'treasury', targetKey: 'treasuryUrl' },
   { path: 'compliance', targetKey: 'fraudUrl' },
   { path: 'kyc', targetKey: 'kycUrl' },
+  { path: 'assistant', targetKey: 'assistantUrl' },
 ];
 
 function createRouteProxy(

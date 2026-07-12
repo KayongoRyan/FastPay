@@ -22,6 +22,7 @@ data:
   BLOCKCHAIN_SERVICE_URL: http://blockchain-service:3009
   FRAUD_SERVICE_URL: http://fraud-service:3011
   KYC_SERVICE_URL: http://kyc-service:3012
+  ASSISTANT_SERVICE_URL: http://assistant-service:3016
   CHAINALYSIS_MOCK_URL: http://fraud-service:3011/compliance/chainalysis
   CHAINALYSIS_API_KEY: mock-api-key
   OFFLINE_QUEUE_NAME: offline-tx
@@ -42,3 +43,4 @@ data:
   BLOCKCHAIN_SERVICE_PORT: "3009"
   FRAUD_SERVICE_PORT: "3011"
   KYC_SERVICE_PORT: "3012"
+  ASSISTANT_SERVICE_PORT: "3016"
