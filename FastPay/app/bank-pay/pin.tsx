@@ -1,10 +1,10 @@
 import { Href, router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
 import * as Haptics from "expo-haptics";
 
 import { PinEntryLayout } from "@/components/ui/PinEntryLayout";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { featureRoutes } from "@/lib/navigation/feature-routes";
 import { verifyTransactionPin } from "@/lib/auth/storage";
 import { useBankPayStore } from "@/store/bankPayStore";
 
@@ -84,10 +84,7 @@ export default function BankPayPinScreen() {
       loading={submitting}
       forgotPasscode={{
         onPress: () =>
-          Alert.alert(
-            "Forgot passcode?",
-            "Contact support to reset your transaction PIN.",
-          ),
+          router.push(featureRoutes.forgotPasscode("/bank-pay/pin")),
       }}
       secondaryAction={{
         label: "Cancel payment",

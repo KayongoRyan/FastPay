@@ -9,6 +9,8 @@ export const AUTH_AUDIT_ACTIONS = {
   BIOMETRIC_LOGIN_SUCCESS: 'auth.biometric.login.success',
   BIOMETRIC_LOGIN_FAILED: 'auth.biometric.login.failed',
   LOGOUT: 'auth.logout',
+  PASSCODE_RESET_VERIFY: 'auth.passcode_reset.verify',
+  PASSCODE_RESET_FAILED: 'auth.passcode_reset.failed',
 } as const;
 
 export type AuthAuditAction =
