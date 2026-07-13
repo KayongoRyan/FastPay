@@ -1,56 +1,69 @@
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Play, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { HeroPhoneMockups } from "./HeroPhoneMockups";
 
-const avatars = ["JK", "AM", "SR", "LT"];
+const avatars = [
+  { initials: "JK", color: "#5b8def" },
+  { initials: "AM", color: "#e85d8a" },
+  { initials: "SR", color: "#f5a623" },
+  { initials: "LT", color: "#50c878" },
+  { initials: "DP", color: "#9b59b6" },
+];
 
 export function Hero() {
   return (
     <section className="hero" id="home">
-      <div className="hero__grid" aria-hidden="true" />
       <div className="container">
         <div className="hero__content">
-          <div className="hero__badge">Welcome to FastPay</div>
+          <div className="hero__badge">
+            <Shield size={14} />
+            Keep Your Money Safe
+          </div>
           <h1 className="hero__title">
-            Secure Your <span>Fintech Success</span> For The Future
+            The best <span>digital wallet</span> platform for your future.
           </h1>
           <p className="hero__text">
-            Move money globally, track spending with weekly, monthly, and yearly
-            budgets, and get AI-powered insights — all in one secure wallet built
-            for modern finance.
+            Send, spend, and grow your money with the most secure and intelligent
+            platform — budgets, global transfers, and AI insights in one app.
           </p>
+
+          <div className="hero__social">
+            <div className="hero__avatars">
+              {avatars.map((a) => (
+                <div
+                  key={a.initials}
+                  className="hero__avatar"
+                  style={{ background: a.color }}
+                >
+                  {a.initials}
+                </div>
+              ))}
+            </div>
+            <div className="hero__social-text">
+              <strong>250K+</strong>
+              <span>Happy Users</span>
+            </div>
+          </div>
+
           <div className="hero__cta">
-            <Link to="/pricing" className="btn btn-primary">
+            <Link to="/pricing" className="btn btn-primary hero__btn-primary">
               Get Started
               <ArrowRight size={18} />
             </Link>
-            <Link to="/services" className="btn btn-outline">
-              Explore Services
-            </Link>
+            <button type="button" className="hero__video-btn">
+              <span className="hero__video-icon">
+                <Play size={16} fill="currentColor" />
+              </span>
+              <span className="hero__video-copy">
+                <strong>Watch Video</strong>
+                <small>2 min video</small>
+              </span>
+            </button>
           </div>
         </div>
 
-        <div className="hero__proof">
-          <div className="hero__rating">
-            <div className="hero__rating-score">
-              4.9<span>/5</span>
-            </div>
-            <div className="hero__stars" aria-label="4.9 out of 5 stars">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} size={16} fill="currentColor" />
-              ))}
-            </div>
-            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Trusted by 50,000+ users
-            </p>
-          </div>
-          <div className="hero__avatars">
-            {avatars.map((initials) => (
-              <div key={initials} className="hero__avatar">
-                {initials}
-              </div>
-            ))}
-            <span className="hero__avatar-count">+2k this week</span>
-          </div>
+        <div className="hero__visual">
+          <HeroPhoneMockups />
         </div>
       </div>
     </section>
