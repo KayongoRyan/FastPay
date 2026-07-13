@@ -1,37 +1,5 @@
-import { CreditCard, PiggyBank, RefreshCw, Shield, Smartphone, Zap } from "lucide-react";
-
-const services = [
-  {
-    icon: CreditCard,
-    title: "Virtual & Physical Cards",
-    desc: "Instant card issuance with customizable limits, categories, and freeze controls.",
-  },
-  {
-    icon: RefreshCw,
-    title: "Currency Convert",
-    desc: "Real-time exchange rates with zero hidden markup on 40+ currency pairs.",
-  },
-  {
-    icon: PiggyBank,
-    title: "Smart Budgeting",
-    desc: "Weekly, monthly, and yearly budget builders with alerts when you approach limits.",
-  },
-  {
-    icon: Shield,
-    title: "Bank-Grade Security",
-    desc: "Biometric login, device binding, and transaction signing on every payment.",
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile First",
-    desc: "Native iOS and Android apps with offline-ready transaction history.",
-  },
-  {
-    icon: Zap,
-    title: "AI Assistant",
-    desc: "Ask about balances, affordability, and savings — get answers grounded in your data.",
-  },
-];
+import { Link } from "react-router-dom";
+import { services } from "../data/services";
 
 export function Services() {
   return (
@@ -55,6 +23,11 @@ export function Services() {
               <p>{s.desc}</p>
             </article>
           ))}
+        </div>
+        <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+          <Link to="/services" className="btn btn-outline">
+            View All Services
+          </Link>
         </div>
       </div>
     </section>

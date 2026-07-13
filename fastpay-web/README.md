@@ -20,12 +20,15 @@ npm run preview  # preview production build
 
 ## Sections
 
-- Top bar + sticky nav
-- Hero with grid background + social proof
-- 3 feature cards (cards, transfers, insights)
-- Analytics deep-dive with **weekly / monthly / yearly** budget toggle
-- Logo strip, services grid, testimonials
-- Pricing (3 tiers), FAQ accordion, footer + newsletter
+**Home** (`/`) — landing with hero, features, analytics preview, services, testimonials, pricing, FAQ
+
+**Analytics** (`/analytics`) — budget demo (weekly/monthly/yearly), metrics, category breakdown, capabilities
+
+**Services** (`/services`) — detailed service cards, how-it-works, business panel
+
+**Pricing** (`/pricing`) — plan cards, feature comparison table, pricing FAQ
+
+**Contact** (`/contact`) — contact form, support channels, global offices
 
 ## Stack
 

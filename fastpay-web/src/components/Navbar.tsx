@@ -1,13 +1,13 @@
 import { Menu, Search, X } from "lucide-react";
 import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 
 const links = [
-  { href: "#home", label: "Home" },
-  { href: "#services", label: "Services" },
-  { href: "#analytics", label: "Analytics" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#contact", label: "Contact" },
+  { to: "/", label: "Home" },
+  { to: "/services", label: "Services" },
+  { to: "/analytics", label: "Analytics" },
+  { to: "/pricing", label: "Pricing" },
+  { to: "/contact", label: "Contact" },
 ];
 
 export function Navbar() {
@@ -17,20 +17,21 @@ export function Navbar() {
     <>
       <nav className="navbar">
         <div className="container">
-          <a href="#home" className="navbar__brand">
+          <Link to="/" className="navbar__brand">
             <span className="navbar__logo">F</span>
             FastPay
-          </a>
+          </Link>
 
           <div className="navbar__links">
             {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={link.href === "#home" ? "active" : undefined}
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === "/"}
+                className={({ isActive }) => (isActive ? "active" : undefined)}
               >
                 {link.label}
-              </a>
+              </NavLink>
             ))}
           </div>
 
@@ -38,12 +39,12 @@ export function Navbar() {
             <button type="button" className="navbar__search" aria-label="Search">
               <Search size={18} />
             </button>
-            <a href="#login" className="btn btn-ghost">
+            <Link to="/contact" className="btn btn-ghost">
               Log In
-            </a>
-            <a href="#pricing" className="btn btn-primary">
+            </Link>
+            <Link to="/pricing" className="btn btn-primary">
               Get Started
-            </a>
+            </Link>
             <button
               type="button"
               className="navbar__toggle"
@@ -76,16 +77,21 @@ export function Navbar() {
             <X size={22} />
           </button>
           {links.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
+              onClick={() => setMobileOpen(false)}
+            >
               {link.label}
-            </a>
+            </NavLink>
           ))}
-          <a href="#login" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
+          <Link to="/contact" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
             Log In
-          </a>
-          <a href="#pricing" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
+          </Link>
+          <Link to="/pricing" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
             Get Started
-          </a>
+          </Link>
         </div>
       </div>
     </>

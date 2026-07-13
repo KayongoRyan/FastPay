@@ -1,29 +1,42 @@
 import { Github, Linkedin, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const columns = [
   {
     title: "Product",
-    links: ["Features", "Pricing", "Convert", "Analytics", "Cards"],
+    links: [
+      { label: "Services", to: "/services" },
+      { label: "Analytics", to: "/analytics" },
+      { label: "Pricing", to: "/pricing" },
+    ],
   },
   {
     title: "Company",
-    links: ["About", "Blog", "Careers", "Press", "Partners"],
+    links: [
+      { label: "About", to: "/contact" },
+      { label: "Careers", to: "/contact" },
+      { label: "Partners", to: "/contact" },
+    ],
   },
   {
-    title: "Legal",
-    links: ["Privacy", "Terms", "Security", "Compliance"],
+    title: "Support",
+    links: [
+      { label: "Contact", to: "/contact" },
+      { label: "Help Center", to: "/contact" },
+      { label: "Security", to: "/contact" },
+    ],
   },
 ];
 
 export function Footer() {
   return (
-    <footer className="footer" id="contact">
+    <footer className="footer">
       <div className="container">
         <div className="footer__top">
           <div>
-            <div className="footer__brand">
+            <Link to="/" className="footer__brand">
               Fast<span>Pay</span>
-            </div>
+            </Link>
             <p style={{ fontSize: "0.9rem", maxWidth: "32ch" }}>
               Secure fintech for the future. Move, manage, and grow your money
               with confidence.
@@ -40,8 +53,8 @@ export function Footer() {
               <h4>{col.title}</h4>
               <ul>
                 {col.links.map((link) => (
-                  <li key={link}>
-                    <a href="#">{link}</a>
+                  <li key={link.label}>
+                    <Link to={link.to}>{link.label}</Link>
                   </li>
                 ))}
               </ul>
