@@ -1,5 +1,8 @@
 import { Type } from 'class-transformer';
 import {
+  IsArray,
+  IsIn,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -76,6 +79,22 @@ export class ChatContextDto {
   @IsOptional()
   @IsString()
   walletPublicKey?: string;
+
+  @IsOptional()
+  @IsString()
+  walletBalanceRwf?: string;
+
+  @IsOptional()
+  @IsString()
+  walletBalanceUsdt?: string;
+
+  @IsOptional()
+  @IsString()
+  cryptoPortfolioSummary?: string;
+
+  @IsOptional()
+  @IsString()
+  engagementSummary?: string;
 
   @IsOptional()
   @ValidateNested()

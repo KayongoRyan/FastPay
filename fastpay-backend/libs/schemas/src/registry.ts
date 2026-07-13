@@ -22,5 +22,6 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'audit_logs', service: 'audit-service', description: 'Security and activity audit trail' },
   { collection: 'knowledge_chunks', service: 'assistant-service', description: 'RAG knowledge chunks and embeddings' },
   { collection: 'chat_conversations', service: 'assistant-service', description: 'Assistant chat history per user' },
+  { collection: 'assistant_feedback', service: 'assistant-service', description: 'Assistant thumbs up/down feedback' },
   { collection: 'momo_payments', service: 'payment-service', description: 'Mobile money top-up payments' },
 ];

@@ -429,6 +429,20 @@
     "category": "policy"
   },
   {
+    "text": "FastPay action support routes to /support.",
+    "source": "lib/navigation/feature-routes.ts",
+    "title": "support",
+    "actionRoute": "/support",
+    "category": "policy"
+  },
+  {
+    "text": "FastPay action login routes to /login.",
+    "source": "lib/navigation/feature-routes.ts",
+    "title": "login",
+    "actionRoute": "/login",
+    "category": "policy"
+  },
+  {
     "text": "FastPay action familySetup routes to /services/family-setup.",
     "source": "lib/navigation/feature-routes.ts",
     "title": "familySetup",

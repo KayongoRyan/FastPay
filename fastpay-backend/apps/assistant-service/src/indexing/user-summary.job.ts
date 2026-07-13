@@ -131,6 +131,34 @@ export class UserSummaryJobService {
       return { indexed: 0 };
     }
 
+    const spendSignals = chunks.filter((c) => c.category === KnowledgeChunkCategory.TRANSACTION).length;
+    const riskFlags: string[] = [];
+    if (spendSignals >= 15) {
+      riskFlags.push('high_spend');
+    }
+    if (kycDocs.length === 0) {
+      riskFlags.push('low_kyc');
+    }
+
+    const profileChunk = [
+      `income: ? RWF`,
+      `spend: ?%`,
+      `savings: ?%`,
+      `topIntents: []`,
+      `portfolio: USDT/BTC/SOL`,
+      `riskFlags: [${riskFlags.join(', ')}]`,
+      `recentTransactions: ${spendSignals}`,
+    ].join(' | ');
+
+    chunks.unshift({
+      text: `User profile summary: ${profileChunk}`,
+      source: 'user_profile',
+      title: 'User profile',
+      category: KnowledgeChunkCategory.BUDGET,
+      route: '/analytics',
+      actionRoute: '/analytics',
+    });
+
     return this.indexer.upsertUserChunks(userId, chunks);
   }
 }

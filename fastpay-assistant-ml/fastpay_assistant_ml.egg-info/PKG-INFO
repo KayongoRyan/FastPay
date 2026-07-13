@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: fastpay-assistant-ml
+Version: 0.1.0
+Summary: FastPay Assistant ML pipeline — confidence routing, hybrid intent, personalization, feedback/eval
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+# FastPay Assistant ML (Python)
+
+Pure-Python implementation of the 4-phase FastPay Assistant ML plan:
+
+1. **Pipeline correctness** — retrieval confidence, confidence-gated orchestrator, answer validator, cloud escalation gate  
+2. **Understanding** — centroid intent classifier + regex fallback, entity extraction  
+3. **Personal financial intelligence** — user profile / risk flags, action ranker, personalized fast-answers  
+4. **Learning loop** — feedback store, turn audit, eval harness, feedback export report  
+
+No native ML deps (Expo-Go-safe centroid classifier port).
+
+## Layout
+
+```
+fastpay_assistant/
+  ml/           config, classifier, entities, validator, profile, ranker
+  rag/          BM25, retriever, template replies
+  orchestrator.py
+  intent_router.py
+  fast_answers.py
+  escalation.py
+  feedback.py
+  cli.py
+data/
+  sample_corpus.json
+  golden_set.json
+scripts/
+  eval_assistant.py
+  export_feedback_report.py
+```
+
+## Quick start
+
+```bash
+cd fastpay-assistant-ml
+pip install -e ".[dev]"
+python -m fastpay_assistant.cli "how much do i have"
+python -m fastpay_assistant.cli "can i afford 50000" --json
+pytest -q
+python scripts/eval_assistant.py
+```
+
+## Cloud escalation
+
+```python
+from fastpay_assistant.escalation import should_escalate_to_cloud
+
+if should_escalate_to_cloud(local_reply):
+    # POST /assistant/chat with engagementSummary, walletBalanceRwf, cryptoPortfolioSummary
+    ...
+```
+
+## Wire into TS app
+
+This package is the reference implementation / offline eval brain. Port thresholds from `fastpay_assistant/ml/config.py` into `FastPay/lib/assistant/ml/config.ts` when integrating the mobile client.

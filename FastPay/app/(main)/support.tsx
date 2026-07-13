@@ -11,7 +11,9 @@ import { useHideTabBar } from "@/hooks/useHideTabBar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import type { BudgetSnapshotPayload } from "@/lib/api/chat";
 import { useAssistantEngagementStore } from "@/store/assistantEngagementStore";
+import { useAssistantFeedbackStore } from "@/store/assistantFeedbackStore";
 import { useAssistantStore } from "@/store/assistantStore";
+import { useAssistantTurnAuditStore } from "@/store/assistantTurnAuditStore";
 import { useBudgetStore } from "@/store/budgetStore";
 import { useChatStore } from "@/store/chatStore";
 import { useFamilyPlanStore } from "@/store/familyPlanStore";
@@ -24,7 +26,7 @@ export default function SupportScreen() {
   const { user } = useRequireAuth();
 
   const pathname = usePathname();
-  const { messages, isLoading, error, sendMessage, clear } = useChatStore();
+  const { messages, conversationId, isLoading, error, sendMessage, clear } = useChatStore();
   const { budget, goals, initialize: initBudget } = useBudgetStore();
   const { settings, plans, initialize: initFamily } = useFamilyPlanStore();
   const {
@@ -36,6 +38,9 @@ export default function SupportScreen() {
     initialize: initWallet,
   } = useWalletStore();
   const { initialize: initEngagement } = useAssistantEngagementStore();
+  const { initialize: initFeedback, record: recordFeedback } =
+    useAssistantFeedbackStore();
+  const { initialize: initTurnAudit } = useAssistantTurnAuditStore();
   const {
     privacyMode,
     modelStatus,
@@ -59,7 +64,17 @@ export default function SupportScreen() {
     void initWallet();
     void initAssistant();
     void initEngagement();
-  }, [initBudget, initFamily, initWallet, initAssistant, initEngagement]);
+    void initFeedback();
+    void initTurnAudit();
+  }, [
+    initBudget,
+    initFamily,
+    initWallet,
+    initAssistant,
+    initEngagement,
+    initFeedback,
+    initTurnAudit,
+  ]);
 
   const budgetSnapshot = useMemo<BudgetSnapshotPayload>(
     () => {
@@ -161,7 +176,21 @@ export default function SupportScreen() {
       {modelMessage ? <Text style={styles.modelNote}>{modelMessage}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <ChatMessageList messages={messages} />
+      <ChatMessageList
+        messages={messages}
+        conversationId={conversationId}
+        onFeedback={(message, rating) =>
+          void recordFeedback({
+            conversationId: message.conversationId ?? conversationId ?? undefined,
+            messageId: message.id,
+            rating,
+            intent: message.intent ?? "general",
+            confidence: message.confidence ?? 0,
+            chunkIds: message.chunkIds,
+            engine: message.engine ?? "local",
+          })
+        }
+      />
 
       {messages.length > 0 ? (
         <Pressable style={styles.clearBtn} onPress={clear}>

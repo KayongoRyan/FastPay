@@ -1,6 +1,7 @@
 import type { BudgetSnapshotPayload } from "@/lib/api/chat";
 import type { AuthUser } from "@/lib/auth/types";
 
+import { buildUserProfile } from "./ml/user-profile";
 import type { AssistantContext } from "./types";
 
 export function buildAssistantContext(params: {
@@ -14,8 +15,9 @@ export function buildAssistantContext(params: {
   engagementSummary?: string;
   budgetSnapshot?: BudgetSnapshotPayload;
   user?: AuthUser | null;
+  routeVisitCounts?: Record<string, number>;
 }): AssistantContext {
-  return {
+  const base: AssistantContext = {
     currentRoute: params.currentRoute,
     screenTitle: params.screenTitle ?? "Ask FastPay",
     walletPublicKey: params.walletPublicKey,
@@ -27,6 +29,9 @@ export function buildAssistantContext(params: {
     budgetSnapshot: params.budgetSnapshot,
     user: params.user ?? null,
   };
+
+  base.userProfile = buildUserProfile(base, params.routeVisitCounts);
+  return base;
 }
 
 export function contextToPromptSection(context: AssistantContext): string {
