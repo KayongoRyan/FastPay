@@ -7,6 +7,7 @@ on:
       - 'FastPay/**'
       - 'fastpay-web/**'
       - '.github/workflows/container-security.yml'
+      - '.gitleaks.toml'
   push:
     branches: [main, master]
     paths:
@@ -14,6 +15,7 @@ on:
       - 'FastPay/**'
       - 'fastpay-web/**'
       - '.github/workflows/container-security.yml'
+      - '.gitleaks.toml'
 
 defaults:
   run:
@@ -51,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Required for gitleaks PR diff scan (parent..head); shallow clone breaks log-opts.
+          fetch-depth: 0
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@v2
         env:
