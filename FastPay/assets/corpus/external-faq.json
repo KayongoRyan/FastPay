@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Irembo — National ID",
+    "keywords": ["irembo", "national id", "id card", "identity card"],
+    "text": "Apply for or renew a national ID through Irembo (irembo.gov.rw). You need a valid phone number and payment via Mobile Money or bank."
+  },
+  {
+    "title": "Irembo — Birth certificate",
+    "keywords": ["birth certificate", "irembo", "birth"],
+    "text": "Request a birth certificate on Irembo. Processing times vary by sector; keep your application reference number."
+  },
+  {
+    "title": "RRA — Pay tax",
+    "keywords": ["rra", "tax", "pay tax", "revenue"],
+    "text": "Rwanda Revenue Authority (RRA) taxes can be paid via Irembo, banks, or Mobile Money. Use your TIN for all filings."
+  },
+  {
+    "title": "RRA — EBM receipts",
+    "keywords": ["rra", "ebm", "receipt", "vat"],
+    "text": "Registered businesses must issue EBM receipts. Consumers can verify receipts on the RRA verification portal."
+  },
+  {
+    "title": "Police clearance",
+    "keywords": ["police clearance", "irembo", "criminal record"],
+    "text": "Police clearance certificates are requested through Irembo. Allow several working days for processing."
+  }
+]

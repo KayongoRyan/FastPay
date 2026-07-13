@@ -4,6 +4,8 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import {
   BarChart3,
   Bell,
+  Bot,
+  Cloud,
   CreditCard,
   FileText,
   Fingerprint,
@@ -41,6 +43,8 @@ import {
   truncateId,
 } from "@/lib/settings/profile";
 import { useAuthStore } from "@/store/authStore";
+import { useAssistantStore } from "@/store/assistantStore";
+import { useChatStore } from "@/store/chatStore";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
@@ -62,12 +66,26 @@ export default function SettingsScreen() {
     error,
   } = useAuthStore();
   const wallet = useWalletStore((state) => state.wallet);
+  const clearChat = useChatStore((state) => state.clear);
+  const {
+    privacyMode,
+    cloudFallback,
+    useLocalLlm,
+    modelStatus,
+    modelMessage,
+    initialize: initAssistant,
+    setPrivacyMode,
+    setCloudFallback,
+    setUseLocalLlm,
+    downloadModel,
+  } = useAssistantStore();
 
   const [hasTransactionPin, setHasTransactionPin] = useState<boolean | null>(null);
 
   useEffect(() => {
     void loadTransactionPin().then((pin) => setHasTransactionPin(Boolean(pin)));
-  }, []);
+    void initAssistant();
+  }, [initAssistant]);
 
   const handleBiometricToggle = useCallback(
     (enabled: boolean) => {
@@ -231,6 +249,58 @@ export default function SettingsScreen() {
           title="Budget & savings goals"
           subtitle="Weekly plan, goals, and analytics"
           onPress={() => router.push(featureRoutes.analytics())}
+          isLast
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Assistant"
+        description="Offline-first AI — Private keeps all data on this device"
+      >
+        <SettingsNavRow
+          icon={Shield}
+          title="Privacy mode"
+          subtitle={
+            privacyMode === "private"
+              ? "Private — no external fetch, no cloud assistant"
+              : "Connected — FX, Horizon, and bundled gov FAQs allowed"
+          }
+          onPress={() =>
+            void setPrivacyMode(privacyMode === "private" ? "connected" : "private")
+          }
+        />
+        <SettingsToggleRow
+          icon={Cloud}
+          title="Cloud assistant fallback"
+          subtitle="Use server RAG when local docs are insufficient (Connected only)"
+          value={cloudFallback}
+          onValueChange={(next) => void setCloudFallback(next)}
+          disabled={privacyMode === "private"}
+        />
+        <SettingsToggleRow
+          icon={Bot}
+          title="On-device LLM"
+          subtitle={
+            modelStatus === "ready"
+              ? "Neural answers on this device"
+              : modelStatus === "unsupported"
+                ? "Using fast templates + local search"
+                : `Model: ${modelStatus}`
+          }
+          value={useLocalLlm}
+          onValueChange={(next) => void setUseLocalLlm(next)}
+        />
+        <SettingsNavRow
+          icon={Bot}
+          title="Download / refresh model"
+          subtitle={modelMessage ?? "WebLLM on browser · llama.rn on dev build"}
+          onPress={() => void downloadModel()}
+        />
+        <SettingsNavRow
+          icon={LifeBuoy}
+          title="Clear assistant chat"
+          subtitle="Remove local conversation history"
+          onPress={clearChat}
           isLast
         />
       </SettingsSection>

@@ -1,11 +1,20 @@
 import { create } from "zustand";
 
 import {
+  buildAssistantContext,
+  canUseCloudFallback,
+  runAssistantQuery,
+  type AssistantMessageSource,
+} from "@/lib/assistant";
+import { getNetworkStatus } from "@/lib/assistant/connectivity";
+import {
   sendChatMessage,
   type ChatAction,
   type ChatSource,
   type BudgetSnapshotPayload,
 } from "@/lib/api/chat";
+import type { AuthUser } from "@/lib/auth/types";
+import { useAssistantStore } from "@/store/assistantStore";
 
 export type ChatMessage = {
   id: string;
@@ -13,6 +22,8 @@ export type ChatMessage = {
   content: string;
   sources?: ChatSource[];
   actions?: ChatAction[];
+  engine?: AssistantMessageSource;
+  latencyMs?: number;
 };
 
 interface ChatState {
@@ -25,6 +36,9 @@ interface ChatState {
     currentRoute?: string;
     budgetSnapshot?: BudgetSnapshotPayload;
     walletPublicKey?: string;
+    walletBalanceRwf?: string;
+    walletBalanceXlm?: number;
+    user?: AuthUser | null;
   }) => Promise<void>;
   clear: () => void;
 }
@@ -39,7 +53,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  sendMessage: async ({ message, currentRoute, budgetSnapshot, walletPublicKey }) => {
+  sendMessage: async ({
+    message,
+    currentRoute,
+    budgetSnapshot,
+    walletPublicKey,
+    walletBalanceRwf,
+    walletBalanceXlm,
+    user,
+  }) => {
     const trimmed = message.trim();
     if (!trimmed) {
       return;
@@ -57,29 +79,77 @@ export const useChatStore = create<ChatState>((set, get) => ({
       error: null,
     }));
 
+    const assistantState = useAssistantStore.getState();
+    const isOnline = await getNetworkStatus();
+
     try {
-      const response = await sendChatMessage({
+      const localReply = await runAssistantQuery({
         message: trimmed,
-        conversationId: get().conversationId ?? undefined,
-        context: {
+        privacyMode: assistantState.privacyMode,
+        isOnline,
+        useLocalLlm: assistantState.useLocalLlm,
+        context: buildAssistantContext({
           currentRoute,
           screenTitle: "Ask FastPay",
           walletPublicKey,
+          walletBalanceRwf,
+          walletBalanceXlm,
           budgetSnapshot,
-        },
+          user,
+        }),
       });
+
+      const shouldTryCloud = canUseCloudFallback(
+        assistantState.privacyMode,
+        assistantState.cloudFallback,
+        isOnline,
+      );
+
+      if (
+        shouldTryCloud &&
+        !localReply.usedLlm &&
+        localReply.sources.length === 0
+      ) {
+        const response = await sendChatMessage({
+          message: trimmed,
+          conversationId: get().conversationId ?? undefined,
+          context: {
+            currentRoute,
+            screenTitle: "Ask FastPay",
+            walletPublicKey,
+            budgetSnapshot,
+          },
+        });
+
+        const assistantMessage: ChatMessage = {
+          id: makeId(),
+          role: "assistant",
+          content: response.reply,
+          sources: response.sources,
+          actions: response.actions,
+          engine: "cloud",
+        };
+
+        set((state) => ({
+          messages: [...state.messages, assistantMessage],
+          conversationId: response.conversationId,
+          isLoading: false,
+        }));
+        return;
+      }
 
       const assistantMessage: ChatMessage = {
         id: makeId(),
         role: "assistant",
-        content: response.reply,
-        sources: response.sources,
-        actions: response.actions,
+        content: localReply.reply,
+        sources: localReply.sources,
+        actions: localReply.actions,
+        engine: localReply.source,
+        latencyMs: localReply.latencyMs,
       };
 
       set((state) => ({
         messages: [...state.messages, assistantMessage],
-        conversationId: response.conversationId,
         isLoading: false,
       }));
     } catch (error) {
@@ -88,7 +158,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         error:
           error instanceof Error
             ? error.message
-            : "Could not reach FastPay Assistant. Start assistant-service and gateway.",
+            : "Assistant could not answer. Check privacy mode and connectivity.",
       });
     }
   },

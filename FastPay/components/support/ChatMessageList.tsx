@@ -35,6 +35,14 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
             <Text style={[styles.text, isUser ? styles.userText : styles.assistantText]}>
               {message.content}
             </Text>
+            {!isUser && message.engine ? (
+              <View style={styles.engineChip}>
+                <Text style={styles.engineText}>
+                  {message.engine === "cloud" ? "Cloud" : "Local"}
+                  {message.latencyMs ? ` · ${message.latencyMs}ms` : ""}
+                </Text>
+              </View>
+            ) : null}
             {!isUser && message.sources ? (
               <SourceChips sources={message.sources} />
             ) : null}
@@ -76,6 +84,21 @@ const styles = StyleSheet.create({
   },
   assistantText: {
     color: colors.white,
+  },
+  engineChip: {
+    alignSelf: "flex-start",
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.pillTrack,
+  },
+  engineText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
   },
   empty: {
     paddingVertical: spacing.xl,

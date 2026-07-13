@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { usePathname } from "expo-router";
-import { MessageCircle } from "lucide-react-native";
+import { MessageCircle, Shield, Wifi } from "lucide-react-native";
 
 import { ChatInput } from "@/components/support/ChatInput";
 import { ChatMessageList } from "@/components/support/ChatMessageList";
@@ -10,28 +10,43 @@ import { BackHeader } from "@/components/ui/BackHeader";
 import { useHideTabBar } from "@/hooks/useHideTabBar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import type { BudgetSnapshotPayload } from "@/lib/api/chat";
+import { useAssistantStore } from "@/store/assistantStore";
 import { useBudgetStore } from "@/store/budgetStore";
 import { useChatStore } from "@/store/chatStore";
 import { useFamilyPlanStore } from "@/store/familyPlanStore";
 import { useWalletStore } from "@/store/walletStore";
 import { colors } from "@/theme/colors";
-import { spacing } from "@/theme/spacing";
+import { radius, spacing } from "@/theme/spacing";
 
 export default function SupportScreen() {
   useHideTabBar();
-  useRequireAuth();
+  const { user } = useRequireAuth();
 
   const pathname = usePathname();
   const { messages, isLoading, error, sendMessage, clear } = useChatStore();
   const { budget, goals, initialize: initBudget } = useBudgetStore();
   const { settings, plans, initialize: initFamily } = useFamilyPlanStore();
-  const { wallet, initialize: initWallet } = useWalletStore();
+  const {
+    wallet,
+    balanceRwfEstimate,
+    nativeBalanceXlm,
+    initialize: initWallet,
+  } = useWalletStore();
+  const {
+    privacyMode,
+    modelStatus,
+    modelMessage,
+    useLocalLlm,
+    initialize: initAssistant,
+    downloadModel,
+  } = useAssistantStore();
 
   useEffect(() => {
     void initBudget();
     void initFamily();
     void initWallet();
-  }, [initBudget, initFamily, initWallet]);
+    void initAssistant();
+  }, [initBudget, initFamily, initWallet, initAssistant]);
 
   const budgetSnapshot = useMemo<BudgetSnapshotPayload>(
     () => {
@@ -50,7 +65,6 @@ export default function SupportScreen() {
           name: goal.name,
           targetRwf: goal.targetRwf,
           savedRwf: goal.savedRwf,
-          deadline: goal.deadline,
         })),
         familyPlan: {
           yearlyIncomePercent: settings.yearlyIncomePercent,
@@ -65,6 +79,9 @@ export default function SupportScreen() {
     [budget, goals, settings, plans],
   );
 
+  const modeLabel =
+    privacyMode === "private" ? "Private · on-device" : "Connected · tools enabled";
+
   return (
     <TabScreenLayout
       adjustForKeyboard
@@ -78,6 +95,9 @@ export default function SupportScreen() {
               currentRoute: pathname,
               budgetSnapshot,
               walletPublicKey: wallet?.publicKey,
+              walletBalanceRwf: balanceRwfEstimate,
+              walletBalanceXlm: nativeBalanceXlm,
+              user,
             })
           }
         />
@@ -87,10 +107,43 @@ export default function SupportScreen() {
       <View style={styles.hero}>
         <MessageCircle size={22} color={colors.primary} />
         <Text style={styles.heroText}>
-          Product help grounded in FastPay docs, your payments, and budget snapshot.
+          Offline-first assistant. Answers stay on your device in Private mode.
         </Text>
       </View>
 
+      <View style={styles.badges}>
+        <View style={styles.badge}>
+          {privacyMode === "private" ? (
+            <Shield size={14} color={colors.success} />
+          ) : (
+            <Wifi size={14} color={colors.primary} />
+          )}
+          <Text style={styles.badgeText}>{modeLabel}</Text>
+        </View>
+        {useLocalLlm ? (
+          <View style={styles.badgeMuted}>
+            <Text style={styles.badgeMutedText}>
+              {modelStatus === "ready"
+                ? "LLM ready"
+                : modelStatus === "downloading"
+                  ? "Downloading model…"
+                  : modelStatus === "unsupported"
+                    ? "Template mode"
+                    : "Local LLM"}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {modelStatus === "unsupported" && useLocalLlm ? (
+        <Pressable style={styles.modelCta} onPress={() => void downloadModel()}>
+          <Text style={styles.modelCtaText}>
+            Download on-device model (web: WebLLM · mobile: dev build)
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {modelMessage ? <Text style={styles.modelNote}>{modelMessage}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <ChatMessageList messages={messages} />
@@ -109,12 +162,63 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   heroText: {
     flex: 1,
     color: colors.textMuted,
     lineHeight: 20,
+  },
+  badges: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.inputBg,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  badgeMuted: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.pillTrack,
+  },
+  badgeMutedText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  modelCta: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  modelCtaText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  modelNote: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginBottom: spacing.sm,
   },
   error: {
     color: colors.error,
