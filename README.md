@@ -6,8 +6,17 @@ Monorepo for the FastPay fintech wallet.
 Fast/
 ├── fastpay-backend/        # NestJS microservices + MongoDB
 ├── fastpay_mobile/         # Flutter mobile app (iOS + Android) — primary mobile client
+├── fastpay-web/            # Marketing landing site (Vite + React)
 ├── FastPay/                # Legacy Expo/RN app (web prototyping)
 └── fastpay-assistant-ml/   # Python offline eval brain (assistant golden set / CLI)
+```
+
+### Marketing site
+
+```bash
+cd fastpay-web
+npm install
+npm run dev   # http://localhost:5173
 ```
 
 ## Quick start
