@@ -7,5 +7,6 @@ export { GoalCard } from "./GoalCard";
 export { GoalsList } from "./GoalsList";
 export { MonthPicker } from "./MonthPicker";
 export { WeekPicker } from "./WeekPicker";
+export { YearPicker } from "./YearPicker";
 export { WeeklyPlanCard } from "./WeeklyPlanCard";
 export { WeeklyTransactionRow } from "./WeeklyTransactionRow";

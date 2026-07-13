@@ -10,6 +10,7 @@ import {
   GoalsList,
   MonthPicker,
   WeekPicker,
+  YearPicker,
   WeeklyPlanCard,
   WeeklyTransactionRow,
   type AnalyticsMode,
@@ -17,7 +18,7 @@ import {
 import { TabScreenLayout } from "@/components/layout/TabScreenLayout";
 import { ExpenseChart } from "@/components/ui/ExpenseChart";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { evaluateBudget } from "@/lib/analytics/budget";
+import { evaluateBudget, getBudgetPeriodLabel } from "@/lib/analytics/budget";
 import {
   applyPeriodIncomeDeduction,
   evaluateFamilyIncomeAllocation,
@@ -36,6 +37,11 @@ import {
   shiftWeek,
 } from "@/lib/analytics/weekly";
 import { evaluateWeeklyPlan, createEmptyPlan } from "@/lib/analytics/weekly-plan";
+import {
+  buildYearlySummary,
+  getYearBounds,
+  shiftYear,
+} from "@/lib/analytics/yearly";
 import { useBillsStore } from "@/store/billsStore";
 import { useBudgetStore } from "@/store/budgetStore";
 import { useFamilyPlanStore } from "@/store/familyPlanStore";
@@ -57,6 +63,7 @@ export default function AnalyticsScreen() {
   const [tab, setTab] = useState<"expenses" | "income">("expenses");
   const [weekAnchor, setWeekAnchor] = useState(() => new Date());
   const [monthAnchor, setMonthAnchor] = useState(() => new Date());
+  const [yearAnchor, setYearAnchor] = useState(() => new Date());
 
   const {
     wallet,
@@ -142,17 +149,27 @@ export default function AnalyticsScreen() {
     [sources, monthAnchor],
   );
 
+  const yearlySummary = useMemo(
+    () => buildYearlySummary(sources, yearAnchor),
+    [sources, yearAnchor],
+  );
+
   const budgetSummary = useMemo(() => {
     if (budget.period === "weekly") {
       return buildWeeklySummary(sources, weekAnchor);
     }
-    return buildMonthlySummary(sources, monthAnchor);
-  }, [budget.period, sources, weekAnchor, monthAnchor]);
+    if (budget.period === "monthly") {
+      return buildMonthlySummary(sources, monthAnchor);
+    }
+    return buildYearlySummary(sources, yearAnchor);
+  }, [budget.period, sources, weekAnchor, monthAnchor, yearAnchor]);
 
   const currentWeekKey = useMemo(() => getWeekBounds(new Date()).weekKey, []);
   const currentMonthKey = useMemo(() => getMonthBounds(new Date()).monthKey, []);
+  const currentYearKey = useMemo(() => getYearBounds(new Date()).yearKey, []);
   const isCurrentWeek = weeklySummary.bounds.weekKey === currentWeekKey;
   const isCurrentMonth = monthlySummary.bounds.monthKey === currentMonthKey;
+  const isCurrentYear = yearlySummary.bounds.yearKey === currentYearKey;
 
   const plan = useMemo(
     () =>
@@ -193,19 +210,30 @@ export default function AnalyticsScreen() {
     const bounds =
       budget.period === "weekly"
         ? weeklySummary.bounds
-        : monthlySummary.bounds;
+        : budget.period === "monthly"
+          ? monthlySummary.bounds
+          : yearlySummary.bounds;
+
     const grossIncome =
       budget.period === "weekly"
         ? weeklySummary.incomeTotalRwf
-        : monthlySummary.incomeTotalRwf;
+        : budget.period === "monthly"
+          ? monthlySummary.incomeTotalRwf
+          : yearlySummary.incomeTotalRwf;
 
     return applyPeriodIncomeDeduction(
       grossIncome,
       familyContributions,
-      budget.period === "weekly" ? bounds.start : monthlySummary.bounds.start,
-      budget.period === "weekly" ? bounds.end : monthlySummary.bounds.end,
+      bounds.start,
+      bounds.end,
     );
-  }, [budget.period, weeklySummary, monthlySummary, familyContributions]);
+  }, [
+    budget.period,
+    weeklySummary,
+    monthlySummary,
+    yearlySummary,
+    familyContributions,
+  ]);
 
   const budgetStatus = useMemo(
     () =>
@@ -296,8 +324,10 @@ export default function AnalyticsScreen() {
           adjustedIncome={budgetAdjustedIncome}
           isCurrentWeek={isCurrentWeek}
           isCurrentMonth={isCurrentMonth}
+          isCurrentYear={isCurrentYear}
           weeklyBounds={weeklySummary.bounds}
           monthlyBounds={monthlySummary.bounds}
+          yearlyBounds={yearlySummary.bounds}
           onSaveBudget={(nextBudget) => void saveBudget(nextBudget)}
           onSaveFamilySettings={(settings) => void saveFamilySettings(settings)}
           onAddFamilyPlan={(input) => void addFamilyPlan(input)}
@@ -315,6 +345,12 @@ export default function AnalyticsScreen() {
           onNextMonth={() => {
             if (!isCurrentMonth) {
               setMonthAnchor((date) => shiftMonth(date, 1));
+            }
+          }}
+          onPreviousYear={() => setYearAnchor((date) => shiftYear(date, -1))}
+          onNextYear={() => {
+            if (!isCurrentYear) {
+              setYearAnchor((date) => shiftYear(date, 1));
             }
           }}
         />
@@ -500,8 +536,10 @@ function BudgetSection({
   adjustedIncome,
   isCurrentWeek,
   isCurrentMonth,
+  isCurrentYear,
   weeklyBounds,
   monthlyBounds,
+  yearlyBounds,
   onSaveBudget,
   onSaveFamilySettings,
   onAddFamilyPlan,
@@ -511,6 +549,8 @@ function BudgetSection({
   onNextWeek,
   onPreviousMonth,
   onNextMonth,
+  onPreviousYear,
+  onNextYear,
 }: {
   budget: ReturnType<typeof useBudgetStore.getState>["budget"];
   budgetStatus: ReturnType<typeof evaluateBudget> | null;
@@ -521,12 +561,14 @@ function BudgetSection({
   familyIncomeAllocation: ReturnType<typeof evaluateFamilyIncomeAllocation>;
   familyPlanSaving: boolean;
   familyPlanError: string | null;
-  period: "weekly" | "monthly";
+  period: "weekly" | "monthly" | "yearly";
   adjustedIncome: ReturnType<typeof applyPeriodIncomeDeduction>;
   isCurrentWeek: boolean;
   isCurrentMonth: boolean;
+  isCurrentYear: boolean;
   weeklyBounds: ReturnType<typeof getWeekBounds>;
   monthlyBounds: ReturnType<typeof getMonthBounds>;
+  yearlyBounds: ReturnType<typeof getYearBounds>;
   onSaveBudget: (budget: ReturnType<typeof useBudgetStore.getState>["budget"]) => void;
   onSaveFamilySettings: (
     settings: ReturnType<typeof useFamilyPlanStore.getState>["settings"],
@@ -540,7 +582,11 @@ function BudgetSection({
   onNextWeek: () => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
+  onPreviousYear: () => void;
+  onNextYear: () => void;
 }) {
+  const periodLabel = getBudgetPeriodLabel(period);
+
   return (
     <>
       {period === "weekly" ? (
@@ -550,12 +596,19 @@ function BudgetSection({
           onPrevious={onPreviousWeek}
           onNext={onNextWeek}
         />
-      ) : (
+      ) : period === "monthly" ? (
         <MonthPicker
           bounds={monthlyBounds}
           isCurrentMonth={isCurrentMonth}
           onPrevious={onPreviousMonth}
           onNext={onNextMonth}
+        />
+      ) : (
+        <YearPicker
+          bounds={yearlyBounds}
+          isCurrentYear={isCurrentYear}
+          onPrevious={onPreviousYear}
+          onNext={onNextYear}
         />
       )}
 
@@ -570,14 +623,14 @@ function BudgetSection({
       {budgetStatus ? (
         <BudgetOverviewCard
           status={budgetStatus}
-          periodLabel={period === "weekly" ? "week" : "month"}
+          periodLabel={periodLabel}
         />
       ) : null}
 
       {adjustedIncome.familyPlanDeductionRwf > 0 ? (
         <Text style={styles.familyDeduction}>
           Family plan: -{adjustedIncome.familyPlanDeductionRwf.toLocaleString()} RWF
-          removed from income this {period === "weekly" ? "week" : "month"}
+          removed from income this {periodLabel}
         </Text>
       ) : null}
 

@@ -1,4 +1,4 @@
-export type BudgetPeriod = "weekly" | "monthly";
+export type BudgetPeriod = "weekly" | "monthly" | "yearly";
 
 export interface BudgetBucket {
   id: string;
@@ -53,6 +53,16 @@ export const DEFAULT_BUCKETS: BudgetBucket[] = [
   { id: "wants", name: "Wants", percent: 30 },
   { id: "savings", name: "Savings", percent: 20 },
 ];
+
+export function getBudgetPeriodLabel(period: BudgetPeriod): string {
+  if (period === "weekly") {
+    return "week";
+  }
+  if (period === "monthly") {
+    return "month";
+  }
+  return "year";
+}
 
 export function createDefaultBudget(): UserBudget {
   return {
@@ -212,7 +222,7 @@ function buildBudgetInsights(input: {
   health: BudgetHealth;
 }): string[] {
   const insights: string[] = [];
-  const periodLabel = input.budget.period === "weekly" ? "week" : "month";
+  const periodLabel = getBudgetPeriodLabel(input.budget.period);
 
   if (input.budget.incomeBaseRwf > 0) {
     if (input.incomeProgress >= 1) {
