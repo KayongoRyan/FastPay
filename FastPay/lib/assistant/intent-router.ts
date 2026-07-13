@@ -9,7 +9,17 @@ const PATTERNS: { intent: AssistantIntent; regex: RegExp }[] = [
   {
     intent: "balance",
     regex:
-      /\b(balance|how much (do i|money)|wallet address|public key|xlm|usdt)\b/i,
+      /\b(balance|how much (do i|money)|wallet address|public key|usdt|btc|bitcoin|sol|solana)\b/i,
+  },
+  {
+    intent: "cash_flow",
+    regex:
+      /\b(cash flow|cashflow|spending|expenses|income|afford|overspend|burn rate|where (did|does) my money)\b/i,
+  },
+  {
+    intent: "planning",
+    regex:
+      /\b(plan|budget plan|financial plan|save more|savings plan|money management|how should i|advice|direction|guide me)\b/i,
   },
   {
     intent: "budget",

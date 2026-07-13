@@ -10,6 +10,7 @@ import { BackHeader } from "@/components/ui/BackHeader";
 import { useHideTabBar } from "@/hooks/useHideTabBar";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import type { BudgetSnapshotPayload } from "@/lib/api/chat";
+import { useAssistantEngagementStore } from "@/store/assistantEngagementStore";
 import { useAssistantStore } from "@/store/assistantStore";
 import { useBudgetStore } from "@/store/budgetStore";
 import { useChatStore } from "@/store/chatStore";
@@ -29,9 +30,12 @@ export default function SupportScreen() {
   const {
     wallet,
     balanceRwfEstimate,
+    balanceUsdtFormatted,
+    cryptoPortfolio,
     nativeBalanceXlm,
     initialize: initWallet,
   } = useWalletStore();
+  const { initialize: initEngagement } = useAssistantEngagementStore();
   const {
     privacyMode,
     modelStatus,
@@ -41,12 +45,21 @@ export default function SupportScreen() {
     downloadModel,
   } = useAssistantStore();
 
+  const cryptoPortfolioSummary = useMemo(
+    () =>
+      cryptoPortfolio?.holdings
+        .map((h) => `${h.amountFormatted} ${h.symbol}`)
+        .join(", ") ?? "",
+    [cryptoPortfolio],
+  );
+
   useEffect(() => {
     void initBudget();
     void initFamily();
     void initWallet();
     void initAssistant();
-  }, [initBudget, initFamily, initWallet, initAssistant]);
+    void initEngagement();
+  }, [initBudget, initFamily, initWallet, initAssistant, initEngagement]);
 
   const budgetSnapshot = useMemo<BudgetSnapshotPayload>(
     () => {
@@ -97,17 +110,19 @@ export default function SupportScreen() {
               walletPublicKey: wallet?.publicKey,
               walletBalanceRwf: balanceRwfEstimate,
               walletBalanceXlm: nativeBalanceXlm,
+              walletBalanceUsdt: balanceUsdtFormatted,
+              cryptoPortfolioSummary,
               user,
             })
           }
         />
       }
     >
-      <BackHeader title="Ask FastPay" />
+      <BackHeader title="AI Assistant" />
       <View style={styles.hero}>
         <MessageCircle size={22} color={colors.primary} />
         <Text style={styles.heroText}>
-          Offline-first assistant. Answers stay on your device in Private mode.
+          Your financial copilot — tracks cash flow, learns your habits, and guides USDT, BTC, and SOL decisions.
         </Text>
       </View>
 

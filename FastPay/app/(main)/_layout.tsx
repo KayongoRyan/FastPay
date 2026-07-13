@@ -1,6 +1,8 @@
 import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 
+import { AssistantFab } from "@/components/assistant/AssistantFab";
+import { AssistantRouteTracker } from "@/components/assistant/AssistantRouteTracker";
 import {
   FLOATING_TAB_BAR_HEIGHT,
   MainTabBar,
@@ -9,33 +11,37 @@ import { colors } from "@/theme/colors";
 
 export default function MainLayout() {
   return (
-    <Tabs
-      tabBar={(props) => <MainTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: colors.background },
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
-          elevation: 0,
-          height: FLOATING_TAB_BAR_HEIGHT,
-          ...(Platform.OS === "ios" ? { shadowOpacity: 0 } : {}),
-        },
-      }}
-    >
-      <Tabs.Screen name="home" options={{ title: "Home" }} />
-      <Tabs.Screen name="wallet" options={{ title: "Wallet" }} />
-      <Tabs.Screen name="convert" options={{ title: "Convert" }} />
-      <Tabs.Screen name="analytics" options={{ title: "Analytics" }} />
-      <Tabs.Screen name="settings" options={{ title: "Settings" }} />
-      <Tabs.Screen name="buy" options={{ href: null, title: "Buy" }} />
-      <Tabs.Screen name="bills" options={{ href: null, title: "Bills" }} />
-      <Tabs.Screen name="quick-links" options={{ href: null, title: "Quick Links" }} />
-      <Tabs.Screen name="services" options={{ href: null, title: "Services" }} />
-      <Tabs.Screen name="loan" options={{ href: null, title: "Loan" }} />
-      <Tabs.Screen name="irembo" options={{ href: null, title: "Irembo" }} />
-      <Tabs.Screen name="support" options={{ href: null, title: "Support" }} />
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <AssistantRouteTracker />
+      <Tabs
+        tabBar={(props) => <MainTabBar {...props} />}
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: colors.background },
+          tabBarStyle: {
+            position: "absolute",
+            backgroundColor: "transparent",
+            borderTopWidth: 0,
+            elevation: 0,
+            height: FLOATING_TAB_BAR_HEIGHT,
+            ...(Platform.OS === "ios" ? { shadowOpacity: 0 } : {}),
+          },
+        }}
+      >
+        <Tabs.Screen name="home" options={{ title: "Home" }} />
+        <Tabs.Screen name="wallet" options={{ title: "Wallet" }} />
+        <Tabs.Screen name="convert" options={{ title: "Convert" }} />
+        <Tabs.Screen name="analytics" options={{ title: "Analytics" }} />
+        <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+        <Tabs.Screen name="buy" options={{ href: null, title: "Buy" }} />
+        <Tabs.Screen name="bills" options={{ href: null, title: "Bills" }} />
+        <Tabs.Screen name="quick-links" options={{ href: null, title: "Quick Links" }} />
+        <Tabs.Screen name="services" options={{ href: null, title: "Services" }} />
+        <Tabs.Screen name="loan" options={{ href: null, title: "Loan" }} />
+        <Tabs.Screen name="irembo" options={{ href: null, title: "Irembo" }} />
+        <Tabs.Screen name="support" options={{ href: null, title: "Support" }} />
+      </Tabs>
+      <AssistantFab />
+    </View>
   );
 }

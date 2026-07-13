@@ -21,11 +21,14 @@ import { buildUnsignedPayment } from '@/lib/stellar/build-payment';
 import { STELLAR_NETWORK_PASSPHRASE } from '@/lib/stellar/constants';
 import type { StellarBalanceEntry, WalletTransaction } from '@/lib/stellar/types';
 import {
-  formatRwfEstimateFromXlm,
   formatXlmBalance,
   getNativeBalance,
   mapPaymentToTransaction,
 } from '@/lib/stellar/format';
+import {
+  buildCryptoPortfolio,
+  type CryptoPortfolio,
+} from '@/lib/wallet/crypto-assets';
 
 interface WalletState {
   wallet: MpcWallet | null;
@@ -38,6 +41,8 @@ interface WalletState {
   nativeBalanceXlm: number;
   balanceRwfEstimate: string;
   balanceXlmFormatted: string;
+  balanceUsdtFormatted: string;
+  cryptoPortfolio: CryptoPortfolio | null;
   transactions: WalletTransaction[];
   payments: PaymentHistoryItem[];
   momoHistory: MomoHistoryItem[];
@@ -79,6 +84,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   nativeBalanceXlm: 0,
   balanceRwfEstimate: '0',
   balanceXlmFormatted: '0.00',
+  balanceUsdtFormatted: '0.00',
+  cryptoPortfolio: null,
   transactions: [],
   payments: [],
   momoHistory: [],
@@ -132,12 +139,19 @@ export const useWalletStore = create<WalletState>((set, get) => ({
 
       const nativeBalanceXlm = getNativeBalance(balances);
       const transactions = payments.map(mapPaymentToTransaction);
+      const totalUsdtEquivalent = nativeBalanceXlm;
+      const cryptoPortfolio = buildCryptoPortfolio(
+        totalUsdtEquivalent,
+        wallet.publicKey,
+      );
 
       set({
         balances,
         nativeBalanceXlm,
         balanceXlmFormatted: formatXlmBalance(nativeBalanceXlm),
-        balanceRwfEstimate: formatRwfEstimateFromXlm(nativeBalanceXlm),
+        balanceRwfEstimate: cryptoPortfolio.totalRwfFormatted,
+        balanceUsdtFormatted: cryptoPortfolio.totalUsdtFormatted,
+        cryptoPortfolio,
         transactions,
         payments,
         momoHistory,
@@ -193,6 +207,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         nativeBalanceXlm: 0,
         balanceRwfEstimate: '0',
         balanceXlmFormatted: '0.00',
+        balanceUsdtFormatted: '0.00',
+        cryptoPortfolio: null,
         transactions: [],
         payments: [],
         momoHistory: [],

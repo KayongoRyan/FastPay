@@ -1,5 +1,5 @@
-﻿import { Href, Link, router } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Href, Link, router } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -9,10 +9,14 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import {
   ArrowDown,
   ArrowUpRight,
   ChevronDown,
+  Copy,
+  Eye,
+  EyeOff,
   Plus,
   Receipt,
   Search,
@@ -32,6 +36,10 @@ import {
 } from "@/lib/wallet/trending-tokens";
 import { useCardSubscriptionStore } from "@/store/cardSubscriptionStore";
 import { useWalletStore } from "@/store/walletStore";
+import {
+  buildFastPayAccountNumber,
+  formatFastPayAccountNumberDisplay,
+} from "@/lib/wallet/account-number";
 import { colors } from "@/theme/colors";
 import { radius, spacing } from "@/theme/spacing";
 
@@ -67,12 +75,23 @@ export default function WalletScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const subscriptionsY = useRef(0);
   const [sensitiveVisible, setSensitiveVisible] = useState(false);
+  const [balanceVisible, setBalanceVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState<TrendingPeriod>("today");
   const [periodOpen, setPeriodOpen] = useState(false);
   const { user, isReady, isLoading } = useRequireAuth();
-  const { wallet, initialize, createWallet, isLoading: walletLoading, isReady: walletReady } =
-    useWalletStore();
+  const {
+    wallet,
+    initialize,
+    createWallet,
+    refreshWalletData,
+    isLoading: walletLoading,
+    isReady: walletReady,
+    isRefreshing,
+    balanceRwfEstimate,
+    balanceUsdtFormatted,
+    cryptoPortfolio,
+  } = useWalletStore();
   const {
     initialize: initSubscriptions,
     isReady: subscriptionsReady,
@@ -95,12 +114,40 @@ export default function WalletScreen() {
   const periodLabel =
     TRENDING_PERIODS.find((item) => item.id === period)?.label ?? "Today";
 
+  const accountNumber = useMemo(() => {
+    if (!user?.id) {
+      return "—";
+    }
+    return formatFastPayAccountNumberDisplay(buildFastPayAccountNumber(user.id));
+  }, [user?.id]);
+
+  const accountNumberRaw = useMemo(() => {
+    if (!user?.id) {
+      return "";
+    }
+    return buildFastPayAccountNumber(user.id);
+  }, [user?.id]);
+
+  const [copiedAccount, setCopiedAccount] = useState(false);
+
+  const copyAccountNumber = useCallback(async () => {
+    await Clipboard.setStringAsync(accountNumberRaw || accountNumber);
+    setCopiedAccount(true);
+    setTimeout(() => setCopiedAccount(false), 2000);
+  }, [accountNumber, accountNumberRaw]);
+
   useEffect(() => {
     if (user) {
       void initialize();
       void initSubscriptions();
     }
   }, [user, initialize, initSubscriptions]);
+
+  useEffect(() => {
+    if (wallet) {
+      void refreshWalletData();
+    }
+  }, [wallet, refreshWalletData]);
 
   if (!isReady || isLoading || !user || !subscriptionsReady) {
     return (
@@ -111,8 +158,68 @@ export default function WalletScreen() {
   }
 
   return (
-    <TabScreenLayout scrollRef={scrollRef}>
+    <TabScreenLayout scrollRef={scrollRef} refreshing={isRefreshing} onRefresh={() => void refreshWalletData()}>
       <Text style={styles.title}>Wallet</Text>
+
+      <View style={styles.accountCard}>
+        <View style={styles.balanceHeader}>
+          <Text style={styles.balanceLabel}>Available balance</Text>
+          <Pressable
+            style={styles.hideBalanceBtn}
+            onPress={() => setBalanceVisible((v) => !v)}
+            hitSlop={8}
+            accessibilityLabel={balanceVisible ? "Hide balance" : "Show balance"}
+          >
+            {balanceVisible ? (
+              <EyeOff color={colors.textMuted} size={20} />
+            ) : (
+              <Eye color={colors.primary} size={20} />
+            )}
+          </Pressable>
+        </View>
+        <Text style={styles.balanceAmount}>
+          {!wallet
+            ? "—"
+            : balanceVisible
+              ? `${balanceRwfEstimate} RWF`
+              : "••••••"}
+        </Text>
+        {wallet ? (
+          <Text style={styles.balanceSub}>
+            {balanceVisible
+              ? `${balanceUsdtFormatted} USDT`
+              : "•••• USDT"}
+          </Text>
+        ) : null}
+
+        {wallet && cryptoPortfolio ? (
+          <View style={styles.cryptoRow}>
+            {cryptoPortfolio.holdings.map((holding) => (
+              <View key={holding.symbol} style={styles.cryptoChip}>
+                <Text style={styles.cryptoSymbol}>{holding.symbol}</Text>
+                <Text style={styles.cryptoAmount}>
+                  {balanceVisible ? holding.amountFormatted : "••••"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.accountRow}>
+          <View style={styles.accountMeta}>
+            <Text style={styles.accountLabel}>Account number</Text>
+            <Text style={styles.accountValue} selectable>
+              {accountNumber}
+            </Text>
+          </View>
+          <Pressable style={styles.copyBtn} onPress={() => void copyAccountNumber()} hitSlop={8}>
+            <Copy color={copiedAccount ? colors.success : colors.primary} size={18} />
+          </Pressable>
+        </View>
+        {copiedAccount ? (
+          <Text style={styles.copiedHint}>Account number copied</Text>
+        ) : null}
+      </View>
 
       <VirtualCardCarousel
         holderName={user.fullName}
@@ -233,7 +340,7 @@ export default function WalletScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Stellar wallet</Text>
+        <Text style={styles.label}>Crypto wallet (USDT · BTC · SOL)</Text>
         <Text style={styles.value}>
           {walletReady
             ? wallet
@@ -273,7 +380,117 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 26,
     fontWeight: "700",
+    marginBottom: spacing.md,
+  },
+  accountCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
     marginBottom: spacing.lg,
+    backgroundColor: colors.inputBg,
+    gap: spacing.xs,
+  },
+  balanceLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  balanceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  hideBalanceBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  balanceAmount: {
+    color: colors.white,
+    fontSize: 32,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  balanceSub: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: spacing.xs,
+  },
+  cryptoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  cryptoChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.04)",
+    minWidth: 72,
+  },
+  cryptoSymbol: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  cryptoAmount: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: spacing.sm,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.06)",
+  },
+  accountMeta: {
+    flex: 1,
+    gap: 4,
+  },
+  accountLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  accountValue: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  copyBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,174,239,0.08)",
+  },
+  copiedHint: {
+    color: colors.success,
+    fontSize: 12,
+    marginTop: spacing.xs,
   },
   actions: {
     flexDirection: "row",

@@ -29,7 +29,7 @@ export function WalletGate({
       <View style={styles.empty}>
         <Text style={styles.emptyTitle}>Wallet required</Text>
         <Text style={styles.emptyText}>
-          Create a Stellar wallet to send and receive funds on FastPay.
+          Create a crypto wallet (USDT, BTC, SOL) to send and receive on FastPay.
         </Text>
         <PrimaryButton
           label={walletLoading ? "Creating..." : "Create wallet"}

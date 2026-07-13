@@ -9,6 +9,9 @@ export function buildAssistantContext(params: {
   walletPublicKey?: string;
   walletBalanceXlm?: number;
   walletBalanceRwf?: string;
+  walletBalanceUsdt?: string;
+  cryptoPortfolioSummary?: string;
+  engagementSummary?: string;
   budgetSnapshot?: BudgetSnapshotPayload;
   user?: AuthUser | null;
 }): AssistantContext {
@@ -18,6 +21,9 @@ export function buildAssistantContext(params: {
     walletPublicKey: params.walletPublicKey,
     walletBalanceXlm: params.walletBalanceXlm,
     walletBalanceRwf: params.walletBalanceRwf,
+    walletBalanceUsdt: params.walletBalanceUsdt,
+    cryptoPortfolioSummary: params.cryptoPortfolioSummary,
+    engagementSummary: params.engagementSummary,
     budgetSnapshot: params.budgetSnapshot,
     user: params.user ?? null,
   };
@@ -39,7 +45,16 @@ export function contextToPromptSection(context: AssistantContext): string {
     lines.push(`Wallet: ${context.walletPublicKey}`);
   }
   if (context.walletBalanceRwf) {
-    lines.push(`Balance estimate: ${context.walletBalanceRwf}`);
+    lines.push(`Balance estimate: ${context.walletBalanceRwf} RWF`);
+  }
+  if (context.walletBalanceUsdt) {
+    lines.push(`Crypto balance: ${context.walletBalanceUsdt} USDT equivalent`);
+  }
+  if (context.cryptoPortfolioSummary) {
+    lines.push(`Portfolio: ${context.cryptoPortfolioSummary}`);
+  }
+  if (context.engagementSummary) {
+    lines.push(`User engagement:\n${context.engagementSummary}`);
   }
   if (context.budgetSnapshot) {
     lines.push(`Budget snapshot: ${JSON.stringify(context.budgetSnapshot)}`);

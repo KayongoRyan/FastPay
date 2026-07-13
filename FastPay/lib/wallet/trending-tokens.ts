@@ -21,13 +21,13 @@ export const TRENDING_TOKENS: Record<TrendingPeriod, TrendingToken[]> = {
   today: [
     {
       id: "t1",
-      name: "Shopping",
-      symbol: "RWF",
+      name: "Bitcoin",
+      symbol: "BTC",
       date: "27 05 2026",
-      amountRwf: 50_450,
-      changePercent: 1.8,
+      amountRwf: 312_400,
+      changePercent: 2.1,
       image:
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=120&h=120&fit=crop",
+        "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=120&fit=crop",
     },
     {
       id: "t2",
@@ -41,6 +41,16 @@ export const TRENDING_TOKENS: Record<TrendingPeriod, TrendingToken[]> = {
     },
     {
       id: "t3",
+      name: "Solana",
+      symbol: "SOL",
+      date: "26 05 2026",
+      amountRwf: 95_600,
+      changePercent: 4.2,
+      image:
+        "https://images.unsplash.com/photo-1622630992268-f73695f3f2a5?w=120&h=120&fit=crop",
+    },
+    {
+      id: "t4",
       name: "Transfer",
       symbol: "RWF",
       date: "26 05 2026",
@@ -49,20 +59,20 @@ export const TRENDING_TOKENS: Record<TrendingPeriod, TrendingToken[]> = {
       image:
         "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=120&h=120&fit=crop",
     },
-    {
-      id: "t4",
-      name: "Mobile Money",
-      symbol: "RWF",
-      date: "26 05 2026",
-      amountRwf: 32_800,
-      changePercent: 0.9,
-      image:
-        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=120&fit=crop",
-    },
   ],
   week: [
     {
       id: "w1",
+      name: "Bitcoin",
+      symbol: "BTC",
+      date: "25 05 2026",
+      amountRwf: 890_200,
+      changePercent: 3.8,
+      image:
+        "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=120&fit=crop",
+    },
+    {
+      id: "w2",
       name: "USDT",
       symbol: "USDT",
       date: "25 05 2026",
@@ -72,29 +82,29 @@ export const TRENDING_TOKENS: Record<TrendingPeriod, TrendingToken[]> = {
         "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=120&h=120&fit=crop",
     },
     {
-      id: "w2",
-      name: "Shopping",
-      symbol: "RWF",
-      date: "24 05 2026",
-      amountRwf: 198_300,
-      changePercent: 1.2,
-      image:
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=120&h=120&fit=crop",
-    },
-    {
       id: "w3",
-      name: "Bills",
-      symbol: "RWF",
-      date: "23 05 2026",
-      amountRwf: 62_150,
-      changePercent: -1.4,
+      name: "Solana",
+      symbol: "SOL",
+      date: "24 05 2026",
+      amountRwf: 245_800,
+      changePercent: 5.4,
       image:
-        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=120&h=120&fit=crop",
+        "https://images.unsplash.com/photo-1622630992268-f73695f3f2a5?w=120&h=120&fit=crop",
     },
   ],
   month: [
     {
       id: "m1",
+      name: "Bitcoin",
+      symbol: "BTC",
+      date: "15 05 2026",
+      amountRwf: 2_180_000,
+      changePercent: 6.2,
+      image:
+        "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=120&h=120&fit=crop",
+    },
+    {
+      id: "m2",
       name: "USDT",
       symbol: "USDT",
       date: "15 05 2026",
@@ -104,24 +114,14 @@ export const TRENDING_TOKENS: Record<TrendingPeriod, TrendingToken[]> = {
         "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=120&h=120&fit=crop",
     },
     {
-      id: "m2",
-      name: "Shopping",
-      symbol: "RWF",
-      date: "10 05 2026",
-      amountRwf: 890_400,
-      changePercent: 2.8,
-      image:
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=120&h=120&fit=crop",
-    },
-    {
       id: "m3",
-      name: "Mobile Money",
-      symbol: "RWF",
-      date: "05 05 2026",
-      amountRwf: 455_000,
-      changePercent: 1.1,
+      name: "Solana",
+      symbol: "SOL",
+      date: "10 05 2026",
+      amountRwf: 680_400,
+      changePercent: 8.1,
       image:
-        "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=120&fit=crop",
+        "https://images.unsplash.com/photo-1622630992268-f73695f3f2a5?w=120&h=120&fit=crop",
     },
   ],
 };
