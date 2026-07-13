@@ -7,6 +7,8 @@ import '../features/auth/screens/biometric_unlock_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/security/screens/security_screen.dart';
+import '../features/settings/screens/settings_screen.dart';
 import '../features/offline/screens/offline_receive_screen.dart';
 import '../features/offline/screens/offline_send_screen.dart';
 
@@ -56,6 +58,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/biometric-unlock',
         builder: (context, state) => const BiometricUnlockScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/security',
+        builder: (context, state) => const SecurityScreen(),
       ),
       GoRoute(
         path: '/offline/send',

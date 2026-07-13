@@ -4,11 +4,15 @@ on:
   pull_request:
     paths:
       - 'fastpay-backend/**'
+      - 'FastPay/**'
+      - 'fastpay-web/**'
       - '.github/workflows/container-security.yml'
   push:
     branches: [main, master]
     paths:
       - 'fastpay-backend/**'
+      - 'FastPay/**'
+      - 'fastpay-web/**'
       - '.github/workflows/container-security.yml'
 
 defaults:
@@ -38,7 +42,32 @@ jobs:
       - name: Scan base image
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+          image-ref: node:22-alpine
           format: table
           severity: CRITICAL
           exit-code: 1
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [fastpay-backend, FastPay, fastpay-web]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm audit --audit-level=high
+        continue-on-error: true

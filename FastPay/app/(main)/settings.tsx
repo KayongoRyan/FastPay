@@ -186,6 +186,12 @@ export default function SettingsScreen() {
         />
         <SettingsNavRow
           icon={Shield}
+          title="Security Center"
+          subtitle="Sessions, alerts, and activity"
+          onPress={() => router.push("/security")}
+        />
+        <SettingsNavRow
+          icon={Shield}
           title="Identity verification (KYC)"
           subtitle={`${formatKycStatus(user.kycStatus)} · upload ID & proof of address`}
           onPress={() => router.push(featureRoutes.kyc)}

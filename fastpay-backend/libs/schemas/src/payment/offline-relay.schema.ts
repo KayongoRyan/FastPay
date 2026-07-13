@@ -3,6 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export enum OfflineRelayStatus {
   QUEUED = 'queued',
+  PENDING_REVIEW = 'pending_review',
   BROADCASTING = 'broadcasting',
   CONFIRMED = 'confirmed',
   FAILED = 'failed',
@@ -36,6 +37,12 @@ export class OfflineRelay {
 
   @Prop()
   recipientPhone?: string;
+
+  @Prop()
+  fraudRiskScore?: number;
+
+  @Prop()
+  fraudDecision?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

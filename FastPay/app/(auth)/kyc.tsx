@@ -19,6 +19,7 @@ import {
 } from "lucide-react-native";
 
 import { BackHeader } from "@/components/ui/BackHeader";
+import { usePreventScreenCapture } from "@/hooks/usePreventScreenCapture";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { Screen } from "@/components/ui/Screen";
 import {
@@ -91,6 +92,7 @@ function StatusBadge({
 }
 
 export default function KycScreen() {
+  usePreventScreenCapture();
   const resetOnboarding = useOnboardingStore((s) => s.reset);
   const user = useAuthStore((s) => s.user);
   const initializeAuth = useAuthStore((s) => s.initialize);

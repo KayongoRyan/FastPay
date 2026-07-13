@@ -24,6 +24,10 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('FastPay Wallet'),
         actions: [
           IconButton(
+            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+          IconButton(
             onPressed: auth.isLoading
                 ? null
                 : () async {

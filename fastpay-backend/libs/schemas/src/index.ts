@@ -16,6 +16,11 @@ export * from './kyc/kyc-document.schema';
 
 export * from './audit/audit-log.schema';
 
+export * from './security/user-session.schema';
+export * from './security/trusted-device.schema';
+export * from './security/security-alert.schema';
+export * from './security/fraud-case.schema';
+
 export {
   KnowledgeChunk,
   KnowledgeChunkSchema,

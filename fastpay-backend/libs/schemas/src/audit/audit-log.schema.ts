@@ -15,6 +15,18 @@ export class AuditLog {
   @Prop()
   userAgent?: string;
 
+  @Prop()
+  sessionId?: string;
+
+  @Prop()
+  deviceId?: string;
+
+  @Prop({ enum: ['auth', 'payment', 'security', 'assistant'] })
+  category?: 'auth' | 'payment' | 'security' | 'assistant';
+
+  @Prop({ enum: ['info', 'warn', 'critical'], default: 'info' })
+  severity!: 'info' | 'warn' | 'critical';
+
   @Prop({ type: Object, default: {} })
   details!: Record<string, unknown>;
 

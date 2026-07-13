@@ -35,20 +35,23 @@ export class OfflineController {
       throw new BadRequestException('Invalid Stellar transaction signature');
     }
 
-    await this.fraudClient.assertSignedTransaction(dto.signedTxXDR);
+    const fraud = await this.fraudClient.assertSignedTransaction(dto.signedTxXDR);
 
     const txHash = this.offlineService.hashSignedXdr(dto.signedTxXDR);
     const result = await this.offlineService.queueSignedTx(
       dto.signedTxXDR,
       txHash,
       dto.recipientPhone,
+      { riskScore: fraud.riskScore, decision: fraud.decision },
     );
 
     return {
       accepted: true,
       queueId: result.queueId,
       txHash: result.txHash,
-      estimatedSeconds: this.estimatedSeconds,
+      estimatedSeconds: fraud.decision === 'review' ? 0 : this.estimatedSeconds,
+      fraudDecision: fraud.decision,
+      riskScore: fraud.riskScore,
     };
   }
 

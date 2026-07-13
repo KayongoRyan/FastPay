@@ -15,6 +15,7 @@
     "start:fraud": "npm run start:dev -w @fastpay/fraud-service",
     "start:kyc": "npx --yes kill-port 3012 && npm run start:dev -w @fastpay/kyc-service",
     "start:assistant": "npx --yes kill-port 3016 && npm run start:dev -w @fastpay/assistant-service",
+    "start:audit": "npx --yes kill-port 3015 && npm run start:dev -w @fastpay/audit-service",
     "corpus:build": "npm run corpus:build -w @fastpay/assistant-service",
     "corpus:sync": "npm run corpus:sync --prefix ../FastPay",
     "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",

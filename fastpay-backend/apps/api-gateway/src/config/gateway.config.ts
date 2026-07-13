@@ -13,4 +13,5 @@ export default registerAs('gateway', () => ({
   fraudUrl: process.env.FRAUD_SERVICE_URL ?? 'http://localhost:3011',
   kycUrl: process.env.KYC_SERVICE_URL ?? 'http://localhost:3012',
   assistantUrl: process.env.ASSISTANT_SERVICE_URL ?? 'http://localhost:3016',
+  auditUrl: process.env.AUDIT_SERVICE_URL ?? 'http://localhost:3015',
 }));

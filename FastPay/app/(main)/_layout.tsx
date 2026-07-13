@@ -33,6 +33,7 @@ export default function MainLayout() {
         <Tabs.Screen name="convert" options={{ title: "Convert" }} />
         <Tabs.Screen name="analytics" options={{ title: "Analytics" }} />
         <Tabs.Screen name="settings" options={{ title: "Settings" }} />
+        <Tabs.Screen name="security" options={{ href: null, title: "Security" }} />
         <Tabs.Screen name="buy" options={{ href: null, title: "Buy" }} />
         <Tabs.Screen name="bills" options={{ href: null, title: "Bills" }} />
         <Tabs.Screen name="quick-links" options={{ href: null, title: "Quick Links" }} />

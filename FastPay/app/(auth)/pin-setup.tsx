@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as Haptics from "expo-haptics";
 
 import { PinEntryLayout } from "@/components/ui/PinEntryLayout";
+import { usePreventScreenCapture } from "@/hooks/usePreventScreenCapture";
 import { useAuthStore } from "@/store/authStore";
 import { saveTransactionPin } from "@/lib/auth/storage";
 import { useOnboardingStore } from "@/store/onboardingStore";
@@ -10,6 +11,7 @@ import { useOnboardingStore } from "@/store/onboardingStore";
 const PIN_LENGTH = 4;
 
 export default function PinSetupScreen() {
+  usePreventScreenCapture();
   const register = useAuthStore((state) => state.register);
   const authError = useAuthStore((state) => state.error);
   const { firstName, lastName, email, password, setPin } = useOnboardingStore();

@@ -4,7 +4,18 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 
-import { AuditLog, AuditLogSchema, User, UserSchema } from '@fastpay/schemas';
+import {
+  AuditLog,
+  AuditLogSchema,
+  SecurityAlert,
+  SecurityAlertSchema,
+  TrustedDevice,
+  TrustedDeviceSchema,
+  User,
+  UserSchema,
+  UserSession,
+  UserSessionSchema,
+} from '@fastpay/schemas';
 
 import authConfig from '../config/auth.config';
 import { AuditLogService } from './audit/audit-log.service';
@@ -13,6 +24,8 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { BiometricChallengeService } from './rate-limit/biometric-challenge.service';
 import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
+import { SecurityAlertService } from './security/security-alert.service';
+import { SessionService } from './security/session.service';
 
 import { VerificationService } from './verification/verification.service';
 
@@ -22,6 +35,9 @@ import { VerificationService } from './verification/verification.service';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
+      { name: UserSession.name, schema: UserSessionSchema },
+      { name: TrustedDevice.name, schema: TrustedDeviceSchema },
+      { name: SecurityAlert.name, schema: SecurityAlertSchema },
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -40,6 +56,8 @@ import { VerificationService } from './verification/verification.service';
     BiometricChallengeService,
     AuditLogService,
     VerificationService,
+    SessionService,
+    SecurityAlertService,
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })
