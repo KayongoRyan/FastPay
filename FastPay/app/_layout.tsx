@@ -4,11 +4,13 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { useAutoLock } from "@/hooks/useAutoLock";
 import { useAuthStore } from "@/store/authStore";
 import { colors } from "@/theme/colors";
 
 export default function RootLayout() {
   const initialize = useAuthStore((state) => state.initialize);
+  useAutoLock();
 
   useEffect(() => {
     void initialize().catch(() => undefined);

@@ -11,6 +11,7 @@ const REFRESH_TOKEN_BIO_KEY = 'fastpay_refresh_token_bio';
 const USER_KEY = 'fastpay_auth_user';
 const BIOMETRIC_LOCK_KEY = 'fastpay_biometric_lock';
 const TRANSACTION_PIN_KEY = 'fastpay_transaction_pin';
+const SESSION_ID_KEY = 'fastpay_session_id';
 
 type SecureOptions = SecureStore.SecureStoreOptions | undefined;
 
@@ -52,6 +53,10 @@ export async function saveAuthSession(
   const biometricProtected = options?.biometricProtected ?? false;
 
   await setSecureItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+
+  if (tokens.sessionId) {
+    await setSecureItem(SESSION_ID_KEY, tokens.sessionId);
+  }
 
   if (biometricProtected) {
     await setSecureItem(REFRESH_TOKEN_BIO_KEY, tokens.refreshToken);
@@ -98,6 +103,7 @@ export async function clearAuthSession(): Promise<void> {
     deleteSecureItem(DEVICE_ID_KEY),
     deleteSecureItem(DEVICE_SECRET_KEY),
     deleteSecureItem(TRANSACTION_PIN_KEY),
+    deleteSecureItem(SESSION_ID_KEY),
     AsyncStorage.multiRemove([USER_KEY, BIOMETRIC_LOCK_KEY]),
   ]);
 }
@@ -192,6 +198,10 @@ export async function saveTransactionPin(pin: string): Promise<void> {
 
 export async function loadTransactionPin(): Promise<string | null> {
   return getSecureItem(TRANSACTION_PIN_KEY);
+}
+
+export async function loadSessionId(): Promise<string | null> {
+  return getSecureItem(SESSION_ID_KEY);
 }
 
 export async function verifyTransactionPin(input: string): Promise<boolean> {

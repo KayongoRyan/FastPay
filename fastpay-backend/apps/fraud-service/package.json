@@ -9,13 +9,18 @@
     "start:prod": "node dist/apps/fraud-service/src/main.js"
   },
   "dependencies": {
+    "@fastpay/common": "1.0.0",
+    "@fastpay/mongo": "1.0.0",
+    "@fastpay/schemas": "1.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@stellar/stellar-sdk": "^13.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "mongoose": "^8.9.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   }

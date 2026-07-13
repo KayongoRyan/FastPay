@@ -1,6 +1,14 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+export interface FraudScreenResult {
+  allowed: boolean;
+  decision: 'allow' | 'review' | 'block';
+  riskScore: number;
+  reasons: string[];
+  ruleHits: string[];
+}
+
 @Injectable()
 export class FraudClient {
   private readonly baseUrl: string;
@@ -11,7 +19,7 @@ export class FraudClient {
       .replace(/\/$/, '');
   }
 
-  async assertSignedTransaction(signedXdr: string): Promise<void> {
+  async assertSignedTransaction(signedXdr: string): Promise<FraudScreenResult> {
     const response = await fetch(`${this.baseUrl}/compliance/transactions/assert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -19,11 +27,15 @@ export class FraudClient {
     });
 
     if (response.status === 403) {
-      throw new ForbiddenException(await response.text());
+      throw new ForbiddenException(
+        'This transaction cannot be processed for security reasons.',
+      );
     }
 
     if (!response.ok) {
       throw new Error(`Fraud check failed (${response.status})`);
     }
+
+    return (await response.json()) as FraudScreenResult;
   }
 }

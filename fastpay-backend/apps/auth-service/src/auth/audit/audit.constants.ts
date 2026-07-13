@@ -11,6 +11,12 @@ export const AUTH_AUDIT_ACTIONS = {
   LOGOUT: 'auth.logout',
   PASSCODE_RESET_VERIFY: 'auth.passcode_reset.verify',
   PASSCODE_RESET_FAILED: 'auth.passcode_reset.failed',
+  PASSWORD_CHANGE: 'auth.password.change',
+  ACCOUNT_FREEZE: 'auth.account.freeze',
+  ACCOUNT_UNFREEZE: 'auth.account.unfreeze',
+  SESSION_REVOKE: 'auth.session.revoke',
+  VERIFICATION_SEND: 'auth.verification.send',
+  VERIFICATION_VERIFY: 'auth.verification.verify',
 } as const;
 
 export type AuthAuditAction =
@@ -19,11 +25,17 @@ export type AuthAuditAction =
 export interface AuditContext {
   ipAddress?: string;
   userAgent?: string;
+  sessionId?: string;
+  deviceId?: string;
+  platform?: string;
+  deviceLabel?: string;
 }
 
 export interface AuditEventInput {
-  action: AuthAuditAction;
+  action: AuthAuditAction | string;
   userId?: string;
   details?: Record<string, unknown>;
   context?: AuditContext;
+  category?: 'auth' | 'payment' | 'security' | 'assistant';
+  severity?: 'info' | 'warn' | 'critical';
 }

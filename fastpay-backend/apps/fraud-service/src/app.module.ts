@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { createHealthController } from '@fastpay/common';
+import { FastpayMongoModule } from '@fastpay/mongo';
 
 import complianceConfig from './config/compliance.config';
 import stellarConfig from './config/stellar.config';
@@ -16,6 +17,7 @@ const HealthController = createHealthController('fraud-service');
       load: [complianceConfig, stellarConfig],
       envFilePath: ['.env', '../../.env'],
     }),
+    FastpayMongoModule.forRoot(),
     ComplianceModule,
   ],
   controllers: [HealthController],

@@ -7,6 +7,7 @@ const columns = [
     links: [
       { label: "Services", to: "/services" },
       { label: "Analytics", to: "/analytics" },
+      { label: "Security", to: "/security" },
       { label: "Pricing", to: "/pricing" },
     ],
   },

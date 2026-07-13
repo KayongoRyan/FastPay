@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { BiometricChallengeQueryDto } from './dto/biometric-challenge-query.dto';
 import { BiometricEnrollDto } from './dto/biometric-enroll.dto';
 import { BiometricLoginDto } from './dto/biometric-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -89,6 +90,37 @@ export class AuthController {
     return this.authService.verifyPassword(
       req.user.userId,
       dto.password,
+      extractAuditContext(req),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(
+    @Req() req: Request & { user: AuthenticatedUser },
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      req.user.userId,
+      dto,
+      extractAuditContext(req),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('freeze-account')
+  freezeAccount(@Req() req: Request & { user: AuthenticatedUser }) {
+    return this.authService.freezeAccount(
+      req.user.userId,
+      extractAuditContext(req),
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('unfreeze-account')
+  unfreezeAccount(@Req() req: Request & { user: AuthenticatedUser }) {
+    return this.authService.unfreezeAccount(
+      req.user.userId,
       extractAuditContext(req),
     );
   }

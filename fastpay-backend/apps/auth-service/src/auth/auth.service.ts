@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 
 import { User, UserDocument } from '@fastpay/schemas';
+import { SecurityAlertType } from '@fastpay/schemas';
 
 import {
   AUTH_AUDIT_ACTIONS,
@@ -22,6 +23,7 @@ import {
 import { AuditLogService } from './audit/audit-log.service';
 import { BiometricEnrollDto } from './dto/biometric-enroll.dto';
 import { BiometricLoginDto } from './dto/biometric-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import {
@@ -30,12 +32,15 @@ import {
 } from './interfaces/jwt-payload.interface';
 import { LoginRateLimiterService } from './rate-limit/login-rate-limiter.service';
 import { BiometricChallengeService } from './rate-limit/biometric-challenge.service';
+import { SecurityAlertService } from './security/security-alert.service';
+import { SessionService } from './security/session.service';
 import { verifyEd25519Signature } from './utils/ed25519.util';
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   expiresIn: string;
+  sessionId: string;
 }
 
 export interface AuthUserResponse {
@@ -62,6 +67,8 @@ export class AuthService {
     private readonly rateLimiter: LoginRateLimiterService,
     private readonly biometricChallenge: BiometricChallengeService,
     private readonly auditLog: AuditLogService,
+    private readonly sessionService: SessionService,
+    private readonly securityAlert: SecurityAlertService,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
     this.accessExpiresIn = this.configService.getOrThrow<string>(
@@ -100,7 +107,7 @@ export class AuthService {
         nationalIdHash,
       });
 
-      const tokens = await this.issueTokens(user);
+      const tokens = await this.issueTokens(user, context);
 
       await this.auditLog.record({
         action: AUTH_AUDIT_ACTIONS.REGISTER,
@@ -150,13 +157,21 @@ export class AuthService {
 
     await this.rateLimiter.clearLoginFailures(trimmed);
 
-    const tokens = await this.issueTokens(user);
+    const tokens = await this.issueTokens(user, context);
 
     await this.auditLog.record({
       action: AUTH_AUDIT_ACTIONS.LOGIN_SUCCESS,
       userId: user._id.toString(),
       context,
     });
+
+    await this.securityAlert.create(
+      user._id.toString(),
+      SecurityAlertType.NEW_LOGIN,
+      'New sign-in',
+      'Your account was accessed successfully.',
+      { ipAddress: context?.ipAddress },
+    );
 
     return { user: this.toAuthUser(user), tokens };
   }
@@ -208,7 +223,13 @@ export class AuthService {
     this.assertAccountUsable(user);
 
     const tokenHash = this.hashValue(refreshToken);
-    if (tokenHash !== user.refreshTokenHash) {
+    const session = await this.sessionService.validateRefreshSession(
+      payload.jti,
+      tokenHash,
+    );
+
+    const legacyMatch = tokenHash === user.refreshTokenHash;
+    if (!session && !legacyMatch) {
       await this.auditLog.record({
         action: AUTH_AUDIT_ACTIONS.REFRESH_FAILED,
         userId: user._id.toString(),
@@ -218,18 +239,34 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const tokens = await this.issueTokens(user);
+    const tokens = await this.issueTokens(user, context, payload.jti);
+
+    if (session) {
+      await this.sessionService.rotateSession(
+        payload.jti,
+        tokens.sessionId,
+        this.hashValue(tokens.refreshToken),
+        context,
+      );
+    }
 
     await this.auditLog.record({
       action: AUTH_AUDIT_ACTIONS.REFRESH,
       userId: user._id.toString(),
-      context,
+      context: { ...context, sessionId: tokens.sessionId },
     });
 
     return tokens;
   }
 
-  async logout(userId: string, context?: AuditContext): Promise<{ success: true }> {
+  async logout(
+    userId: string,
+    context?: AuditContext,
+  ): Promise<{ success: true }> {
+    if (context?.sessionId) {
+      await this.sessionService.revokeSession(context.sessionId);
+    }
+
     await this.userModel
       .findByIdAndUpdate(userId, { $unset: { refreshTokenHash: 1 } })
       .exec();
@@ -288,6 +325,24 @@ export class AuthService {
         deviceId: dto.enabled ? dto.deviceId : undefined,
       },
     });
+
+    if (dto.enabled && dto.deviceId && dto.publicKey) {
+      await this.sessionService.upsertTrustedDevice({
+        userId,
+        deviceId: dto.deviceId,
+        publicKey: dto.publicKey,
+        platform: context?.platform,
+      });
+      await this.securityAlert.create(
+        userId,
+        SecurityAlertType.DEVICE_ENROLLED,
+        'Biometric device enrolled',
+        'A new trusted device was added to your account.',
+        { deviceId: dto.deviceId },
+      );
+    } else if (!dto.enabled && dto.deviceId) {
+      await this.sessionService.revokeTrustedDevice(userId, dto.deviceId);
+    }
 
     return this.toAuthUser(user);
   }
@@ -363,7 +418,7 @@ export class AuthService {
 
     this.assertAccountUsable(user);
 
-    const tokens = await this.issueTokens(user);
+    const tokens = await this.issueTokens(user, context);
 
     await this.auditLog.record({
       action: AUTH_AUDIT_ACTIONS.BIOMETRIC_LOGIN_SUCCESS,
@@ -417,6 +472,85 @@ export class AuthService {
     return { verified: true };
   }
 
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    context?: AuditContext,
+  ): Promise<{ success: true }> {
+    const user = await this.userModel
+      .findById(userId)
+      .select('+passwordHash')
+      .exec();
+
+    if (!user?.passwordHash) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    this.assertAccountUsable(user);
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid password');
+    }
+
+    user.passwordHash = await bcrypt.hash(dto.newPassword, this.bcryptRounds);
+    await user.save();
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.PASSWORD_CHANGE,
+      userId,
+      context,
+    });
+
+    return { success: true };
+  }
+
+  async freezeAccount(
+    userId: string,
+    context?: AuditContext,
+  ): Promise<{ success: true; frozenUntil: string }> {
+    const frozenUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await this.userModel
+      .findByIdAndUpdate(userId, { $set: { frozenUntil } })
+      .exec();
+
+    await this.sessionService.revokeAllForUser(userId);
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.ACCOUNT_FREEZE,
+      userId,
+      context,
+      severity: 'critical',
+    });
+
+    await this.securityAlert.create(
+      userId,
+      SecurityAlertType.ACCOUNT_FROZEN,
+      'Account frozen',
+      'Your account was temporarily frozen for security.',
+      { frozenUntil: frozenUntil.toISOString() },
+    );
+
+    return { success: true, frozenUntil: frozenUntil.toISOString() };
+  }
+
+  async unfreezeAccount(
+    userId: string,
+    context?: AuditContext,
+  ): Promise<{ success: true }> {
+    await this.userModel
+      .findByIdAndUpdate(userId, { $unset: { frozenUntil: 1 } })
+      .exec();
+
+    await this.auditLog.record({
+      action: AUTH_AUDIT_ACTIONS.ACCOUNT_UNFREEZE,
+      userId,
+      context,
+    });
+
+    return { success: true };
+  }
+
   async getProfile(userId: string): Promise<AuthUserResponse> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
@@ -465,13 +599,18 @@ export class AuthService {
     }
   }
 
-  private async issueTokens(user: UserDocument): Promise<AuthTokens> {
+  private async issueTokens(
+    user: UserDocument,
+    context?: AuditContext,
+    rotateFromSessionId?: string,
+  ): Promise<AuthTokens> {
     const userId = user._id.toString();
+    const sessionId = randomUUID();
     const accessPayload: JwtAccessPayload = { sub: userId, type: 'access' };
     const refreshPayload: JwtRefreshPayload = {
       sub: userId,
       type: 'refresh',
-      jti: randomUUID(),
+      jti: sessionId,
     };
 
     const accessExpiresSec = this.parseExpiresIn(this.accessExpiresIn);
@@ -488,13 +627,24 @@ export class AuthService {
       }),
     ]);
 
-    user.refreshTokenHash = this.hashValue(refreshToken);
+    const refreshHash = this.hashValue(refreshToken);
+    user.refreshTokenHash = refreshHash;
     await user.save();
+
+    if (!rotateFromSessionId) {
+      await this.sessionService.createSession({
+        userId,
+        sessionId,
+        refreshTokenHash: refreshHash,
+        context,
+      });
+    }
 
     return {
       accessToken,
       refreshToken,
       expiresIn: this.accessExpiresIn,
+      sessionId,
     };
   }
 

@@ -16,6 +16,7 @@ resources:
   - apps/blockchain-service-deployment.yaml
   - apps/fraud-service-deployment.yaml
   - apps/kyc-service-deployment.yaml
+  - apps/audit-service-deployment.yaml
   - apps/stubs-deployment.yaml
   - networking/ingress.yaml
 

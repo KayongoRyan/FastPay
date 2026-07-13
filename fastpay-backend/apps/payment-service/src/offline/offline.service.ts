@@ -99,6 +99,7 @@ export class OfflineService {
     signedTxXDR: string,
     txHash: string,
     recipientPhone?: string,
+    fraudMeta?: { riskScore?: number; decision?: string },
   ): Promise<QueueSignedTxResult> {
     const existing = await this.findByTxHash(txHash);
     if (existing) {
@@ -112,12 +113,19 @@ export class OfflineService {
       `Queueing offline tx ${txHash} from ${parsed.sourceAccount} seq=${parsed.sequence}`,
     );
 
+    const status =
+      fraudMeta?.decision === 'review'
+        ? OfflineRelayStatus.PENDING_REVIEW
+        : OfflineRelayStatus.QUEUED;
+
     try {
       await this.offlineRelayModel.create({
         txHash,
         signedXdr: signedTxXDR,
-        status: OfflineRelayStatus.QUEUED,
+        status,
         recipientPhone,
+        fraudRiskScore: fraudMeta?.riskScore,
+        fraudDecision: fraudMeta?.decision,
       });
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
@@ -130,9 +138,15 @@ export class OfflineService {
 
     try {
       if (this.inlineOfflineQueue || !this.offlineQueue) {
-        setImmediate(() => {
-          void this.processInlineBroadcast(signedTxXDR, txHash);
-        });
+        if (status !== OfflineRelayStatus.PENDING_REVIEW) {
+          setImmediate(() => {
+            void this.processInlineBroadcast(signedTxXDR, txHash);
+          });
+        }
+        return { queueId: txHash, txHash };
+      }
+
+      if (status === OfflineRelayStatus.PENDING_REVIEW) {
         return { queueId: txHash, txHash };
       }
 

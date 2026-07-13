@@ -43,9 +43,20 @@ class ApiClient {
     return _parse(response, parser);
   }
 
+  Future<void> delete(String path, {bool authenticated = false}) async {
+    final response = await _http.delete(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: _headers(authenticated),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(_extractError(response), statusCode: response.statusCode);
+    }
+  }
+
   Map<String, String> _headers(bool authenticated) {
     final headers = <String, String>{
       'Content-Type': 'application/json',
+      'X-Platform': 'flutter',
     };
 
     if (authenticated && _accessToken != null) {

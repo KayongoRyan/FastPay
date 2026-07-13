@@ -5,6 +5,7 @@ import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { ServicesPage } from "./pages/ServicesPage";
 import { PricingPage } from "./pages/PricingPage";
 import { ContactPage } from "./pages/ContactPage";
+import { SecurityPage } from "./pages/SecurityPage";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="pricing" element={<PricingPage />} />
+          <Route path="security" element={<SecurityPage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
       </Routes>

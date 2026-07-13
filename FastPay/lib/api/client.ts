@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from './config';
+import { loadSessionId } from '@/lib/auth/storage';
 
 type AccessTokenProvider = () => Promise<string | null>;
 type TokenRefresher = () => Promise<string | null>;
@@ -53,6 +54,11 @@ async function buildHeaders(
       throw new Error(SESSION_EXPIRED_MESSAGE);
     }
     headers.Authorization = `Bearer ${token}`;
+    const sessionId = await loadSessionId();
+    if (sessionId) {
+      headers['X-Session-Id'] = sessionId;
+    }
+    headers['X-Platform'] = 'expo';
   }
 
   return headers;
@@ -114,7 +120,7 @@ async function fetchWithTimeout(
 }
 
 async function apiFetch<T>(
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'DELETE' | 'PATCH',
   path: string,
   body?: unknown,
   authenticated = false,
@@ -172,4 +178,12 @@ export async function apiPostAuth<T>(path: string, body: unknown): Promise<T> {
 
 export async function apiGetAuth<T>(path: string): Promise<T> {
   return apiFetch<T>('GET', path, undefined, true);
+}
+
+export async function apiDeleteAuth<T>(path: string): Promise<T> {
+  return apiFetch<T>('DELETE', path, undefined, true);
+}
+
+export async function apiPatchAuth<T>(path: string, body: unknown): Promise<T> {
+  return apiFetch<T>('PATCH', path, body, true);
 }

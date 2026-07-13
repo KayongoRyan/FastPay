@@ -1,0 +1,16 @@
+# Dev fallback JWT strings and .env placeholders are not real secrets.
+title = "FastPay gitleaks config"
+
+[allowlist]
+description = "Local dev defaults and example env files"
+paths = [
+  '''(?:^|/)fastpay-backend/\.env\.example$''',
+  '''(?:^|/)fastpay-backend/apps/.*/src/config/auth\.config\.ts$''',
+  '''(?:^|/)docs/security/''',
+]
+regexes = [
+  '''dev-access-secret-change-in-production''',
+  '''dev-refresh-secret-change-in-production''',
+  '''change-me-access''',
+  '''change-me-refresh''',
+]

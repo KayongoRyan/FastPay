@@ -19,6 +19,17 @@ npm install
 npm run dev   # http://localhost:5173
 ```
 
+### Security (docs + services)
+
+```bash
+# Start audit-service (Security Center API)
+cd fastpay-backend && npm run start:audit
+
+# Docs
+docs/security/stride-payment-flow.md
+docs/security/security-center-api.md
+```
+
 ## Quick start
 
 ### Option A — npm (local dev)
