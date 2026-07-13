@@ -1,48 +1,6 @@
 import { Check } from "lucide-react";
-
-const plans = [
-  {
-    name: "Starter",
-    price: "Free",
-    period: "",
-    desc: "Perfect for personal use and getting started.",
-    features: [
-      "1 virtual card",
-      "Weekly & monthly budgets",
-      "Domestic transfers",
-      "Basic AI assistant",
-    ],
-    featured: false,
-  },
-  {
-    name: "Pro",
-    price: "$9",
-    period: "/mo",
-    desc: "For power users who need global access.",
-    features: [
-      "5 virtual + 1 physical card",
-      "Weekly, monthly & yearly budgets",
-      "40+ currency convert",
-      "Priority AI assistant",
-      "FX rate alerts",
-    ],
-    featured: true,
-  },
-  {
-    name: "Business",
-    price: "$29",
-    period: "/mo",
-    desc: "Built for teams and growing companies.",
-    features: [
-      "Unlimited cards & team seats",
-      "Multi-entity dashboards",
-      "API access & webhooks",
-      "Dedicated support",
-      "Custom spending policies",
-    ],
-    featured: false,
-  },
-];
+import { Link } from "react-router-dom";
+import { plans } from "../data/plans";
 
 export function Pricing() {
   return (
@@ -75,12 +33,12 @@ export function Pricing() {
                   </li>
                 ))}
               </ul>
-              <a
-                href="#contact"
+              <Link
+                to="/contact"
                 className={`btn ${plan.featured ? "btn-primary" : "btn-outline"}`}
               >
                 Get Started
-              </a>
+              </Link>
             </article>
           ))}
         </div>

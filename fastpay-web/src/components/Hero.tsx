@@ -1,4 +1,5 @@
 import { ArrowRight, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const avatars = ["JK", "AM", "SR", "LT"];
 
@@ -18,13 +19,13 @@ export function Hero() {
             for modern finance.
           </p>
           <div className="hero__cta">
-            <a href="#pricing" className="btn btn-primary">
+            <Link to="/pricing" className="btn btn-primary">
               Get Started
               <ArrowRight size={18} />
-            </a>
-            <a href="#services" className="btn btn-outline">
+            </Link>
+            <Link to="/services" className="btn btn-outline">
               Explore Services
-            </a>
+            </Link>
           </div>
         </div>
 

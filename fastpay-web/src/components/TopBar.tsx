@@ -1,4 +1,5 @@
 import { Mail, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function TopBar() {
   return (
@@ -15,12 +16,12 @@ export function TopBar() {
           </span>
         </div>
         <div className="top-bar__right">
-          <a href="#support" className="top-bar__link">
+          <Link to="/contact" className="top-bar__link">
             Support
-          </a>
-          <a href="#faq" className="top-bar__link">
+          </Link>
+          <Link to="/contact" className="top-bar__link">
             Help
-          </a>
+          </Link>
           <span className="top-bar__link">EN</span>
         </div>
       </div>
