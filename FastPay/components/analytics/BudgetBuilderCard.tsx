@@ -7,6 +7,7 @@ import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import {
   sumBucketPercents,
   validatePercentages,
+  getBudgetPeriodLabel,
   type BudgetBucket,
   type BudgetPeriod,
   type UserBudget,
@@ -110,36 +111,30 @@ export function BudgetBuilderCard({
       </Text>
 
       <View style={styles.periodRow}>
-        <Pressable
-          style={[styles.periodBtn, period === "weekly" && styles.periodActive]}
-          onPress={() => setPeriod("weekly")}
-        >
-          <Text
-            style={[
-              styles.periodText,
-              period === "weekly" && styles.periodTextActive,
-            ]}
+        {(["weekly", "monthly", "yearly"] as BudgetPeriod[]).map((option) => (
+          <Pressable
+            key={option}
+            style={[styles.periodBtn, period === option && styles.periodActive]}
+            onPress={() => setPeriod(option)}
           >
-            Weekly
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.periodBtn, period === "monthly" && styles.periodActive]}
-          onPress={() => setPeriod("monthly")}
-        >
-          <Text
-            style={[
-              styles.periodText,
-              period === "monthly" && styles.periodTextActive,
-            ]}
-          >
-            Monthly
-          </Text>
-        </Pressable>
+            <Text
+              style={[
+                styles.periodText,
+                period === option && styles.periodTextActive,
+              ]}
+            >
+              {option === "weekly"
+                ? "Weekly"
+                : option === "monthly"
+                  ? "Monthly"
+                  : "Yearly"}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       <Input
-        label={`Income base (RWF / ${period === "weekly" ? "week" : "month"})`}
+        label={`Income base (RWF / ${getBudgetPeriodLabel(period)})`}
         value={incomeBase}
         onChangeText={setIncomeBase}
         keyboardType="numeric"
