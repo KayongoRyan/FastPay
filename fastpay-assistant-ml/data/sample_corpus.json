@@ -1,0 +1,98 @@
+[
+  {
+    "text": "FastPay wallet holds USDT, BTC, and SOL. Check balances, receive, and transfer from the Wallet screen. Day-to-day spend prefers USDT liquidity.",
+    "source": "app/(main)/wallet.tsx",
+    "title": "Wallet",
+    "route": "/wallet",
+    "category": "wallet",
+    "action_route": "/wallet"
+  },
+  {
+    "text": "Pay and track bills — rent, utilities, subscriptions. Add a bill, pay from wallet, track monthly spend by category.",
+    "source": "app/(main)/services/bill.tsx",
+    "title": "Bill Pay",
+    "route": "/bills",
+    "category": "service",
+    "action_route": "/bills"
+  },
+  {
+    "text": "Analytics shows income, spend percent, savings goals, and cash flow. Set savings goals and review weekly burn.",
+    "source": "app/(main)/analytics.tsx",
+    "title": "Analytics",
+    "route": "/analytics",
+    "category": "analytics",
+    "action_route": "/analytics"
+  },
+  {
+    "text": "Apply for a personal, business, or salary loan. Eligibility depends on KYC level and repayment history. Prefer savings before borrowing.",
+    "source": "app/(main)/loan/apply.tsx",
+    "title": "Loans",
+    "route": "/loan/apply",
+    "category": "loan",
+    "action_route": "/loan/apply"
+  },
+  {
+    "text": "Complete KYC with national ID and proof of address to raise transfer limits. Status and level are shown in Settings.",
+    "source": "app/(auth)/kyc.tsx",
+    "title": "KYC",
+    "route": "/(auth)/kyc",
+    "category": "kyc",
+    "action_route": "/(auth)/kyc"
+  },
+  {
+    "text": "Buy crypto with mobile money (MoMo). Top up USDT for spending or accumulate BTC/SOL for longer-term growth.",
+    "source": "app/(main)/buy.tsx",
+    "title": "Buy",
+    "route": "/buy",
+    "category": "buy",
+    "action_route": "/buy"
+  },
+  {
+    "text": "Escrow holds funds until goods or services are delivered. Buyer funds, seller delivers, then release or dispute.",
+    "source": "app/(main)/services/escrow.tsx",
+    "title": "Escrow",
+    "route": "/services/escrow",
+    "category": "service",
+    "action_route": "/services/escrow"
+  },
+  {
+    "text": "Family wallet pools money, sets spending limits, and parent approvals for household members.",
+    "source": "app/(main)/services/family-setup.tsx",
+    "title": "Family Wallet",
+    "route": "/services/family-setup",
+    "category": "service",
+    "action_route": "/services/family-setup"
+  },
+  {
+    "text": "Reset your 4-digit transaction passcode after verifying your login password. Passcode never leaves the device.",
+    "source": "app/forgot-passcode/index.tsx",
+    "title": "Passcode",
+    "route": "/forgot-passcode",
+    "category": "security",
+    "action_route": "/forgot-passcode"
+  },
+  {
+    "text": "Offline receive lets you accept payments over Bluetooth when the network is unavailable.",
+    "source": "app/offline/receive.tsx",
+    "title": "Offline Pay",
+    "route": "/offline/receive",
+    "category": "offline",
+    "action_route": "/offline/receive"
+  },
+  {
+    "text": "Convert between USDT, BTC, and SOL inside FastPay. Rates update when Connected.",
+    "source": "app/(main)/convert.tsx",
+    "title": "Convert",
+    "route": "/convert",
+    "category": "wallet",
+    "action_route": "/convert"
+  },
+  {
+    "text": "Irembo government services — national ID, birth certificate, police clearance, land title, driving license fees.",
+    "source": "app/(main)/irembo.tsx",
+    "title": "Irembo",
+    "route": "/irembo",
+    "category": "gov",
+    "action_route": "/irembo"
+  }
+]

@@ -1,0 +1,220 @@
+[
+  {
+    "id": "bal-1",
+    "question": "how much do i have",
+    "expected_intent": "balance",
+    "must_include": ["USDT", "BTC", "SOL"],
+    "must_not_include": ["Stellar", "XLM"],
+    "expected_route": "/wallet"
+  },
+  {
+    "id": "bal-2",
+    "question": "show my wallet balance",
+    "expected_intent": "balance",
+    "must_include": ["wallet"],
+    "must_not_include": ["loan"]
+  },
+  {
+    "id": "cf-1",
+    "question": "can i afford 50000",
+    "expected_intent": "cash_flow",
+    "must_include": ["RWF"],
+    "must_not_include": []
+  },
+  {
+    "id": "cf-2",
+    "question": "where did my money go",
+    "expected_intent": "cash_flow",
+    "must_include": ["income"],
+    "must_not_include": []
+  },
+  {
+    "id": "plan-1",
+    "question": "help me save more",
+    "expected_intent": "planning",
+    "must_include": ["savings", "USDT"],
+    "must_not_include": []
+  },
+  {
+    "id": "plan-2",
+    "question": "financial plan for me",
+    "expected_intent": "planning",
+    "must_include": ["BTC"],
+    "must_not_include": ["XLM"]
+  },
+  {
+    "id": "nav-1",
+    "question": "open bills",
+    "expected_intent": "navigate",
+    "must_include": ["Bills"],
+    "must_not_include": [],
+    "expected_route": "/bills"
+  },
+  {
+    "id": "nav-2",
+    "question": "take me to analytics",
+    "expected_intent": "navigate",
+    "must_include": ["Analytics"],
+    "must_not_include": [],
+    "expected_route": "/analytics"
+  },
+  {
+    "id": "kyc-1",
+    "question": "what is my kyc status",
+    "expected_intent": "kyc",
+    "must_include": ["KYC"],
+    "must_not_include": []
+  },
+  {
+    "id": "pin-1",
+    "question": "forgot my passcode",
+    "expected_intent": "passcode",
+    "must_include": ["passcode"],
+    "must_not_include": []
+  },
+  {
+    "id": "prod-1",
+    "question": "how do i use escrow",
+    "expected_intent": "product_help",
+    "must_include": ["Escrow"],
+    "must_not_include": ["XLM"]
+  },
+  {
+    "id": "prod-2",
+    "question": "pay a bill from wallet",
+    "expected_intent": "product_help",
+    "must_include": ["bill"],
+    "must_not_include": []
+  },
+  {
+    "id": "budget-1",
+    "question": "savings goal progress",
+    "expected_intent": "budget",
+    "must_include": ["Emergency"],
+    "must_not_include": []
+  },
+  {
+    "id": "gen-1",
+    "question": "asdf qwer zxcv",
+    "expected_intent": "general",
+    "must_include": [],
+    "must_not_include": ["loan apply"],
+    "expect_escalation": true
+  },
+  {
+    "id": "crypto-1",
+    "question": "how much btc do i hold",
+    "expected_intent": "balance",
+    "must_include": ["BTC"],
+    "must_not_include": ["XLM", "Stellar"]
+  },
+  {
+    "id": "afford-1",
+    "question": "can I afford 100000 RWF this month",
+    "expected_intent": "cash_flow",
+    "must_include": ["afford", "RWF"],
+    "must_not_include": []
+  },
+  {
+    "id": "loan-guard-1",
+    "question": "help me plan my finances",
+    "expected_intent": "planning",
+    "must_include": ["savings"],
+    "must_not_include": ["Apply for a loan"]
+  },
+  {
+    "id": "buy-1",
+    "question": "buy usdt with momo",
+    "expected_intent": "product_help",
+    "must_include": [],
+    "must_not_include": ["XLM"]
+  },
+  {
+    "id": "family-1",
+    "question": "go to family wallet",
+    "expected_intent": "navigate",
+    "must_include": ["Family"],
+    "must_not_include": [],
+    "expected_route": "/services/family-setup"
+  },
+  {
+    "id": "offline-1",
+    "question": "open offline receive",
+    "expected_intent": "navigate",
+    "must_include": ["Offline"],
+    "must_not_include": [],
+    "expected_route": "/offline/receive"
+  },
+  {
+    "id": "convert-1",
+    "question": "how do I convert crypto",
+    "expected_intent": "product_help",
+    "must_include": ["Convert"],
+    "must_not_include": ["Stellar"]
+  },
+  {
+    "id": "irembo-1",
+    "question": "open irembo",
+    "expected_intent": "navigate",
+    "must_include": ["Irembo"],
+    "must_not_include": []
+  },
+  {
+    "id": "spend-1",
+    "question": "am I overspending",
+    "expected_intent": "cash_flow",
+    "must_include": ["spending"],
+    "must_not_include": []
+  },
+  {
+    "id": "goal-1",
+    "question": "budget for Emergency goal",
+    "expected_intent": "budget",
+    "must_include": ["Emergency"],
+    "must_not_include": []
+  },
+  {
+    "id": "ext-1",
+    "question": "what is the usd exchange rate",
+    "expected_intent": "external_info",
+    "must_include": ["Connected"],
+    "must_not_include": [],
+    "privacy_mode": "private"
+  },
+  {
+    "id": "wallet-addr-1",
+    "question": "show my public key",
+    "expected_intent": "balance",
+    "must_include": ["USDT"],
+    "must_not_include": []
+  },
+  {
+    "id": "sol-1",
+    "question": "solana portfolio",
+    "expected_intent": "balance",
+    "must_include": ["SOL"],
+    "must_not_include": ["XLM"]
+  },
+  {
+    "id": "transfer-1",
+    "question": "how do I transfer money",
+    "expected_intent": "product_help",
+    "must_include": [],
+    "must_not_include": []
+  },
+  {
+    "id": "insurance-1",
+    "question": "tell me about insurance plans",
+    "expected_intent": "product_help",
+    "must_include": [],
+    "must_not_include": []
+  },
+  {
+    "id": "hello-1",
+    "question": "hello",
+    "expected_intent": "general",
+    "must_include": [],
+    "must_not_include": [],
+    "expect_escalation": true
+  }
+]

@@ -1,5 +1,18 @@
 import type { RetrievedLocalChunk } from "../types";
 
+function dedupeActions(
+  actions: { label: string; href: string }[],
+): { label: string; href: string }[] {
+  const seen = new Set<string>();
+  return actions.filter((action) => {
+    if (seen.has(action.href)) {
+      return false;
+    }
+    seen.add(action.href);
+    return true;
+  });
+}
+
 export function chunksToTemplateReply(chunks: RetrievedLocalChunk[]): {
   reply: string;
   sources: { title: string; source: string; route?: string }[];
@@ -29,12 +42,14 @@ export function chunksToTemplateReply(chunks: RetrievedLocalChunk[]): {
       source: chunk.source,
       route: chunk.route,
     })),
-    actions: top
-      .filter((chunk) => chunk.route || chunk.actionRoute)
-      .slice(0, 2)
-      .map((chunk) => ({
-        label: `Open ${chunk.title ?? "screen"}`,
-        href: chunk.actionRoute ?? chunk.route!,
-      })),
+    actions: dedupeActions(
+      top
+        .filter((chunk) => chunk.route || chunk.actionRoute)
+        .slice(0, 2)
+        .map((chunk) => ({
+          label: `Open ${chunk.title ?? "screen"}`,
+          href: chunk.actionRoute ?? chunk.route!,
+        })),
+    ),
   };
 }

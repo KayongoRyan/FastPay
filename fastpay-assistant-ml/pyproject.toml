@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastpay-assistant-ml"
+version = "0.1.0"
+description = "FastPay Assistant ML pipeline — confidence routing, hybrid intent, personalization, feedback/eval"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fastpay-assistant = "fastpay_assistant.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fastpay_assistant*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

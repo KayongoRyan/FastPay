@@ -4,9 +4,10 @@ Monorepo for the FastPay fintech wallet.
 
 ```
 Fast/
-├── fastpay-backend/   # NestJS microservices + MongoDB
-├── fastpay_mobile/    # Flutter mobile app (iOS + Android) — primary mobile client
-└── FastPay/           # Legacy Expo/RN app (web prototyping)
+├── fastpay-backend/        # NestJS microservices + MongoDB
+├── fastpay_mobile/         # Flutter mobile app (iOS + Android) — primary mobile client
+├── FastPay/                # Legacy Expo/RN app (web prototyping)
+└── fastpay-assistant-ml/   # Python offline eval brain (assistant golden set / CLI)
 ```
 
 ## Quick start
@@ -51,5 +52,34 @@ netsh advfirewall firewall add rule name="FastPay API Gateway 3000" dir=in actio
 ```
 
 4. Restart Expo after changing `.env`: `npm run start -- --clear`
+
+## Assistant ML (Python offline eval)
+
+Runtime assistant lives in `FastPay` (TS) + `fastpay-backend/apps/assistant-service` (Nest).  
+`fastpay-assistant-ml` is the **offline eval brain** — golden-set regression, CLI smoke tests, feedback reports. Not on the request path.
+
+```bash
+cd fastpay-assistant-ml
+pip install -e ".[dev]"
+
+# Interactive smoke test
+python -m fastpay_assistant.cli "how much do i have"
+python -m fastpay_assistant.cli "can i afford 50000" --json
+python -m fastpay_assistant.cli "help me save more" --mode connected --online
+
+# Unit tests
+python -m pytest -q
+
+# Golden set (intent + mustInclude / mustNotInclude; target pass rate >= 80%)
+python scripts/eval_assistant.py
+python scripts/eval_assistant.py --json
+python scripts/eval_assistant.py --min-pass 0.8
+
+# Aggregate downvoted turns for corpus fixes (after local feedback exists)
+python scripts/export_feedback_report.py
+python scripts/export_feedback_report.py --out feedback-report.json
+```
+
+See `fastpay-assistant-ml/README.md` for package layout and thresholds.
 
 See each folder's README for details.

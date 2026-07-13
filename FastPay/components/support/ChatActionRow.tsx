@@ -15,9 +15,9 @@ export function ChatActionRow({ actions }: ChatActionRowProps) {
 
   return (
     <View style={styles.wrap}>
-      {actions.map((action) => (
+      {actions.map((action, index) => (
         <Pressable
-          key={`${action.label}-${action.href}`}
+          key={`${action.href}-${index}`}
           style={styles.btn}
           onPress={() => router.push(action.href as Href)}
         >

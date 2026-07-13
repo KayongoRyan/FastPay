@@ -1,0 +1,97 @@
+"""Phase 2 intent exemplars — 5–10 labeled phrases per intent."""
+
+from __future__ import annotations
+
+from fastpay_assistant.types import AssistantIntent
+
+INTENT_EXEMPLARS: dict[AssistantIntent, list[str]] = {
+    AssistantIntent.NAVIGATE: [
+        "go to wallet",
+        "open bills",
+        "take me to analytics",
+        "navigate to settings",
+        "show me buy screen",
+        "where is kyc",
+        "how do i open transfer",
+        "find loan page",
+    ],
+    AssistantIntent.BALANCE: [
+        "how much do i have",
+        "what is my balance",
+        "wallet balance",
+        "show my usdt",
+        "how much btc do i hold",
+        "solana portfolio",
+        "public key address",
+        "crypto holdings",
+    ],
+    AssistantIntent.CASH_FLOW: [
+        "cash flow this month",
+        "where did my money go",
+        "am i overspending",
+        "can i afford 50000",
+        "spending vs income",
+        "burn rate",
+        "expenses breakdown",
+        "income and spend",
+    ],
+    AssistantIntent.PLANNING: [
+        "help me save more",
+        "financial plan",
+        "how should i manage money",
+        "savings plan advice",
+        "guide me on budgeting",
+        "money management tips",
+        "plan my finances",
+        "what should i do next financially",
+    ],
+    AssistantIntent.BUDGET: [
+        "budget status",
+        "savings goal progress",
+        "spend percent",
+        "family plan budget",
+        "analytics goals",
+        "how much have i saved toward",
+        "budget split",
+    ],
+    AssistantIntent.KYC: [
+        "kyc status",
+        "verify my identity",
+        "national id upload",
+        "proof of address",
+        "complete verification",
+        "increase kyc level",
+    ],
+    AssistantIntent.PASSCODE: [
+        "reset passcode",
+        "forgot transaction pin",
+        "change passcode",
+        "pin reset",
+        "forgot my pin",
+    ],
+    AssistantIntent.PRODUCT_HELP: [
+        "how do i send money",
+        "pay a bill",
+        "apply for a loan",
+        "buy airtime with momo",
+        "use escrow",
+        "offline payment",
+        "insurance plans",
+        "convert crypto",
+    ],
+    AssistantIntent.EXTERNAL_INFO: [
+        "usd exchange rate",
+        "forex eur",
+        "rra tax info",
+        "irembo services",
+        "stellar horizon status",
+        "government fees",
+    ],
+    AssistantIntent.GENERAL: [
+        "hello",
+        "what can you do",
+        "help",
+        "thanks",
+        "who are you",
+    ],
+}
