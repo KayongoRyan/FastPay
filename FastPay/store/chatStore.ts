@@ -14,6 +14,7 @@ import {
   type BudgetSnapshotPayload,
 } from "@/lib/api/chat";
 import type { AuthUser } from "@/lib/auth/types";
+import { useAssistantEngagementStore } from "@/store/assistantEngagementStore";
 import { useAssistantStore } from "@/store/assistantStore";
 
 export type ChatMessage = {
@@ -38,6 +39,8 @@ interface ChatState {
     walletPublicKey?: string;
     walletBalanceRwf?: string;
     walletBalanceXlm?: number;
+    walletBalanceUsdt?: string;
+    cryptoPortfolioSummary?: string;
     user?: AuthUser | null;
   }) => Promise<void>;
   clear: () => void;
@@ -60,6 +63,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     walletPublicKey,
     walletBalanceRwf,
     walletBalanceXlm,
+    walletBalanceUsdt,
+    cryptoPortfolioSummary,
     user,
   }) => {
     const trimmed = message.trim();
@@ -80,7 +85,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     const assistantState = useAssistantStore.getState();
+    const engagementState = useAssistantEngagementStore.getState();
     const isOnline = await getNetworkStatus();
+
+    const recordEngagement = async (intent: string) => {
+      await engagementState.recordMessage({
+        message: trimmed,
+        intent: intent as Parameters<typeof engagementState.recordMessage>[0]["intent"],
+        route: currentRoute,
+        cashFlow: budgetSnapshot
+          ? {
+              recordedAt: new Date().toISOString(),
+              balanceRwf: walletBalanceRwf,
+              balanceUsdt: walletBalanceUsdt,
+              monthlyIncomeRwf: budgetSnapshot.monthlyIncomeRwf,
+              spendPercent: budgetSnapshot.spendPercent,
+              savingsPercent: budgetSnapshot.savingsPercent,
+            }
+          : undefined,
+      });
+    };
 
     try {
       const localReply = await runAssistantQuery({
@@ -94,6 +118,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           walletPublicKey,
           walletBalanceRwf,
           walletBalanceXlm,
+          walletBalanceUsdt,
+          cryptoPortfolioSummary,
+          engagementSummary: engagementState.getEngagementSummary(),
           budgetSnapshot,
           user,
         }),
@@ -135,6 +162,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           conversationId: response.conversationId,
           isLoading: false,
         }));
+        await recordEngagement("general");
         return;
       }
 
@@ -152,6 +180,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: [...state.messages, assistantMessage],
         isLoading: false,
       }));
+      await recordEngagement(localReply.intent);
     } catch (error) {
       set({
         isLoading: false,

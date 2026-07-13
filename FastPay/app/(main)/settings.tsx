@@ -199,11 +199,11 @@ export default function SettingsScreen() {
       >
         <SettingsNavRow
           icon={Wallet}
-          title="Stellar wallet"
+          title="Crypto wallet"
           subtitle={
             wallet
-              ? `${truncateId(wallet.publicKey, 10)} · view balance & transfers`
-              : "Create or link your on-chain wallet"
+              ? `USDT · BTC · SOL · ${truncateId(wallet.publicKey, 10)}`
+              : "Create your USDT, BTC, and SOL wallet"
           }
           onPress={() => router.push(featureRoutes.wallet)}
         />

@@ -65,7 +65,7 @@ export function TransferPanel() {
     const stellarDestination = destination.trim();
 
     if (!stellarDestination.startsWith("G") || stellarDestination.length < 56) {
-      setLocalError("Enter a valid recipient Stellar wallet address (G...).");
+      setLocalError("Enter a valid recipient wallet address.");
       return;
     }
 
@@ -117,7 +117,7 @@ export function TransferPanel() {
 
       if (status.status === "confirmed") {
         setRelayUiState("confirmed");
-        setRelayMessage("Transfer confirmed on Stellar.");
+        setRelayMessage("Transfer confirmed.");
       } else {
         setRelayUiState("failed");
         setRelayMessage(status.lastError ?? "Transfer failed.");
@@ -144,7 +144,7 @@ export function TransferPanel() {
       >
         <Text style={styles.pageTag}>TRANSFER</Text>
         <Text style={styles.subtitle}>
-          Send funds to a FastPay user or Stellar wallet address.
+          Send USDT, BTC, or SOL to a FastPay user or wallet address.
         </Text>
 
         <View style={styles.methodRow}>
@@ -173,14 +173,14 @@ export function TransferPanel() {
         </View>
 
         <View style={styles.amountBadge}>
-          <Text style={styles.amountLabel}>Amount (XLM)</Text>
+          <Text style={styles.amountLabel}>Amount (USDT)</Text>
         </View>
 
         <Pressable
           style={styles.amountWrap}
           onPress={() => setKeypadOpen(true)}
         >
-          <Text style={styles.amount}>{numericAmount.toLocaleString()} XLM</Text>
+          <Text style={styles.amount}>{numericAmount.toLocaleString()} USDT</Text>
           {keypadOpen ? <View style={styles.cursor} /> : null}
         </Pressable>
 
@@ -220,7 +220,7 @@ export function TransferPanel() {
 
         <View style={styles.feeRow}>
           <Text style={styles.feeLabel}>Network fee (est.)</Text>
-          <Text style={styles.feeValue}>~0.00001 XLM</Text>
+          <Text style={styles.feeValue}>~0.50 USDT</Text>
         </View>
 
         {(localError ?? error) ? (

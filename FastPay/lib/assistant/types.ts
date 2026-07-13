@@ -7,6 +7,8 @@ export type AssistantIntent =
   | "navigate"
   | "balance"
   | "budget"
+  | "cash_flow"
+  | "planning"
   | "kyc"
   | "passcode"
   | "product_help"
@@ -41,6 +43,9 @@ export interface AssistantContext {
   walletPublicKey?: string;
   walletBalanceXlm?: number;
   walletBalanceRwf?: string;
+  walletBalanceUsdt?: string;
+  cryptoPortfolioSummary?: string;
+  engagementSummary?: string;
   budgetSnapshot?: BudgetSnapshotPayload;
   user?: AuthUser | null;
 }

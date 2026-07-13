@@ -3,6 +3,16 @@ import type {
   BankPayFormValues,
   BankPayMerchant,
 } from "./types";
+import {
+  buildFastPayAccountNumber,
+  formatFastPayAccountNumberDisplay,
+} from "@/lib/wallet/account-number";
+
+export {
+  buildFastPayAccountNumber,
+  formatFastPayAccountNumberDisplay,
+  FASTPAY_INSTITUTION_CODE,
+} from "@/lib/wallet/account-number";
 
 export const BENEFICIARIES: BankPayBeneficiary[] = [
   {
@@ -48,12 +58,9 @@ const MERCHANTS: BankPayMerchant[] = [
 
 export function formatFastPayAccountNumber(
   userId: string,
-  publicKey?: string | null,
+  _publicKey?: string | null,
 ): string {
-  const source = publicKey ?? userId;
-  const digits = source.replace(/\D/g, "").slice(-10);
-  const padded = digits.padStart(10, "0");
-  return `${padded.slice(0, 3)}-${padded.slice(3, 7)}-${padded.slice(7)}`;
+  return formatFastPayAccountNumberDisplay(buildFastPayAccountNumber(userId));
 }
 
 export function formatFastPayCode(publicKey?: string | null): string {

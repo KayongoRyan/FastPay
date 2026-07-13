@@ -77,7 +77,7 @@ export default function OfflineSendScreen() {
       />
       <TextInput
         style={styles.input}
-        placeholder="Amount (XLM)"
+        placeholder="Amount (USDT)"
         placeholderTextColor="#737373"
         keyboardType="decimal-pad"
         value={amount}
