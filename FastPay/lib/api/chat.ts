@@ -27,6 +27,12 @@ export interface BudgetSnapshotPayload {
   };
 }
 
+export interface RetrievalMetaPayload {
+  maxScore: number;
+  scoreGap: number;
+  chunkCount: number;
+}
+
 export interface ChatRequestPayload {
   message: string;
   conversationId?: string;
@@ -34,6 +40,10 @@ export interface ChatRequestPayload {
     currentRoute?: string;
     screenTitle?: string;
     walletPublicKey?: string;
+    walletBalanceRwf?: string;
+    walletBalanceUsdt?: string;
+    cryptoPortfolioSummary?: string;
+    engagementSummary?: string;
     budgetSnapshot?: BudgetSnapshotPayload;
   };
 }
@@ -43,10 +53,29 @@ export interface ChatResponsePayload {
   sources: ChatSource[];
   actions: ChatAction[];
   conversationId: string;
+  retrievalMeta?: RetrievalMetaPayload;
+  confidence?: number;
+}
+
+export interface AssistantFeedbackPayload {
+  conversationId?: string;
+  messageId: string;
+  rating: 1 | -1;
+  intent: string;
+  confidence: number;
+  chunkIds?: string[];
+  engine: "local" | "cloud";
+  comment?: string;
 }
 
 export async function sendChatMessage(
   payload: ChatRequestPayload,
 ): Promise<ChatResponsePayload> {
   return apiPostAuth<ChatResponsePayload>("/assistant/chat", payload);
+}
+
+export async function sendAssistantFeedback(
+  payload: AssistantFeedbackPayload,
+): Promise<{ ok: boolean }> {
+  return apiPostAuth<{ ok: boolean }>("/assistant/feedback", payload);
 }

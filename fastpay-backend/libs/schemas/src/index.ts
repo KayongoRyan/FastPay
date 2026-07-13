@@ -32,4 +32,10 @@ export {
   type ChatConversationDocument,
 } from './assistant/chat-conversation.schema';
 
+export {
+  AssistantFeedback,
+  AssistantFeedbackSchema,
+  type AssistantFeedbackDocument,
+} from './assistant/assistant-feedback.schema';
+
 export { COLLECTION_REGISTRY, type CollectionRegistryEntry } from './registry';

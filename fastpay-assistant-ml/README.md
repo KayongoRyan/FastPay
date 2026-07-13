@@ -69,3 +69,14 @@ if should_escalate_to_cloud(local_reply):
 ```
 
 When porting thresholds into TS, keep `fastpay_assistant/ml/config.py` in sync and re-run `python scripts/eval_assistant.py`.
+
+## Quality ops loop
+
+```bash
+# After corpus or routing changes in TS/Nest:
+cd fastpay-backend && npm run corpus:build && npm run corpus:sync
+curl -X POST http://localhost:3016/assistant/index/rebuild \
+  -H "Content-Type: application/json" -d '{"secret":"dev-index-secret"}'
+cd fastpay-assistant-ml && python scripts/eval_assistant.py --min-pass 0.8
+python scripts/export_feedback_report.py
+```

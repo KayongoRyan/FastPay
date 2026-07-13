@@ -5,9 +5,10 @@ import { radius, spacing } from "@/theme/spacing";
 
 interface SourceChipsProps {
   sources: { title: string; source: string; route?: string }[];
+  lowConfidence?: boolean;
 }
 
-export function SourceChips({ sources }: SourceChipsProps) {
+export function SourceChips({ sources, lowConfidence }: SourceChipsProps) {
   if (!sources.length) {
     return null;
   }

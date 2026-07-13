@@ -9,6 +9,7 @@ import {
 } from '@fastpay/schemas';
 
 import { cosineSimilarity } from '../common/assistant.utils';
+import { computeRetrievalMeta, type RetrievalMeta } from '../generation/answer-validator.service';
 import { EmbedderService } from './embedder.service';
 
 export interface RetrievedChunk {
@@ -20,6 +21,11 @@ export interface RetrievedChunk {
   actionRoute?: string;
   score: number;
   category: string;
+}
+
+export interface RetrievalResult {
+  chunks: RetrievedChunk[];
+  retrievalMeta: RetrievalMeta;
 }
 
 @Injectable()
@@ -36,8 +42,10 @@ export class RetrieverService {
     topK: number;
     currentRoute?: string;
     includeUserScope?: boolean;
-  }): Promise<RetrievedChunk[]> {
+    minScore?: number;
+  }): Promise<RetrievalResult> {
     const queryEmbedding = await this.embedder.embed(params.query);
+    const minScore = params.minScore ?? 0;
     const scopes: KnowledgeChunkScope[] = [KnowledgeChunkScope.GLOBAL];
 
     if (params.includeUserScope && params.userId) {
@@ -87,8 +95,12 @@ export class RetrieverService {
         };
       })
       .sort((a, b) => b.score - a.score)
+      .filter((chunk) => chunk.score >= minScore)
       .slice(0, params.topK);
 
-    return scored;
+    return {
+      chunks: scored,
+      retrievalMeta: computeRetrievalMeta(scored.map((c) => c.score)),
+    };
   }
 }

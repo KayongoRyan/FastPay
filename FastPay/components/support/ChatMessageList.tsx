@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ThumbsDown, ThumbsUp } from "lucide-react-native";
 
 import type { ChatMessage } from "@/store/chatStore";
 import { colors } from "@/theme/colors";
@@ -9,9 +10,18 @@ import { SourceChips } from "./SourceChips";
 
 interface ChatMessageListProps {
   messages: ChatMessage[];
+  conversationId?: string | null;
+  onFeedback?: (
+    message: ChatMessage,
+    rating: 1 | -1,
+  ) => void;
 }
 
-export function ChatMessageList({ messages }: ChatMessageListProps) {
+export function ChatMessageList({
+  messages,
+  conversationId,
+  onFeedback,
+}: ChatMessageListProps) {
   if (!messages.length) {
     return (
       <View style={styles.empty}>
@@ -27,6 +37,11 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
     <View style={styles.list}>
       {messages.map((message) => {
         const isUser = message.role === "user";
+        const lowConfidence =
+          !isUser &&
+          message.confidence != null &&
+          message.confidence < 0.55;
+
         return (
           <View
             key={message.id}
@@ -36,18 +51,46 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
               {message.content}
             </Text>
             {!isUser && message.engine ? (
-              <View style={styles.engineChip}>
-                <Text style={styles.engineText}>
-                  {message.engine === "cloud" ? "Cloud" : "Local"}
-                  {message.latencyMs ? ` · ${message.latencyMs}ms` : ""}
-                </Text>
+              <View style={styles.metaRow}>
+                <View style={styles.engineChip}>
+                  <Text style={styles.engineText}>
+                    {message.engine === "cloud" ? "Cloud" : "Local"}
+                    {message.latencyMs ? ` · ${message.latencyMs}ms` : ""}
+                    {message.confidence != null
+                      ? ` · ${Math.round(message.confidence * 100)}%`
+                      : ""}
+                  </Text>
+                </View>
+                {lowConfidence ? (
+                  <View style={styles.lowConfidenceChip}>
+                    <Text style={styles.lowConfidenceText}>Low confidence</Text>
+                  </View>
+                ) : null}
               </View>
             ) : null}
             {!isUser && message.sources ? (
-              <SourceChips sources={message.sources} />
+              <SourceChips sources={message.sources} lowConfidence={lowConfidence} />
             ) : null}
             {!isUser && message.actions ? (
               <ChatActionRow actions={message.actions} />
+            ) : null}
+            {!isUser && onFeedback ? (
+              <View style={styles.feedbackRow}>
+                <Pressable
+                  accessibilityLabel="Helpful answer"
+                  onPress={() => onFeedback(message, 1)}
+                  style={styles.feedbackBtn}
+                >
+                  <ThumbsUp size={16} color={colors.textMuted} />
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Unhelpful answer"
+                  onPress={() => onFeedback(message, -1)}
+                  style={styles.feedbackBtn}
+                >
+                  <ThumbsDown size={16} color={colors.textMuted} />
+                </Pressable>
+              </View>
             ) : null}
           </View>
         );
@@ -85,9 +128,14 @@ const styles = StyleSheet.create({
   assistantText: {
     color: colors.white,
   },
+  metaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
   engineChip: {
     alignSelf: "flex-start",
-    marginTop: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
@@ -99,6 +147,33 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.4,
     textTransform: "uppercase",
+  },
+  lowConfidenceChip: {
+    alignSelf: "flex-start",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.pillTrack,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  lowConfidenceText: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  feedbackRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  feedbackBtn: {
+    padding: spacing.xs,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   empty: {
     paddingVertical: spacing.xl,

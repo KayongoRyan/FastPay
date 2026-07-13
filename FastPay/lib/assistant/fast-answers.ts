@@ -1,10 +1,15 @@
 import { featureRoutes } from "@/lib/navigation/feature-routes";
 import { formatKycStatus } from "@/lib/settings/profile";
 
+import { rankActions } from "./ml/action-ranker";
+import { HIGH_SPEND_PERCENT, LOW_SAVINGS_PERCENT } from "./ml/config";
 import type { AssistantContext, AssistantIntent, AssistantReply } from "./types";
 
 function reply(
-  partial: Omit<AssistantReply, "source" | "latencyMs" | "usedLlm" | "usedTools">,
+  partial: Omit<
+    AssistantReply,
+    "source" | "latencyMs" | "usedLlm" | "usedTools" | "confidence" | "needsEscalation"
+  > & { confidence?: number },
   started: number,
 ): AssistantReply {
   return {
@@ -13,6 +18,8 @@ function reply(
     latencyMs: Date.now() - started,
     usedLlm: false,
     usedTools: [],
+    confidence: partial.confidence ?? 0.9,
+    needsEscalation: false,
   };
 }
 
@@ -23,8 +30,13 @@ export function tryFastAnswer(
 ): AssistantReply | null {
   const started = Date.now();
   const lower = message.toLowerCase();
+  const profile = context.userProfile;
+  const entities = context.extractedEntities;
 
-  if (intent === "balance" || /\b(wallet address|public key|btc|sol|usdt)\b/i.test(lower)) {
+  if (
+    intent === "balance" ||
+    /\b(wallet address|public key|btc|sol|usdt)\b/i.test(lower)
+  ) {
     if (!context.walletPublicKey) {
       return reply(
         {
@@ -47,12 +59,15 @@ export function tryFastAnswer(
     const portfolioLine = context.cryptoPortfolioSummary
       ? `\nHoldings: ${context.cryptoPortfolioSummary}`
       : "";
+    const assetHint = entities?.asset ? `\nYou asked about ${entities.asset}.` : "";
 
     return reply(
       {
-        reply: `Your FastPay crypto wallet supports USDT, BTC, and SOL.\n${balanceLine}${portfolioLine}`,
+        reply: `Your FastPay crypto wallet supports USDT, BTC, and SOL.\n${balanceLine}${portfolioLine}${assetHint}`,
         sources: [{ title: "Wallet", source: "local/wallet", route: "/wallet" }],
-        actions: [{ label: "Open Wallet", href: "/wallet" }],
+        actions: rankActions("balance", profile, [
+          { label: "Open Wallet", href: "/wallet" },
+        ]),
         intent: "balance",
       },
       started,
@@ -60,7 +75,8 @@ export function tryFastAnswer(
   }
 
   if (intent === "cash_flow" && context.budgetSnapshot) {
-    const { monthlyIncomeRwf, spendPercent, savingsPercent } = context.budgetSnapshot;
+    const { monthlyIncomeRwf, spendPercent, savingsPercent } =
+      context.budgetSnapshot;
     const spendLine =
       spendPercent != null
         ? `You allocate ${spendPercent}% of income to spending`
@@ -70,22 +86,35 @@ export function tryFastAnswer(
         ? ` and ${savingsPercent}% to savings.`
         : ".";
 
+    const flags = profile?.riskFlags ?? [];
     let coaching =
-      spendPercent != null && spendPercent > 70
+      flags.includes("high_spend") ||
+      (spendPercent != null && spendPercent > HIGH_SPEND_PERCENT)
         ? "\nTip: spending is high — review Analytics and trim discretionary buckets."
-        : savingsPercent != null && savingsPercent < 10
+        : flags.includes("low_savings") ||
+            (savingsPercent != null && savingsPercent < LOW_SAVINGS_PERCENT)
           ? "\nTip: boost savings to at least 10% before increasing transfers."
           : "\nYour cash-flow split looks balanced — keep tracking weekly in Analytics.";
 
-    if (context.engagementSummary?.includes("budget")) {
-      coaching += "\nI see you ask about budgets often — open Analytics to adjust your plan.";
+    if (context.engagementSummary?.toLowerCase().includes("budget")) {
+      coaching +=
+        "\nI see you ask about budgets often — open Analytics to adjust your plan.";
+    }
+
+    let afford = "";
+    if (entities?.amountRwf != null && monthlyIncomeRwf) {
+      afford = `\nCan you afford ${entities.amountRwf.toLocaleString()} RWF? Monthly income is ${monthlyIncomeRwf.toLocaleString()} RWF.`;
     }
 
     return reply(
       {
-        reply: `Monthly income: ${monthlyIncomeRwf?.toLocaleString() ?? "?"} RWF.\n${spendLine}${savingsLine}${coaching}`,
-        sources: [{ title: "Analytics", source: "local/cash-flow", route: "/analytics" }],
-        actions: [{ label: "Review cash flow", href: "/analytics" }],
+        reply: `Monthly income: ${monthlyIncomeRwf?.toLocaleString() ?? "?"} RWF.\n${spendLine}${savingsLine}${coaching}${afford}`,
+        sources: [
+          { title: "Analytics", source: "local/cash-flow", route: "/analytics" },
+        ],
+        actions: rankActions("cash_flow", profile, [
+          { label: "Review cash flow", href: "/analytics" },
+        ]),
         intent: "cash_flow",
       },
       started,
@@ -109,14 +138,21 @@ export function tryFastAnswer(
       ? `\n\nBased on your activity:\n${context.engagementSummary}`
       : "";
 
+    const baseActions = [
+      { label: "Open Analytics", href: "/analytics" },
+      { label: "Add funds", href: "/buy" },
+    ];
+    if (entities?.action === "loan") {
+      baseActions.push({ label: "Loan info", href: "/loan/apply" });
+    }
+
     return reply(
       {
         reply: `Here is your financial direction:\n1. Keep USDT for day-to-day liquidity\n2. Hold BTC/SOL for longer-term growth\n3. Automate savings before spending\n\nGoals:\n${goalLine}${engagementHint}`,
-        sources: [{ title: "Planning", source: "local/planning", route: "/analytics" }],
-        actions: [
-          { label: "Open Analytics", href: "/analytics" },
-          { label: "Add funds", href: "/buy" },
+        sources: [
+          { title: "Planning", source: "local/planning", route: "/analytics" },
         ],
+        actions: rankActions("planning", profile, baseActions),
         intent: "planning",
       },
       started,
@@ -161,8 +197,12 @@ export function tryFastAnswer(
       return reply(
         {
           reply: `Goal "${goal.name}": saved ${goal.savedRwf.toLocaleString()} RWF of ${goal.targetRwf.toLocaleString()} RWF target.`,
-          sources: [{ title: "Analytics", source: "local/budget", route: "/analytics" }],
-          actions: [{ label: "Open Analytics", href: "/analytics" }],
+          sources: [
+            { title: "Analytics", source: "local/budget", route: "/analytics" },
+          ],
+          actions: rankActions("budget", profile, [
+            { label: "Open Analytics", href: "/analytics" },
+          ]),
           intent: "budget",
         },
         started,
@@ -180,8 +220,12 @@ export function tryFastAnswer(
     return reply(
       {
         reply: `Your savings goals:\n${summary}`,
-        sources: [{ title: "Analytics", source: "local/budget", route: "/analytics" }],
-        actions: [{ label: "View goals", href: "/analytics?mode=goals" }],
+        sources: [
+          { title: "Analytics", source: "local/budget", route: "/analytics" },
+        ],
+        actions: rankActions("budget", profile, [
+          { label: "View goals", href: "/analytics?mode=goals" },
+        ]),
         intent: "budget",
       },
       started,
@@ -191,15 +235,15 @@ export function tryFastAnswer(
   if (intent === "navigate") {
     const routes: { match: RegExp; label: string; href: string }[] = [
       { match: /\bbill/i, label: "Bills", href: "/bills" },
-      { match: /\bwallet|transfer|send/i, label: "Wallet", href: "/wallet" },
-      { match: /\bbuy|momo|airtime/i, label: "Buy", href: "/buy" },
-      { match: /\banalytic|budget|goal/i, label: "Analytics", href: "/analytics" },
-      { match: /\bsetting/i, label: "Settings", href: "/settings" },
-      { match: /\bkyc|verify/i, label: "KYC", href: "/(auth)/kyc" },
       { match: /\bfamily/i, label: "Family", href: "/services/family-setup" },
       { match: /\bloan/i, label: "Loan", href: "/loan/apply" },
       { match: /\birembo/i, label: "Irembo", href: "/irembo" },
       { match: /\boffline/i, label: "Offline", href: "/offline/receive" },
+      { match: /\bbuy|momo|airtime/i, label: "Buy", href: "/buy" },
+      { match: /\banalytic|budget|goal/i, label: "Analytics", href: "/analytics" },
+      { match: /\bsetting/i, label: "Settings", href: "/settings" },
+      { match: /\bkyc|verify/i, label: "KYC", href: "/(auth)/kyc" },
+      { match: /\bwallet|transfer|send/i, label: "Wallet", href: "/wallet" },
     ];
 
     for (const route of routes) {
@@ -207,7 +251,9 @@ export function tryFastAnswer(
         return reply(
           {
             reply: `Opening ${route.label}. Tap below if you are not redirected automatically.`,
-            sources: [{ title: route.label, source: "local/nav", route: route.href }],
+            sources: [
+              { title: route.label, source: "local/nav", route: route.href },
+            ],
             actions: [{ label: `Go to ${route.label}`, href: route.href }],
             intent: "navigate",
           },

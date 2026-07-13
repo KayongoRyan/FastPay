@@ -14,6 +14,15 @@ export interface BudgetSnapshot {
   };
 }
 
+export interface ClientContext {
+  currentRoute?: string;
+  walletBalanceRwf?: string;
+  walletBalanceUsdt?: string;
+  cryptoPortfolioSummary?: string;
+  engagementSummary?: string;
+  budgetSnapshot?: BudgetSnapshot;
+}
+
 export interface LlmResponse {
   reply: string;
   sources: { title: string; source: string; route?: string }[];
@@ -39,6 +48,10 @@ export class PromptBuilderService {
     chunks: RetrievedChunk[];
     budgetSnapshot?: BudgetSnapshot;
     currentRoute?: string;
+    walletBalanceRwf?: string;
+    walletBalanceUsdt?: string;
+    cryptoPortfolioSummary?: string;
+    engagementSummary?: string;
   }): string {
     const context = params.chunks
       .map(
@@ -51,12 +64,30 @@ export class PromptBuilderService {
       ? `\n\nUser budget snapshot (from client, treat as authoritative for this user):\n${JSON.stringify(params.budgetSnapshot, null, 2)}`
       : '';
 
+    const walletSection = [
+      params.walletBalanceRwf ? `Balance RWF: ${params.walletBalanceRwf}` : '',
+      params.walletBalanceUsdt ? `Balance USDT: ${params.walletBalanceUsdt}` : '',
+      params.cryptoPortfolioSummary
+        ? `Portfolio: ${params.cryptoPortfolioSummary}`
+        : '',
+      params.engagementSummary
+        ? `Engagement: ${params.engagementSummary}`
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const userFactsSection = walletSection
+      ? `\n\nUser facts (from client, authoritative):\n${walletSection}`
+      : '';
+
     return [
       `User question: ${params.message}`,
       params.currentRoute ? `Current screen: ${params.currentRoute}` : '',
       'Context chunks:',
       context || '(no context retrieved)',
       budgetSection,
+      userFactsSection,
       'Respond in JSON only.',
     ]
       .filter(Boolean)
@@ -76,6 +107,10 @@ export class LlmService {
     chunks: RetrievedChunk[];
     budgetSnapshot?: BudgetSnapshot;
     currentRoute?: string;
+    walletBalanceRwf?: string;
+    walletBalanceUsdt?: string;
+    cryptoPortfolioSummary?: string;
+    engagementSummary?: string;
   }): Promise<LlmResponse> {
     const apiKey = this.configService.get<string>('assistant.openAiApiKey');
     const fallbackEnabled = this.configService.get<boolean>('assistant.fallbackEnabled');

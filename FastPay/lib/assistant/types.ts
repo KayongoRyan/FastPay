@@ -17,6 +17,49 @@ export type AssistantIntent =
 
 export type AssistantMessageSource = "local" | "cloud";
 
+export type IntentMethod = "regex" | "centroid";
+
+export type ExtractedAsset = "USDT" | "BTC" | "SOL";
+export type ExtractedAction = "transfer" | "save" | "loan";
+
+export interface ExtractedEntities {
+  amountRwf?: number;
+  asset?: ExtractedAsset;
+  timeframe?: string;
+  action?: ExtractedAction;
+}
+
+export interface UserProfile {
+  incomeRwf?: number;
+  spendPercent?: number;
+  savingsPercent?: number;
+  topIntents: string[];
+  portfolio: string;
+  riskFlags: string[];
+  routeVisitCounts: Record<string, number>;
+  summaryChunk: string;
+}
+
+export interface IntentResult {
+  intent: AssistantIntent;
+  confidence: number;
+  method: IntentMethod;
+}
+
+export interface RetrievalMeta {
+  maxScore: number;
+  scoreGap: number;
+  chunkCount: number;
+}
+
+export interface ValidationResult {
+  ok: boolean;
+  reasons: string[];
+  downgradedConfidence: boolean;
+  strippedActions: number;
+  refused: boolean;
+}
+
 export type ModelDownloadStatus =
   | "idle"
   | "downloading"
@@ -48,6 +91,8 @@ export interface AssistantContext {
   engagementSummary?: string;
   budgetSnapshot?: BudgetSnapshotPayload;
   user?: AuthUser | null;
+  extractedEntities?: ExtractedEntities;
+  userProfile?: UserProfile;
 }
 
 export interface AssistantQueryInput {
@@ -67,6 +112,10 @@ export interface AssistantReply {
   latencyMs: number;
   usedLlm: boolean;
   usedTools: string[];
+  confidence?: number;
+  retrieval?: RetrievalMeta;
+  validation?: ValidationResult;
+  needsEscalation?: boolean;
 }
 
 export interface ToolFetchResult {

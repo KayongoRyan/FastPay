@@ -82,4 +82,22 @@ python scripts/export_feedback_report.py --out feedback-report.json
 
 See `fastpay-assistant-ml/README.md` for package layout and thresholds.
 
+### Assistant quality ops loop
+
+When routing or corpus changes:
+
+```bash
+# 1. Edit corpus or intent exemplars (TS: FastPay/lib/assistant/ml/intent-exemplars.ts)
+cd fastpay-backend && npm run corpus:build && npm run corpus:sync
+
+# 2. Rebuild cloud embeddings (assistant-service running)
+curl -X POST http://localhost:3016/assistant/index/rebuild -H "Content-Type: application/json" -d "{\"secret\":\"dev-index-secret\"}"
+
+# 3. Regression gate (Python offline eval brain)
+cd fastpay-assistant-ml && python scripts/eval_assistant.py --min-pass 0.8
+
+# 4. Review downvoted turns → fix static.json / exemplars
+python scripts/export_feedback_report.py
+```
+
 See each folder's README for details.

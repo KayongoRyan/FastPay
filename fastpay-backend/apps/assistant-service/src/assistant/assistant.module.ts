@@ -4,6 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import {
+  AssistantFeedback,
+  AssistantFeedbackSchema,
   AuditLog,
   AuditLogSchema,
   ChatConversation,
@@ -16,6 +18,7 @@ import authConfig from '../config/auth.config';
 import assistantConfig from '../config/assistant.config';
 import { JwtVerifierService } from '../auth/jwt-verifier.service';
 import { ChatAuditService } from '../audit/chat-audit.service';
+import { AnswerValidatorService } from '../generation/answer-validator.service';
 import { LlmService, PromptBuilderService } from '../generation/llm.service';
 import {
   IndexerService,
@@ -47,6 +50,7 @@ import { ChatService } from '../chat/chat.service';
       { name: KnowledgeChunk.name, schema: KnowledgeChunkSchema },
       { name: ChatConversation.name, schema: ChatConversationSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
+      { name: AssistantFeedback.name, schema: AssistantFeedbackSchema },
       ...UserSummarySchemas,
     ]),
   ],
@@ -58,6 +62,7 @@ import { ChatService } from '../chat/chat.service';
     RetrieverService,
     PromptBuilderService,
     LlmService,
+    AnswerValidatorService,
     StaticCorpusParserService,
     IndexerService,
     UserSummaryJobService,

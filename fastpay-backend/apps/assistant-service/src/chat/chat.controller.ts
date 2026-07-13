@@ -9,6 +9,7 @@ import {
 import { JwtVerifierService } from '../auth/jwt-verifier.service';
 import { ChatService } from './chat.service';
 import { ChatRequestDto, RebuildIndexDto } from './dto/chat.dto';
+import { FeedbackRequestDto } from './dto/feedback.dto';
 
 @Controller('assistant')
 export class ChatController {
@@ -24,6 +25,15 @@ export class ChatController {
   ) {
     const userId = this.jwtVerifier.verifyAccessToken(authorization);
     return this.chatService.chat(userId, dto, authorization);
+  }
+
+  @Post('feedback')
+  feedback(
+    @Headers('authorization') authorization: string,
+    @Body() dto: FeedbackRequestDto,
+  ) {
+    const userId = this.jwtVerifier.verifyAccessToken(authorization);
+    return this.chatService.recordFeedback(userId, dto);
   }
 
   @Post('index/rebuild')

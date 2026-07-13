@@ -1,4 +1,10 @@
-import type { AssistantIntent } from "./types";
+import { classifyIntentCentroid } from "./ml/intent-classifier";
+import {
+  GENERAL_CONFIDENCE,
+  INTENT_CENTROID_MIN,
+  REGEX_CONFIDENCE,
+} from "./ml/config";
+import type { AssistantIntent, IntentResult } from "./types";
 
 const PATTERNS: { intent: AssistantIntent; regex: RegExp }[] = [
   {
@@ -41,25 +47,51 @@ const PATTERNS: { intent: AssistantIntent; regex: RegExp }[] = [
   },
 ];
 
-export function classifyIntent(message: string): AssistantIntent {
+const PRODUCT_RE =
+  /\b(bill|transfer|loan|momo|airtime|escrow|insurance|offline|buy|convert)\b/i;
+
+export function classifyIntentRegex(message: string): IntentResult {
   const normalized = message.trim().toLowerCase();
   if (!normalized) {
-    return "general";
+    return { intent: "general", confidence: GENERAL_CONFIDENCE, method: "regex" };
   }
 
   for (const { intent, regex } of PATTERNS) {
     if (regex.test(normalized)) {
-      return intent;
+      return { intent, confidence: REGEX_CONFIDENCE, method: "regex" };
     }
   }
 
-  if (
-    /\b(bill|transfer|loan|momo|airtime|escrow|insurance|offline|buy|convert)\b/i.test(
-      normalized,
-    )
-  ) {
-    return "product_help";
+  if (PRODUCT_RE.test(normalized)) {
+    return {
+      intent: "product_help",
+      confidence: REGEX_CONFIDENCE,
+      method: "regex",
+    };
   }
 
-  return "general";
+  return { intent: "general", confidence: GENERAL_CONFIDENCE, method: "regex" };
+}
+
+export function classifyIntentResult(message: string): IntentResult {
+  const centroid = classifyIntentCentroid(message);
+  if (centroid.confidence >= INTENT_CENTROID_MIN) {
+    return centroid;
+  }
+
+  const regex = classifyIntentRegex(message);
+  if (regex.intent !== "general") {
+    return regex;
+  }
+
+  if (centroid.confidence > GENERAL_CONFIDENCE) {
+    return centroid;
+  }
+
+  return { intent: "general", confidence: GENERAL_CONFIDENCE, method: "regex" };
+}
+
+/** Back-compat: intent string only */
+export function classifyIntent(message: string): AssistantIntent {
+  return classifyIntentResult(message).intent;
 }
