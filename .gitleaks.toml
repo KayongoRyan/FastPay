@@ -8,9 +8,6 @@ paths = [
   '''(?:^|/)fastpay-backend/apps/.*/src/config/auth\.config\.ts$''',
   '''(?:^|/)docs/security/''',
 ]
-
-[allowlist.regexes]
-description = "Documented dev-only JWT fallback literals"
 regexes = [
   '''dev-access-secret-change-in-production''',
   '''dev-refresh-secret-change-in-production''',
