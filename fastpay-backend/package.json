@@ -12,7 +12,7 @@
     "start:auth": "npx --yes kill-port 3001 && npm run start:dev -w @fastpay/auth-service",
     "start:payment": "npm run start:dev -w @fastpay/payment-service",
     "start:blockchain": "npm run start:dev -w @fastpay/blockchain-service",
-    "start:fraud": "npm run start:dev -w @fastpay/fraud-service",
+    "start:fraud": "npx --yes kill-port 3011 && npm run start:dev -w @fastpay/fraud-service",
     "start:kyc": "npx --yes kill-port 3012 && npm run start:dev -w @fastpay/kyc-service",
     "start:assistant": "npx --yes kill-port 3016 && npm run start:dev -w @fastpay/assistant-service",
     "start:audit": "npx --yes kill-port 3015 && npm run start:dev -w @fastpay/audit-service",

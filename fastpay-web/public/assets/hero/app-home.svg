@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" fill="none">
+  <rect width="390" height="844" fill="#0B1F3F"/>
+  <rect x="0" y="0" width="390" height="54" fill="#08182F"/>
+  <text x="28" y="34" fill="white" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">9:41</text>
+  <circle cx="332" cy="27" r="16" fill="url(#avatar)"/>
+  <defs>
+    <linearGradient id="avatar" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#00AEEF"/>
+      <stop offset="1" stop-color="#1A5C6B"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1A5C6B"/>
+      <stop offset="1" stop-color="#0F3D4A"/>
+    </linearGradient>
+    <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#00AEEF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#00AEEF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <text x="24" y="92" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="15">Good Morning,</text>
+  <text x="24" y="122" fill="white" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="700">Future Pluto</text>
+  <rect x="24" y="148" width="342" height="196" rx="22" fill="url(#cardGrad)"/>
+  <text x="44" y="188" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="12" letter-spacing="1">FASTPAY</text>
+  <text x="44" y="228" fill="white" font-family="Inter, system-ui, sans-serif" font-size="13">"""" """" """" 4821</text>
+  <text x="44" y="296" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">VALID THRU</text>
+  <text x="44" y="316" fill="white" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">12/28</text>
+  <text x="220" y="296" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">CARDHOLDER</text>
+  <text x="220" y="316" fill="white" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">F. PLUTO</text>
+  <circle cx="330" cy="300" r="18" fill="rgba(0,174,239,0.25)" stroke="#00AEEF" stroke-width="2"/>
+  <text x="24" y="382" fill="white" font-family="Inter, system-ui, sans-serif" font-size="17" font-weight="700">Services</text>
+  <rect x="24" y="398" width="72" height="72" rx="18" fill="rgba(255,255,255,0.06)"/>
+  <rect x="34" y="408" width="52" height="52" rx="14" fill="rgba(0,174,239,0.18)"/>
+  <text x="48" y="442" fill="#00AEEF" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700">$</text>
+  <text x="24" y="492" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">Send</text>
+  <rect x="108" y="398" width="72" height="72" rx="18" fill="rgba(255,255,255,0.06)"/>
+  <rect x="118" y="408" width="52" height="52" rx="14" fill="rgba(0,174,239,0.18)"/>
+  <text x="132" y="442" fill="#00AEEF" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700">“</text>
+  <text x="108" y="492" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">Receive</text>
+  <rect x="192" y="398" width="72" height="72" rx="18" fill="rgba(255,255,255,0.06)"/>
+  <rect x="202" y="408" width="52" height="52" rx="14" fill="rgba(0,174,239,0.18)"/>
+  <text x="216" y="442" fill="#00AEEF" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700">Ä</text>
+  <text x="192" y="492" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">Convert</text>
+  <rect x="276" y="398" width="72" height="72" rx="18" fill="rgba(255,255,255,0.06)"/>
+  <rect x="286" y="408" width="52" height="52" rx="14" fill="rgba(0,174,239,0.18)"/>
+  <text x="300" y="442" fill="#00AEEF" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700">Î</text>
+  <text x="276" y="492" fill="rgba(255,255,255,0.55)" font-family="Inter, system-ui, sans-serif" font-size="11">Buy</text>
+  <text x="24" y="540" fill="white" font-family="Inter, system-ui, sans-serif" font-size="17" font-weight="700">Transactions</text>
+  <rect x="24" y="556" width="342" height="64" rx="16" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="52" cy="588" r="16" fill="rgba(74,222,128,0.15)"/>
+  <text x="46" y="594" fill="#4ADE80" font-family="Inter, system-ui, sans-serif" font-size="14">™</text>
+  <text x="78" y="582" fill="white" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">MoMo Top-up</text>
+  <text x="78" y="602" fill="rgba(255,255,255,0.45)" font-family="Inter, system-ui, sans-serif" font-size="12">Today</text>
+  <text x="300" y="592" fill="#4ADE80" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700">+50,000</text>
+  <rect x="24" y="632" width="342" height="64" rx="16" fill="rgba(255,255,255,0.05)"/>
+  <circle cx="52" cy="664" r="16" fill="rgba(248,113,113,0.15)"/>
+  <text x="46" y="670" fill="#F87171" font-family="Inter, system-ui, sans-serif" font-size="14">—</text>
+  <text x="78" y="658" fill="white" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">Payment sent</text>
+  <text x="78" y="678" fill="rgba(255,255,255,0.45)" font-family="Inter, system-ui, sans-serif" font-size="12">Yesterday</text>
+  <text x="296" y="668" fill="#F87171" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700">-12,500</text>
+  <rect x="0" y="760" width="390" height="84" fill="#08182F"/>
+  <rect x="36" y="778" width="48" height="48" rx="14" fill="rgba(0,174,239,0.2)"/>
+  <rect x="120" y="786" width="36" height="36" rx="10" fill="rgba(255,255,255,0.08)"/>
+  <rect x="204" y="786" width="36" height="36" rx="10" fill="rgba(255,255,255,0.08)"/>
+  <rect x="288" y="786" width="36" height="36" rx="10" fill="rgba(255,255,255,0.08)"/>
+  <text x="48" y="842" fill="#00AEEF" font-family="Inter, system-ui, sans-serif" font-size="11" font-weight="600">Home</text>
+</svg>
