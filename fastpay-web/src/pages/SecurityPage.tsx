@@ -8,7 +8,7 @@ import {
   Shield,
   ShieldCheck,
 } from 'lucide-react';
-import { PageHero } from '../components/PageHero';
+import { SecurityHero } from '../components/SecurityHero';
 import { CtaStrip } from '../components/CtaStrip';
 
 const pillars = [
@@ -55,14 +55,9 @@ const features = [
 export function SecurityPage() {
   return (
     <>
-      <PageHero
-        label="Security"
-        title="Bank-Grade Protection Built In"
-        subtitle="Device binding, transaction signing, fraud intelligence, and a full audit trail — not just marketing copy."
-        dark
-      />
+      <SecurityHero />
 
-      <section className="page-section">
+      <section className="page-section" id="security-pillars">
         <div className="container">
           <div className="page-section__header page-section__header--center">
             <div className="section-label">Pillars</div>

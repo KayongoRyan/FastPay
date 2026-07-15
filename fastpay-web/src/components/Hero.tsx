@@ -40,7 +40,7 @@ export function Hero() {
 
           <Reveal delay={240}>
             <div className="hero__cta">
-              <Link to="/pricing" className="btn hero__btn-start">
+              <Link to="/signup" className="btn hero__btn-start">
                 Get Started
                 <ArrowRight size={18} />
               </Link>

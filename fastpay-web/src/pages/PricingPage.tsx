@@ -29,6 +29,7 @@ export function PricingPage() {
         label="Pricing"
         title="Choose The Best Plan For You"
         subtitle="Start free and scale as you grow. Transparent pricing with no hidden fees."
+        plain
       />
 
       <section className="page-section">

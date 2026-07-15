@@ -1,8 +1,8 @@
-import { BarChart3, Bell, PieChart, Target, TrendingUp, Wallet } from "lucide-react";
-import { PageHero } from "../components/PageHero";
-import { BudgetDemo } from "../components/BudgetDemo";
+import { Bell, PieChart, Target, TrendingUp, Wallet, BarChart3 } from "lucide-react";
+import { AnalyticsDashboard } from "../components/AnalyticsDashboard";
 import { CtaStrip } from "../components/CtaStrip";
-import { analyticsMetrics, categories } from "../data/budget";
+import { Reveal } from "../components/Reveal";
+import { categories } from "../data/budget";
 
 const capabilities = [
   {
@@ -40,39 +40,26 @@ const capabilities = [
 export function AnalyticsPage() {
   return (
     <>
-      <PageHero
-        label="Analytics"
-        title="Understand Every Dollar You Spend"
-        subtitle="Weekly, monthly, and yearly views give you the full picture — from daily habits to annual trends."
-        dark
-      />
-
-      <section className="page-section">
-        <div className="container analytics-page__intro">
-          <div className="analytics-page__demo-wrap">
-            <BudgetDemo large />
-            <div className="analytics__float-card analytics-page__float-card">
-              <div style={{ opacity: 0.8, marginBottom: "0.5rem" }}>FastPay Card</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>$3,403.09</div>
-            </div>
-          </div>
-          <div>
-            <h2 className="section-title">Budget Views That Scale With You</h2>
-            <p className="section-subtitle">
-              Toggle between weekly, monthly, and yearly periods without losing context.
-              Each view recalculates limits, remaining budget, and category splits
-              automatically.
+      <section className="analytics-shell">
+        <div className="container analytics-shell__intro">
+          <Reveal>
+            <div className="section-label">Analytics</div>
+            <h1 className="analytics-shell__title">
+              Your money, one clear dashboard
+            </h1>
+          </Reveal>
+          <Reveal delay={80}>
+            <p className="analytics-shell__subtitle">
+              Cards, transfers, and spending health in a single light workspace —
+              built for RWF-first decisions, MoMo, and cross-border remittances.
             </p>
-            <div className="metrics-grid" style={{ marginTop: "2rem" }}>
-              {analyticsMetrics.map((m) => (
-                <div key={m.label} className="metric-card">
-                  <span className="metric-card__label">{m.label}</span>
-                  <span className="metric-card__value">{m.value}</span>
-                  <span className="metric-card__change">{m.change}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          </Reveal>
+        </div>
+
+        <div className="container">
+          <Reveal delay={120}>
+            <AnalyticsDashboard />
+          </Reveal>
         </div>
       </section>
 
