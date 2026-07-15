@@ -23,8 +23,8 @@ const columns = [
     title: "Support",
     links: [
       { label: "Contact", to: "/contact" },
-      { label: "Help Center", to: "/contact" },
-      { label: "Security", to: "/contact" },
+      { label: "Log in", to: "/login" },
+      { label: "Sign up", to: "/signup" },
     ],
   },
 ];

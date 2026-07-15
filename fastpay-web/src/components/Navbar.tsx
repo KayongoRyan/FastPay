@@ -40,10 +40,10 @@ export function Navbar() {
             <button type="button" className="navbar__search" aria-label="Search">
               <Search size={18} />
             </button>
-            <Link to="/contact" className="btn btn-ghost">
+            <Link to="/login" className="btn btn-ghost">
               Log In
             </Link>
-            <Link to="/pricing" className="btn btn-primary">
+            <Link to="/signup" className="btn btn-primary">
               Get Started
             </Link>
             <button
@@ -87,10 +87,10 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          <Link to="/contact" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
+          <Link to="/login" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
             Log In
           </Link>
-          <Link to="/pricing" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
+          <Link to="/signup" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
             Get Started
           </Link>
         </div>
