@@ -1,6 +1,8 @@
 import { Menu, Search, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { UserMenu } from "./UserMenu";
 
 const links = [
   { to: "/", label: "Home" },
@@ -13,6 +15,7 @@ const links = [
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated, ready } = useAuth();
 
   return (
     <>
@@ -40,12 +43,20 @@ export function Navbar() {
             <button type="button" className="navbar__search" aria-label="Search">
               <Search size={18} />
             </button>
-            <Link to="/login" className="btn btn-ghost">
-              Log In
-            </Link>
-            <Link to="/signup" className="btn btn-primary">
-              Get Started
-            </Link>
+
+            {ready && isAuthenticated ? (
+              <UserMenu />
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-ghost">
+                  Log In
+                </Link>
+                <Link to="/signup" className="btn btn-primary">
+                  Get Started
+                </Link>
+              </>
+            )}
+
             <button
               type="button"
               className="navbar__toggle"
@@ -87,12 +98,26 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          <Link to="/login" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
-            Log In
-          </Link>
-          <Link to="/signup" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
-            Get Started
-          </Link>
+
+          {ready && isAuthenticated ? (
+            <>
+              <Link to="/profile" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
+                Profile
+              </Link>
+              <Link to="/settings" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
+                Settings
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="btn btn-outline" onClick={() => setMobileOpen(false)}>
+                Log In
+              </Link>
+              <Link to="/signup" className="btn btn-primary" onClick={() => setMobileOpen(false)}>
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </>

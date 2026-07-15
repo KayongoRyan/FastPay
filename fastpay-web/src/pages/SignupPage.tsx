@@ -2,10 +2,12 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthWalletVisual } from "../components/AuthWalletVisual";
-import { persistSession, registerRequest } from "../lib/auth-api";
+import { useAuth } from "../context/AuthContext";
+import { registerRequest } from "../lib/auth-api";
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const { setSession } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +47,8 @@ export function SignupPage() {
         ...(email ? { email } : {}),
         ...(phone ? { phone } : {}),
       });
-      persistSession(data);
-      navigate("/", { replace: true });
+      setSession(data);
+      navigate("/profile", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create account.");
     } finally {

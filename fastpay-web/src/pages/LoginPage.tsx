@@ -2,10 +2,12 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthWalletVisual } from "../components/AuthWalletVisual";
-import { loginRequest, persistSession } from "../lib/auth-api";
+import { useAuth } from "../context/AuthContext";
+import { loginRequest } from "../lib/auth-api";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { setSession } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,8 +23,8 @@ export function LoginPage() {
 
     try {
       const data = await loginRequest(identifier, password);
-      persistSession(data);
-      navigate("/", { replace: true });
+      setSession(data);
+      navigate("/profile", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {
