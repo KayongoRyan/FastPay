@@ -3,12 +3,15 @@ type PageHeroProps = {
   title: string;
   subtitle: string;
   dark?: boolean;
+  plain?: boolean;
 };
 
-export function PageHero({ label, title, subtitle, dark }: PageHeroProps) {
+export function PageHero({ label, title, subtitle, dark, plain }: PageHeroProps) {
   return (
-    <section className={`page-hero${dark ? " page-hero--dark" : ""}`}>
-      <div className="page-hero__grid" aria-hidden="true" />
+    <section
+      className={`page-hero${dark ? " page-hero--dark" : ""}${plain ? " page-hero--plain" : ""}`}
+    >
+      {!plain && <div className="page-hero__grid" aria-hidden="true" />}
       <div className="container page-hero__inner">
         <span className="section-label">{label}</span>
         <h1 className="page-hero__title">{title}</h1>
