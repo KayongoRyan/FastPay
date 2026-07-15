@@ -1,113 +1,122 @@
 import { useState } from "react";
-import { Building2, Globe2, Wifi } from "lucide-react";
+import { Building2, Globe2, TrendingUp } from "lucide-react";
+import {
+  AppAnalyticsPreview,
+  type AnalyticsPreviewData,
+} from "./AppAnalyticsPreview";
+import { Reveal } from "./Reveal";
 
 type BudgetPeriod = "weekly" | "monthly" | "yearly";
 
-const budgetData: Record<
-  BudgetPeriod,
-  { label: string; bars: number[]; total: string }
-> = {
+const budgetData: Record<BudgetPeriod, AnalyticsPreviewData> = {
   weekly: {
-    label: "This Week",
+    label: "This week",
+    spent: "RWF 186,400",
+    budget: "RWF 300,000",
+    remaining: "RWF 113,600",
+    usedPct: 62,
     bars: [45, 72, 38, 90, 55, 68, 42],
-    total: "$1,240",
+    goal: "Emergency fund",
+    goalPct: 42,
   },
   monthly: {
-    label: "This Month",
+    label: "This month",
+    spent: "RWF 742,000",
+    budget: "RWF 1,200,000",
+    remaining: "RWF 458,000",
+    usedPct: 62,
     bars: [60, 85, 70, 95, 55, 78, 62, 88, 45, 72, 80, 50],
-    total: "$4,820",
+    goal: "Family savings",
+    goalPct: 58,
   },
   yearly: {
-    label: "This Year",
+    label: "This year",
+    spent: "RWF 8.4M",
+    budget: "RWF 14.4M",
+    remaining: "RWF 6.0M",
+    usedPct: 58,
     bars: [55, 78, 65, 88, 72, 90, 68, 82, 75, 60, 85, 70],
-    total: "$58,400",
+    goal: "Home deposit",
+    goalPct: 31,
   },
 };
 
 const features = [
   {
+    icon: TrendingUp,
+    title: "Smart Budget Tracking",
+    desc: "Weekly, monthly, and yearly views help you spot trends before they become problems.",
+  },
+  {
     icon: Building2,
-    title: "Local Business Finance",
-    desc: "Manage payroll, invoices, and vendor payments from a single dashboard built for SMBs.",
+    title: "Built For Local Finance",
+    desc: "Track MoMo, bills, and Stellar payments in one place with RWF-first insights.",
   },
   {
     icon: Globe2,
-    title: "Built For Global Payments",
-    desc: "Send and receive in 40+ currencies with transparent rates and same-day settlement.",
-  },
-  {
-    icon: Wifi,
-    title: "Internet Of Money",
-    desc: "Connect wallets, cards, and crypto rails into one seamless money movement layer.",
+    title: "Goals That Stay On Track",
+    desc: "Savings goals, family plans, and spending limits keep your money moving with purpose.",
   },
 ];
 
 export function AnalyticsSection() {
   const [period, setPeriod] = useState<BudgetPeriod>("monthly");
   const data = budgetData[period];
-  const maxBar = Math.max(...data.bars);
 
   return (
     <section className="analytics" id="analytics">
+      <div className="analytics__ambient" aria-hidden="true">
+        <span className="analytics__orb analytics__orb--1" />
+        <span className="analytics__orb analytics__orb--2" />
+      </div>
+
       <div className="container">
-        <div className="analytics__phone-wrap">
-          <div className="analytics__phone">
+        <Reveal className="analytics__phone-wrap" delay={80}>
+          <div className="analytics__device">
+            <div className="analytics__phone-notch" />
             <div className="analytics__phone-screen">
-              <div className="analytics__budget-tabs" role="tablist">
-                {(["weekly", "monthly", "yearly"] as const).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    role="tab"
-                    aria-selected={period === p}
-                    className={`analytics__budget-tab${period === p ? " active" : ""}`}
-                    onClick={() => setPeriod(p)}
-                  >
-                    {p.charAt(0).toUpperCase() + p.slice(1)}
-                  </button>
-                ))}
-              </div>
-              <div className="analytics__chart-title">Budget / Spending</div>
-              <div className="analytics__chart-sub">
-                {data.label} · {data.total} spent
-              </div>
-              <div className="analytics__bars">
-                {data.bars.map((h, i) => (
-                  <div
-                    key={i}
-                    className={`analytics__bar${h === maxBar ? " active" : ""}`}
-                    style={{ height: `${(h / maxBar) * 100}%` }}
-                  />
-                ))}
-              </div>
+              <AppAnalyticsPreview
+                period={period}
+                onPeriodChange={setPeriod}
+                data={data}
+              />
             </div>
           </div>
-          <div className="analytics__float-card">
-            <div style={{ opacity: 0.8, marginBottom: "0.5rem" }}>FastPay Card</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>$3,403.09</div>
-          </div>
-        </div>
 
-        <div>
-          <div className="section-label">Analytics</div>
-          <h2 className="section-title">
-            Let&apos;s Take Your Analytics To The Next Level
-          </h2>
-          <p className="section-subtitle">
-            Switch between weekly, monthly, and yearly views to understand spending
-            patterns and stay on track with your financial goals.
-          </p>
-          <div className="analytics__features" style={{ marginTop: "2.5rem" }}>
-            {features.map((f) => (
-              <div key={f.title} className="analytics__feature">
-                <div className="analytics__feature-icon">
-                  <f.icon size={22} />
+          <div className="analytics__float-card">
+            <small>Budget remaining</small>
+            <strong>{data.remaining}</strong>
+            <span>{data.usedPct}% used · {data.label}</span>
+          </div>
+        </Reveal>
+
+        <div className="analytics__copy">
+          <Reveal>
+            <div className="section-label">Analytics</div>
+            <h2 className="section-title">
+              Take your spending insights to the next level
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <p className="section-subtitle">
+              Switch between weekly, monthly, and yearly views to understand spending
+              patterns and stay on track with your financial goals.
+            </p>
+          </Reveal>
+
+          <div className="analytics__features">
+            {features.map((f, index) => (
+              <Reveal key={f.title} delay={160 + index * 80}>
+                <div className="analytics__feature">
+                  <div className="analytics__feature-icon">
+                    <f.icon size={22} />
+                  </div>
+                  <div>
+                    <h3>{f.title}</h3>
+                    <p>{f.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3>{f.title}</h3>
-                  <p>{f.desc}</p>
-                </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
