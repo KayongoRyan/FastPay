@@ -1,43 +1,24 @@
-import { Clock, Mail, MapPin, MessageSquare, Phone, Send } from "lucide-react";
 import { useState } from "react";
-import { PageHero } from "../components/PageHero";
+import { ArrowUpRight, Send } from "lucide-react";
 
-const offices = [
+const locations = [
   {
-    city: "New York",
-    address: "350 Fifth Avenue, Suite 4200",
-    zip: "NY 10118, USA",
-    phone: "+1 (800) 555-FAST",
+    city: "Kigali",
+    role: "Headquarters",
+    lines: ["KG 7 Ave, Kacyiru", "Kigali, Rwanda"],
+    phone: "+250 788 000 000",
   },
   {
-    city: "London",
-    address: "1 Canada Square, Level 38",
-    zip: "E14 5AB, UK",
-    phone: "+44 20 7946 0958",
+    city: "Nairobi",
+    role: "East Africa",
+    lines: ["Westlands Business Park", "Nairobi, Kenya"],
+    phone: "+254 700 000 000",
   },
   {
-    city: "Singapore",
-    address: "1 Raffles Place, Tower 2",
-    zip: "048616, Singapore",
-    phone: "+65 6123 4567",
-  },
-];
-
-const supportChannels = [
-  {
-    icon: MessageSquare,
-    title: "Live Chat",
-    desc: "Available 24/7 in-app. Average response under 2 minutes.",
-  },
-  {
-    icon: Mail,
-    title: "Email Support",
-    desc: "support@fastpay.com — we reply within 4 business hours.",
-  },
-  {
-    icon: Phone,
-    title: "Phone",
-    desc: "Business plan customers get a dedicated line Mon–Fri 9am–6pm.",
+    city: "Remote",
+    role: "Support desk",
+    lines: ["Chat & email coverage", "Across CET / CAT"],
+    phone: null,
   },
 ];
 
@@ -51,131 +32,146 @@ export function ContactPage() {
 
   return (
     <>
-      <PageHero
-        label="Contact"
-        title="We'd Love To Hear From You"
-        subtitle="Questions about plans, partnerships, or support — our team is here to help."
-        dark
-      />
+      <section className="contact-hero">
+        <div className="container contact-hero__inner">
+          <p className="contact-hero__brand">FastPay</p>
+          <h1 className="contact-hero__title">
+            Talk to the people
+            <br />
+            behind the wallet.
+          </h1>
+          <p className="contact-hero__lede">
+            Sales, partnerships, or account help — write us once. We answer within
+            one business day.
+          </p>
+        </div>
+      </section>
 
-      <section className="page-section">
-        <div className="container contact-page__layout">
-          <div className="contact-form-card">
-            <h2>Send Us A Message</h2>
-            <p>Fill out the form and we&apos;ll get back to you within one business day.</p>
+      <section className="contact-main">
+        <div className="container contact-main__grid">
+          <aside className="contact-rail">
+            <div className="contact-rail__group">
+              <span className="contact-rail__label">Email</span>
+              <a href="mailto:support@fastpay.com" className="contact-rail__link">
+                support@fastpay.com
+                <ArrowUpRight size={18} strokeWidth={2} />
+              </a>
+            </div>
+
+            <div className="contact-rail__group">
+              <span className="contact-rail__label">Sales</span>
+              <a href="mailto:hello@fastpay.com" className="contact-rail__link">
+                hello@fastpay.com
+                <ArrowUpRight size={18} strokeWidth={2} />
+              </a>
+            </div>
+
+            <div className="contact-rail__group">
+              <span className="contact-rail__label">Phone</span>
+              <a href="tel:+250788000000" className="contact-rail__link">
+                +250 788 000 000
+              </a>
+            </div>
+
+            <div className="contact-rail__group">
+              <span className="contact-rail__label">Hours</span>
+              <p className="contact-rail__text">
+                Mon–Fri · 09:00–18:00 CAT
+                <br />
+                Weekends · chat & email only
+              </p>
+            </div>
+          </aside>
+
+          <div className="contact-compose">
+            <header className="contact-compose__head">
+              <h2>Write a message</h2>
+              <p>No ticket bots. A person on the FastPay team reads this.</p>
+            </header>
+
             {submitted ? (
-              <div className="contact-form__success">
-                <Send size={32} />
-                <h3>Message sent!</h3>
-                <p>Thanks for reaching out. We&apos;ll be in touch shortly.</p>
+              <div className="contact-compose__done">
+                <p className="contact-compose__done-kicker">Sent</p>
+                <h3>We have your note.</h3>
+                <p>Expect a reply to the email you left — usually same day.</p>
               </div>
             ) : (
-              <form className="contact-form" onSubmit={handleSubmit}>
-                <div className="contact-form__row">
+              <form className="contact-compose__form" onSubmit={handleSubmit}>
+                <div className="contact-compose__row">
                   <label>
-                    First name
-                    <input type="text" name="firstName" required placeholder="Jane" />
+                    <span>First name</span>
+                    <input type="text" name="firstName" required autoComplete="given-name" />
                   </label>
                   <label>
-                    Last name
-                    <input type="text" name="lastName" required placeholder="Doe" />
+                    <span>Last name</span>
+                    <input type="text" name="lastName" required autoComplete="family-name" />
                   </label>
                 </div>
+
                 <label>
-                  Email
-                  <input type="email" name="email" required placeholder="jane@company.com" />
+                  <span>Email</span>
+                  <input type="email" name="email" required autoComplete="email" />
                 </label>
+
                 <label>
-                  Subject
+                  <span>Topic</span>
                   <select name="subject" required defaultValue="">
                     <option value="" disabled>
-                      Select a topic
+                      Choose one
                     </option>
-                    <option value="general">General inquiry</option>
+                    <option value="general">General</option>
                     <option value="sales">Sales & pricing</option>
-                    <option value="support">Technical support</option>
+                    <option value="support">Account support</option>
                     <option value="partnership">Partnership</option>
                   </select>
                 </label>
+
                 <label>
-                  Message
-                  <textarea
-                    name="message"
-                    required
-                    rows={5}
-                    placeholder="Tell us how we can help..."
-                  />
+                  <span>Message</span>
+                  <textarea name="message" required rows={6} />
                 </label>
-                <button type="submit" className="btn btn-primary">
-                  Send Message
-                  <Send size={18} />
+
+                <button type="submit" className="contact-compose__submit">
+                  Send message
+                  <Send size={16} strokeWidth={2.25} />
                 </button>
               </form>
             )}
           </div>
-
-          <div className="contact-info">
-            <div className="contact-info__block">
-              <h3>Support Channels</h3>
-              <div className="contact-info__channels">
-                {supportChannels.map((ch) => (
-                  <article key={ch.title} className="contact-channel">
-                    <div className="contact-channel__icon">
-                      <ch.icon size={20} />
-                    </div>
-                    <div>
-                      <h4>{ch.title}</h4>
-                      <p>{ch.desc}</p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </div>
-
-            <div className="contact-info__block">
-              <h3>
-                <Clock size={18} />
-                Business Hours
-              </h3>
-              <p>Mon – Fri: 9:00 AM – 6:00 PM (local time)</p>
-              <p>Sat – Sun: Email & live chat only</p>
-            </div>
-
-            <div className="contact-info__block contact-info__direct">
-              <p>
-                <Mail size={16} />
-                support@fastpay.com
-              </p>
-              <p>
-                <Phone size={16} />
-                +1 (800) 555-FAST
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
-      <section className="page-section page-section--alt">
+      <section className="contact-places">
         <div className="container">
-          <div className="page-section__header page-section__header--center">
-            <div className="section-label">Offices</div>
-            <h2 className="section-title">Our Global Locations</h2>
+          <div className="contact-places__intro">
+            <h2>Where we work</h2>
+            <p>East Africa first. Support follows the clock where your money moves.</p>
           </div>
-          <div className="offices-grid">
-            {offices.map((office) => (
-              <article key={office.city} className="office-card">
-                <div className="office-card__icon">
-                  <MapPin size={20} />
+
+          <ul className="contact-places__list">
+            {locations.map((loc) => (
+              <li key={loc.city} className="contact-places__item">
+                <div className="contact-places__city">
+                  <strong>{loc.city}</strong>
+                  <span>{loc.role}</span>
                 </div>
-                <h3>{office.city}</h3>
-                <p>{office.address}</p>
-                <p>{office.zip}</p>
-                <a href={`tel:${office.phone.replace(/\s/g, "")}`} className="office-card__phone">
-                  {office.phone}
-                </a>
-              </article>
+                <div className="contact-places__addr">
+                  {loc.lines.map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
+                </div>
+                {loc.phone ? (
+                  <a href={`tel:${loc.phone.replace(/\s/g, "")}`} className="contact-places__phone">
+                    {loc.phone}
+                  </a>
+                ) : (
+                  <span className="contact-places__phone contact-places__phone--muted">
+                    In-app chat
+                  </span>
+                )}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
     </>
