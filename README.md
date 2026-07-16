@@ -28,6 +28,7 @@ cd fastpay-backend && npm run start:audit
 # Docs
 docs/security/stride-payment-flow.md
 docs/security/security-center-api.md
+docs/security/network-edge.md   # CDN, WAF, TLS, NetworkPolicies, rate limits
 ```
 
 ## Quick start
