@@ -1,23 +1,21 @@
 import { Copy, Share2 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { walletAccount } from "../../lib/wallet-data";
 
-function pseudoQrCells(seed: string, size = 13): boolean[] {
-  let h = 2166136261;
-  const cells: boolean[] = [];
-  for (let i = 0; i < size * size; i++) {
-    h ^= seed.charCodeAt(i % seed.length) + i;
-    h = Math.imul(h, 16777619);
-    cells.push(((h >>> 13) & 3) !== 0 ? (h & 1) === 1 : true);
-  }
-  return cells;
-}
-
 export function AppReceivePage() {
   const { user } = useAuth();
   const [copied, setCopied] = useState<string | null>(null);
-  const cells = useMemo(() => pseudoQrCells(walletAccount.accountNumber), []);
+
+  const qrPayload = useMemo(() => {
+    const params = new URLSearchParams({
+      account: walletAccount.accountNumber,
+      ...(user?.fullName ? { name: user.fullName } : {}),
+      ...(user?.phone ? { phone: user.phone } : {}),
+    });
+    return `fastpay://pay?${params.toString()}`;
+  }, [user]);
 
   async function copy(value: string, tag: string) {
     await navigator.clipboard.writeText(value).catch(() => undefined);
@@ -36,10 +34,27 @@ export function AppReceivePage() {
             Share your account number or let the sender scan this code in the FastPay app.
           </p>
 
-          <div className="wapp-qr" role="img" aria-label="Wallet QR code">
-            {cells.map((on, i) => (
-              <span key={i} className={on ? "on" : ""} />
-            ))}
+          <div className="wapp-qr">
+            <QRCodeSVG
+              value={qrPayload}
+              size={196}
+              level="M"
+              bgColor="#ffffff"
+              fgColor="#0b1f3f"
+              marginSize={1}
+              title="Wallet QR code"
+              imageSettings={{
+                src:
+                  "data:image/svg+xml;utf8," +
+                  encodeURIComponent(
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0b1f3f"/><text x="24" y="32" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="800" fill="#00aeef" text-anchor="middle">F</text></svg>',
+                  ),
+                height: 38,
+                width: 38,
+                excavate: true,
+              }}
+            />
+            <span className="wapp-qr__caption">{walletAccount.accountNumber}</span>
           </div>
 
           <div className="wapp-receive__lines">
