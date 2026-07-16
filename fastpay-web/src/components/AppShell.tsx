@@ -1,16 +1,17 @@
 import {
-  ArrowDownToLine,
   ArrowLeftRight,
-  ArrowUpRight,
   BarChart3,
+  CandlestickChart,
   Home,
+  LayoutGrid,
   LogOut,
   Menu,
   Receipt,
   RefreshCcw,
   Settings,
   ShieldCheck,
-  Smartphone,
+  Target,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -32,12 +33,13 @@ const navGroups = [
   {
     label: "Money",
     items: [
-      { to: "/app/transfer", label: "Transfer", icon: ArrowUpRight },
-      { to: "/app/receive", label: "Receive", icon: ArrowDownToLine },
-      { to: "/app/buy", label: "Buy / Top-up", icon: Smartphone },
+      { to: "/app/features", label: "Features", icon: LayoutGrid },
       { to: "/app/convert", label: "Convert", icon: ArrowLeftRight },
       { to: "/app/bills", label: "Bills", icon: Receipt },
       { to: "/app/subscriptions", label: "Subscriptions", icon: RefreshCcw },
+      { to: "/app/family", label: "Family Plan", icon: Users },
+      { to: "/app/goals", label: "Saved Goals", icon: Target },
+      { to: "/app/crypto", label: "Crypto market", icon: CandlestickChart },
     ],
   },
   {

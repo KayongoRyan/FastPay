@@ -6244,6 +6244,395 @@ a.wapp-tiles__item:hover {
   font-weight: 800;
 }
 
+/* Features hub */
+.wapp-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.wapp-feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(11, 31, 63, 0.1);
+  background: linear-gradient(165deg, #f8fcff 0%, #fff 55%);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.wapp-feature-card:hover {
+  border-color: var(--aqua);
+  transform: translateY(-2px);
+}
+
+.wapp-feature-card__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 174, 239, 0.12);
+  color: var(--aqua-hover, #0284c7);
+  margin-bottom: 0.35rem;
+}
+
+.wapp-feature-card strong {
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+
+.wapp-feature-card small {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* Family / goals */
+.wapp-family-hero {
+  margin: 1rem 0 1.1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  background: rgba(0, 174, 239, 0.07);
+}
+
+.wapp-family-hero span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.wapp-family-hero strong {
+  display: block;
+  font-size: 1.15rem;
+  color: var(--navy);
+  margin-bottom: 0.65rem;
+}
+
+.wapp-family-hero strong em {
+  font-style: normal;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wapp-goal-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(11, 31, 63, 0.08);
+  overflow: hidden;
+}
+
+.wapp-goal-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0e7490, var(--aqua));
+}
+
+.wapp-perk-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.wapp-perk-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+  color: var(--navy);
+}
+
+.wapp-perk-list svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #16a34a;
+}
+
+.wapp-member-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.wapp-member-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wapp-member-list strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--navy);
+}
+
+.wapp-member-list small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.wapp-member-list > li > span {
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.wapp-member-list > li > span em {
+  display: block;
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wapp-goal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.wapp-goal-card .wapp-card__head em {
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--aqua-hover, #0284c7);
+}
+
+.wapp-goal-card > strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--navy);
+  margin: 0.35rem 0 0.55rem;
+}
+
+.wapp-goal-card > strong span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wapp-goal-card .wapp-goal-bar {
+  margin-bottom: 0.55rem;
+}
+
+.wapp-goal-card .wapp-sheet-actions__btn {
+  margin-top: 0.75rem;
+}
+
+.wapp-goal-deposit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.wapp-goal-deposit input {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(11, 31, 63, 0.14);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.wapp-goal-deposit .auth-form__submit {
+  width: auto;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+}
+
+.wapp-muted {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Crypto tabs / news / calendar */
+.wapp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.wapp-tabs__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(11, 31, 63, 0.12);
+  background: var(--white);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wapp-tabs__btn.is-active {
+  background: rgba(0, 174, 239, 0.12);
+  border-color: rgba(0, 174, 239, 0.45);
+  color: var(--navy);
+}
+
+.wapp-news {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.wapp-news li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: 0.95rem;
+  border-bottom: 1px solid rgba(11, 31, 63, 0.06);
+}
+
+.wapp-news li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.wapp-news em {
+  align-self: flex-start;
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(11, 31, 63, 0.06);
+  color: var(--navy);
+}
+
+.wapp-news strong {
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--navy);
+}
+
+.wapp-news small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.wapp-cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.wapp-cal__dow {
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.25rem 0;
+}
+
+.wapp-cal__day {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(11, 31, 63, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font: inherit;
+  color: var(--navy);
+  cursor: default;
+}
+
+.wapp-cal__day.is-empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+.wapp-cal__day strong {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.wapp-cal__day.is-today {
+  border-color: var(--aqua);
+  background: rgba(0, 174, 239, 0.1);
+}
+
+.wapp-cal__day.has-event {
+  cursor: pointer;
+}
+
+.wapp-cal__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--aqua);
+}
+
+.wapp-cal__dot--macro {
+  background: #f59e0b;
+}
+
+.wapp-cal__dot--local {
+  background: #16a34a;
+}
+
+.wapp-cal__dot--liquidity {
+  background: var(--aqua);
+}
+
+.wapp-cal-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.wapp-cal-list li {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.wapp-cal-list strong {
+  flex: 0 0 52px;
+  color: var(--navy);
+}
+
+.wapp-cal-list span {
+  color: var(--text-muted);
+}
+
+.wapp-provider__item.is-active {
+  border-color: var(--aqua);
+  background: rgba(0, 174, 239, 0.1);
+  color: var(--navy);
+}
+
+@media (max-width: 900px) {
+  .wapp-feature-grid,
+  .wapp-goal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Pricing price link */
 .pricing-card__price--link {
   display: inline-block;
