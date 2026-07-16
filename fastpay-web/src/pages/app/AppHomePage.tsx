@@ -47,7 +47,7 @@ const quickLinks: Tile[] = [
   { label: "Pay tax", icon: Landmark, to: "/app/bills", hint: "RRA & Irembo bills" },
   { label: "Forex", icon: ArrowLeftRight, to: "/app/convert", hint: "RWF ⇄ USDT, USD, KES" },
   { label: "Statement", icon: FileText, to: "/app/wallet", hint: "Full transaction history" },
-  { label: "Savings", icon: PiggyBank, to: "/app/goals", hint: "Goals & pockets" },
+  { label: "Savings", icon: PiggyBank, to: "/app/savings", hint: "Open a savings account" },
   { label: "Crypto", icon: CandlestickChart, to: "/app/crypto", hint: "News, calendar, RWF convert" },
   { label: "Get loan", icon: HandCoins, hint: "Personal & business" },
 ];

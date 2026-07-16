@@ -2,6 +2,7 @@ import {
   ArrowDownToLine,
   ArrowUpRight,
   LayoutGrid,
+  PiggyBank,
   Smartphone,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -25,6 +26,12 @@ const features = [
     hint: "Airtime, data, and mobile money top-ups",
     icon: Smartphone,
   },
+  {
+    to: "/app/savings",
+    label: "Savings",
+    hint: "Open a savings account — flexible, goal-based, or family locked",
+    icon: PiggyBank,
+  },
 ];
 
 export function AppFeaturesPage() {
@@ -37,7 +44,7 @@ export function AppFeaturesPage() {
           </h2>
         </header>
         <p className="wapp-form-card__hint">
-          Core money moves — transfer, receive, and top-up from one place.
+          Core money moves — transfer, receive, top-up, and open a savings account.
         </p>
         <div className="wapp-feature-grid">
           {features.map(({ to, label, hint, icon: Icon }) => (
