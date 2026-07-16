@@ -3,8 +3,19 @@ import {
   ArrowDownToLine,
   ArrowLeftRight,
   ArrowUpRight,
+  Banknote,
+  Building2,
+  FileText,
+  HandCoins,
+  Landmark,
+  PiggyBank,
   Receipt,
+  ShieldCheck,
   Smartphone,
+  Ticket,
+  Users,
+  Wifi,
+  Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -18,6 +29,64 @@ const quickActions = [
   { to: "/app/convert", label: "Convert", icon: ArrowLeftRight },
   { to: "/app/bills", label: "Bills", icon: Receipt },
 ];
+
+type Tile = {
+  label: string;
+  icon: typeof Zap;
+  to?: string;
+  hint: string;
+};
+
+const quickLinks: Tile[] = [
+  { label: "MoMo top-up", icon: Smartphone, to: "/app/buy", hint: "MTN & Airtel" },
+  { label: "Airtime & data", icon: Wifi, to: "/app/buy", hint: "Bundles for any number" },
+  { label: "Utilities", icon: Zap, to: "/app/bills", hint: "EUCL & WASAC tokens" },
+  { label: "Pay tax", icon: Landmark, to: "/app/bills", hint: "RRA & Irembo bills" },
+  { label: "Forex", icon: ArrowLeftRight, to: "/app/convert", hint: "RWF ⇄ USDT, USD, KES" },
+  { label: "Statement", icon: FileText, to: "/app/wallet", hint: "Full transaction history" },
+  { label: "Savings", icon: PiggyBank, to: "/app/analytics", hint: "Goals & pockets" },
+  { label: "Get loan", icon: HandCoins, hint: "Personal & business" },
+];
+
+const services: Tile[] = [
+  { label: "Send money", icon: ArrowUpRight, to: "/app/transfer", hint: "FastPay & phone numbers" },
+  { label: "Bill payments", icon: Receipt, to: "/app/bills", hint: "Utilities, TV, school fees" },
+  { label: "Bank pay", icon: Building2, hint: "Pay merchants by bank" },
+  { label: "Vouchers", icon: Ticket, hint: "Buy & redeem vouchers" },
+  { label: "Family wallet", icon: Users, hint: "Shared budgets & approvals" },
+  { label: "Insurance", icon: ShieldCheck, hint: "Health & device cover" },
+  { label: "Escrow", icon: Banknote, hint: "Protected buyer-seller deals" },
+  { label: "Offline pay", icon: ArrowDownToLine, hint: "Pay without internet" },
+];
+
+function TileGrid({ tiles }: { tiles: Tile[] }) {
+  return (
+    <div className="wapp-tiles">
+      {tiles.map(({ label, icon: Icon, to, hint }) =>
+        to ? (
+          <Link key={label} to={to} className="wapp-tiles__item">
+            <span className="wapp-tiles__icon">
+              <Icon size={18} strokeWidth={2.1} />
+            </span>
+            <strong>{label}</strong>
+            <small>{hint}</small>
+          </Link>
+        ) : (
+          <div key={label} className="wapp-tiles__item is-soon" aria-disabled="true">
+            <span className="wapp-tiles__icon">
+              <Icon size={18} strokeWidth={2.1} />
+            </span>
+            <strong>
+              {label}
+              <em>Soon</em>
+            </strong>
+            <small>{hint}</small>
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
 
 const weekBars = [42, 58, 48, 72, 65, 80, 68];
 
@@ -51,6 +120,20 @@ export function AppHomePage() {
             {label}
           </Link>
         ))}
+      </section>
+
+      <section className="wapp-card">
+        <header className="wapp-card__head">
+          <h2>Quick links</h2>
+        </header>
+        <TileGrid tiles={quickLinks} />
+      </section>
+
+      <section className="wapp-card">
+        <header className="wapp-card__head">
+          <h2>Services</h2>
+        </header>
+        <TileGrid tiles={services} />
       </section>
 
       <div className="wapp-grid-2">
