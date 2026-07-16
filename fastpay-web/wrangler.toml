@@ -1,0 +1,5 @@
+# Cloudflare Pages configuration
+# Deploy: npx wrangler pages deploy dist --project-name fastpay-web
+name = "fastpay-web"
+compatibility_date = "2026-07-01"
+pages_build_output_dir = "dist"

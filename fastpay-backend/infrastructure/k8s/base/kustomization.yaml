@@ -19,6 +19,7 @@ resources:
   - apps/audit-service-deployment.yaml
   - apps/stubs-deployment.yaml
   - networking/ingress.yaml
+  - networking/network-policies.yaml
 
 patches:
   - path: patches/pod-security.yaml
