@@ -48,7 +48,7 @@ export function SignupPage() {
         ...(phone ? { phone } : {}),
       });
       setSession(data);
-      navigate("/profile", { replace: true });
+      navigate("/pin-setup", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create account.");
     } finally {
