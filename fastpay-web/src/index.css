@@ -5210,6 +5210,74 @@ ul {
   flex-shrink: 0;
 }
 
+/* Quick links & services tiles */
+.wapp-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.wapp-tiles__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(11, 31, 63, 0.08);
+  background: #f8fbfd;
+  color: var(--navy);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+a.wapp-tiles__item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 174, 239, 0.4);
+  box-shadow: 0 10px 22px rgba(11, 31, 63, 0.08);
+  color: var(--navy);
+}
+
+.wapp-tiles__item.is-soon {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.wapp-tiles__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 174, 239, 0.12);
+  color: var(--aqua);
+  margin-bottom: 0.35rem;
+}
+
+.wapp-tiles__item strong {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.wapp-tiles__item strong em {
+  font-style: normal;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.14rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(11, 31, 63, 0.08);
+  color: var(--text-muted);
+}
+
+.wapp-tiles__item small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
 /* Cards & grids */
 .wapp-grid-2 {
   display: grid;
@@ -6024,6 +6092,10 @@ ul {
   .wapp-grid-2,
   .wapp-grid-2--wallet {
     grid-template-columns: 1fr;
+  }
+
+  .wapp-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .wapp__sidebar {
