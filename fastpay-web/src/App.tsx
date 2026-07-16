@@ -24,6 +24,7 @@ import { AppFeaturesPage } from "./pages/app/AppFeaturesPage";
 import { AppGoalsPage } from "./pages/app/AppGoalsPage";
 import { AppHomePage } from "./pages/app/AppHomePage";
 import { AppReceivePage } from "./pages/app/AppReceivePage";
+import { AppSavingsPage } from "./pages/app/AppSavingsPage";
 import { AppSecurityPage } from "./pages/app/AppSecurityPage";
 import { AppSubscriptionsPage } from "./pages/app/AppSubscriptionsPage";
 import { AppTransferPage } from "./pages/app/AppTransferPage";
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="transfer" element={<AppTransferPage />} />
             <Route path="receive" element={<AppReceivePage />} />
             <Route path="buy" element={<AppBuyPage />} />
+            <Route path="savings" element={<AppSavingsPage />} />
             <Route path="convert" element={<AppConvertPage />} />
             <Route path="analytics" element={<AppAnalyticsPage />} />
             <Route path="bills" element={<AppBillsPage />} />

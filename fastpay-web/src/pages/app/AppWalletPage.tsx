@@ -1,6 +1,11 @@
 import { ArrowDownLeft, ArrowUpRight, Copy, TrendingDown, TrendingUp } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { loadSettings } from "../../lib/auth-api";
+import {
+  loadSavingsAccounts,
+  totalSavingsBalance,
+} from "../../lib/savings-accounts";
 import {
   formatRwf,
   recentTransactions,
@@ -12,6 +17,11 @@ import {
 export function AppWalletPage() {
   const [copied, setCopied] = useState(false);
   const hideBalance = loadSettings().hideBalance;
+  const savingsTotal = useMemo(() => {
+    const accounts = loadSavingsAccounts();
+    const opened = totalSavingsBalance(accounts);
+    return opened > 0 ? opened : walletAccount.savings;
+  }, []);
 
   async function copyAccount() {
     await navigator.clipboard.writeText(walletAccount.accountNumber).catch(() => undefined);
@@ -33,8 +43,10 @@ export function AppWalletPage() {
               <strong>{hideBalance ? "RWF ••••••" : formatRwf(walletAccount.balance)}</strong>
             </div>
             <div className="wapp-balances__row">
-              <span>Savings pocket</span>
-              <strong>{hideBalance ? "RWF ••••••" : formatRwf(walletAccount.savings)}</strong>
+              <span>
+                Savings pocket · <Link to="/app/savings">Manage</Link>
+              </span>
+              <strong>{hideBalance ? "RWF ••••••" : formatRwf(savingsTotal)}</strong>
             </div>
             <div className="wapp-balances__row">
               <span>USDT</span>
