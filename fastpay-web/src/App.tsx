@@ -18,6 +18,10 @@ import { AppAnalyticsPage } from "./pages/app/AppAnalyticsPage";
 import { AppBillsPage } from "./pages/app/AppBillsPage";
 import { AppBuyPage } from "./pages/app/AppBuyPage";
 import { AppConvertPage } from "./pages/app/AppConvertPage";
+import { AppCryptoPage } from "./pages/app/AppCryptoPage";
+import { AppFamilyPlanPage } from "./pages/app/AppFamilyPlanPage";
+import { AppFeaturesPage } from "./pages/app/AppFeaturesPage";
+import { AppGoalsPage } from "./pages/app/AppGoalsPage";
 import { AppHomePage } from "./pages/app/AppHomePage";
 import { AppReceivePage } from "./pages/app/AppReceivePage";
 import { AppSecurityPage } from "./pages/app/AppSecurityPage";
@@ -50,6 +54,7 @@ export default function App() {
           <Route path="app" element={<AppShell />}>
             <Route index element={<AppHomePage />} />
             <Route path="wallet" element={<AppWalletPage />} />
+            <Route path="features" element={<AppFeaturesPage />} />
             <Route path="transfer" element={<AppTransferPage />} />
             <Route path="receive" element={<AppReceivePage />} />
             <Route path="buy" element={<AppBuyPage />} />
@@ -57,6 +62,9 @@ export default function App() {
             <Route path="analytics" element={<AppAnalyticsPage />} />
             <Route path="bills" element={<AppBillsPage />} />
             <Route path="subscriptions" element={<AppSubscriptionsPage />} />
+            <Route path="family" element={<AppFamilyPlanPage />} />
+            <Route path="goals" element={<AppGoalsPage />} />
+            <Route path="crypto" element={<AppCryptoPage />} />
             <Route path="security" element={<AppSecurityPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />

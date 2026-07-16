@@ -5,13 +5,16 @@ import {
   ArrowUpRight,
   Banknote,
   Building2,
+  CandlestickChart,
   FileText,
   HandCoins,
   Landmark,
+  LayoutGrid,
   PiggyBank,
   Receipt,
   ShieldCheck,
   Smartphone,
+  Target,
   Ticket,
   Users,
   Wifi,
@@ -23,11 +26,11 @@ import { loadSettings } from "../../lib/auth-api";
 import { formatRwf, recentTransactions, walletAccount } from "../../lib/wallet-data";
 
 const quickActions = [
-  { to: "/app/transfer", label: "Transfer", icon: ArrowUpRight },
-  { to: "/app/receive", label: "Receive", icon: ArrowDownToLine },
-  { to: "/app/buy", label: "Top-up", icon: Smartphone },
+  { to: "/app/features", label: "Features", icon: LayoutGrid },
   { to: "/app/convert", label: "Convert", icon: ArrowLeftRight },
   { to: "/app/bills", label: "Bills", icon: Receipt },
+  { to: "/app/goals", label: "Goals", icon: Target },
+  { to: "/app/crypto", label: "Crypto", icon: CandlestickChart },
 ];
 
 type Tile = {
@@ -44,7 +47,8 @@ const quickLinks: Tile[] = [
   { label: "Pay tax", icon: Landmark, to: "/app/bills", hint: "RRA & Irembo bills" },
   { label: "Forex", icon: ArrowLeftRight, to: "/app/convert", hint: "RWF ⇄ USDT, USD, KES" },
   { label: "Statement", icon: FileText, to: "/app/wallet", hint: "Full transaction history" },
-  { label: "Savings", icon: PiggyBank, to: "/app/analytics", hint: "Goals & pockets" },
+  { label: "Savings", icon: PiggyBank, to: "/app/goals", hint: "Goals & pockets" },
+  { label: "Crypto", icon: CandlestickChart, to: "/app/crypto", hint: "News, calendar, RWF convert" },
   { label: "Get loan", icon: HandCoins, hint: "Personal & business" },
 ];
 
@@ -53,7 +57,7 @@ const services: Tile[] = [
   { label: "Bill payments", icon: Receipt, to: "/app/bills", hint: "Utilities, TV, school fees" },
   { label: "Bank pay", icon: Building2, hint: "Pay merchants by bank" },
   { label: "Vouchers", icon: Ticket, hint: "Buy & redeem vouchers" },
-  { label: "Family wallet", icon: Users, hint: "Shared budgets & approvals" },
+  { label: "Family wallet", icon: Users, to: "/app/family", hint: "Shared budgets & approvals" },
   { label: "Insurance", icon: ShieldCheck, hint: "Health & device cover" },
   { label: "Escrow", icon: Banknote, hint: "Protected buyer-seller deals" },
   { label: "Offline pay", icon: ArrowDownToLine, hint: "Pay without internet" },
