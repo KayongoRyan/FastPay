@@ -56,7 +56,7 @@ export function UserMenu() {
           </div>
 
           <Link
-            to="/profile"
+            to="/app/profile"
             role="menuitem"
             className="user-menu__item"
             onClick={() => setOpen(false)}
@@ -65,7 +65,7 @@ export function UserMenu() {
             Profile
           </Link>
           <Link
-            to="/settings"
+            to="/app/settings"
             role="menuitem"
             className="user-menu__item"
             onClick={() => setOpen(false)}

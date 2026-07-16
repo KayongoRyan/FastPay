@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthWalletVisual } from "../components/AuthWalletVisual";
 import { useAuth } from "../context/AuthContext";
 import { loginRequest } from "../lib/auth-api";
+import { hasPin } from "../lib/pin";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export function LoginPage() {
     try {
       const data = await loginRequest(identifier, password);
       setSession(data);
-      navigate("/profile", { replace: true });
+      navigate(hasPin(data.user.id) ? "/app" : "/pin-setup", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {
