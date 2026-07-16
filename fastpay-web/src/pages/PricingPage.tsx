@@ -42,10 +42,21 @@ export function PricingPage() {
               >
                 {plan.featured && <span className="pricing-card__badge">Most Popular</span>}
                 <div className="pricing-card__name">{plan.name}</div>
-                <div className="pricing-card__price">
-                  {plan.price}
-                  {plan.period && <span>{plan.period}</span>}
-                </div>
+                {plan.featured ? (
+                  <Link
+                    to="/app/subscriptions"
+                    className="pricing-card__price pricing-card__price--link"
+                    title="Manage subscriptions & budget"
+                  >
+                    {plan.price}
+                    {plan.period && <span>{plan.period}</span>}
+                  </Link>
+                ) : (
+                  <div className="pricing-card__price">
+                    {plan.price}
+                    {plan.period && <span>{plan.period}</span>}
+                  </div>
+                )}
                 <p className="pricing-card__desc">{plan.desc}</p>
                 <ul className="pricing-card__features">
                   {plan.features.map((f) => (
