@@ -7,6 +7,7 @@ import {
   LogOut,
   Menu,
   Receipt,
+  RefreshCcw,
   Settings,
   ShieldCheck,
   Smartphone,
@@ -36,6 +37,7 @@ const navGroups = [
       { to: "/app/buy", label: "Buy / Top-up", icon: Smartphone },
       { to: "/app/convert", label: "Convert", icon: ArrowLeftRight },
       { to: "/app/bills", label: "Bills", icon: Receipt },
+      { to: "/app/subscriptions", label: "Subscriptions", icon: RefreshCcw },
     ],
   },
   {

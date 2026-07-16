@@ -21,6 +21,7 @@ import { AppConvertPage } from "./pages/app/AppConvertPage";
 import { AppHomePage } from "./pages/app/AppHomePage";
 import { AppReceivePage } from "./pages/app/AppReceivePage";
 import { AppSecurityPage } from "./pages/app/AppSecurityPage";
+import { AppSubscriptionsPage } from "./pages/app/AppSubscriptionsPage";
 import { AppTransferPage } from "./pages/app/AppTransferPage";
 import { AppWalletPage } from "./pages/app/AppWalletPage";
 
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="convert" element={<AppConvertPage />} />
             <Route path="analytics" element={<AppAnalyticsPage />} />
             <Route path="bills" element={<AppBillsPage />} />
+            <Route path="subscriptions" element={<AppSubscriptionsPage />} />
             <Route path="security" element={<AppSecurityPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="settings" element={<SettingsPage />} />
