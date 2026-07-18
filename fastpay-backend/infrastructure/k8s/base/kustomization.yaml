@@ -6,7 +6,10 @@ namespace: fastpay
 resources:
   - namespace.yaml
   - configmap.yaml
+  - data/mongo-configmap.yaml
+  - data/mongo-init-configmap.yaml
   - data/mongodb-statefulset.yaml
+  - data/mongo-backup-cronjob.yaml
   - data/redis-deployment.yaml
   - data/rabbitmq-statefulset.yaml
   - data/mock-horizon-deployment.yaml

@@ -1,0 +1,2 @@
+infrastructure/mongo/backups/*
+!infrastructure/mongo/backups/.gitkeep

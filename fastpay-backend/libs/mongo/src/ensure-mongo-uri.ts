@@ -1,14 +1,16 @@
 import { connect } from 'node:net';
+import { isAbsolute, resolve } from 'node:path';
 
 const DEFAULT_PORT = 27018;
 const DEFAULT_DB = 'FastPay';
+const DEFAULT_APP_USER = 'fastpay_app';
 
 function isPortOpen(port: number, host = '127.0.0.1'): Promise<boolean> {
-  return new Promise((resolve) => {
+  return new Promise((resolvePort) => {
     const socket = connect({ port, host });
     const done = (open: boolean) => {
       socket.destroy();
-      resolve(open);
+      resolvePort(open);
     };
 
     socket.setTimeout(1500);
@@ -16,6 +18,26 @@ function isPortOpen(port: number, host = '127.0.0.1'): Promise<boolean> {
     socket.once('timeout', () => done(false));
     socket.once('error', () => done(false));
   });
+}
+
+function resolveCaFile(): string | undefined {
+  const raw = process.env.MONGODB_TLS_CA_FILE;
+  if (!raw) return undefined;
+  return isAbsolute(raw) ? raw : resolve(process.cwd(), raw);
+}
+
+function buildSecuredDockerUri(): string {
+  const user = process.env.MONGO_APP_USER ?? DEFAULT_APP_USER;
+  const password = process.env.MONGO_APP_PASSWORD;
+  if (!password) {
+    throw new Error(
+      `MONGO_APP_PASSWORD is required to connect to secured Docker Mongo on :${DEFAULT_PORT}. ` +
+        'Copy .env.example to .env, set passwords, run npm run mongo:certs && npm run docker:up',
+    );
+  }
+
+  const encoded = encodeURIComponent(password);
+  return `mongodb://${user}:${encoded}@127.0.0.1:${DEFAULT_PORT}/${DEFAULT_DB}?authSource=${DEFAULT_DB}`;
 }
 
 declare global {
@@ -35,14 +57,16 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
 
   const dockerMongoUp = await isPortOpen(DEFAULT_PORT);
   if (dockerMongoUp && !forceMemory) {
-    process.env.MONGODB_URI ??= `mongodb://127.0.0.1:${DEFAULT_PORT}/${DEFAULT_DB}`;
+    process.env.MONGODB_URI ??= buildSecuredDockerUri();
     process.env.MONGODB_DB_NAME ??= DEFAULT_DB;
+    process.env.MONGODB_TLS ??= 'true';
+    process.env.MONGODB_TLS_CA_FILE ??= 'infrastructure/mongo/certs/ca.crt';
     return;
   }
 
   if (requireDocker) {
     throw new Error(
-      `MongoDB is not running on 127.0.0.1:${DEFAULT_PORT}. Start Docker Desktop, then run: npm run docker:up`,
+      `MongoDB is not running on 127.0.0.1:${DEFAULT_PORT}. Start Docker Desktop, then run: npm run mongo:certs && npm run docker:up`,
     );
   }
 
@@ -55,7 +79,9 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
   console.warn(
     `[${serviceName}] MongoDB not reachable on :${DEFAULT_PORT}. Starting in-memory MongoDB for local dev.`,
   );
-  console.warn(`[${serviceName}] For persistent data, start Docker Desktop and run: npm run docker:up`);
+  console.warn(
+    `[${serviceName}] For persistent secured data: npm run mongo:certs && npm run docker:up`,
+  );
 
   const { MongoMemoryServer } = await import('mongodb-memory-server');
   const server = await MongoMemoryServer.create({
@@ -68,4 +94,9 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
   global.__FASTPAY_MONGO_MEMORY__ = server;
   process.env.MONGODB_URI = server.getUri();
   process.env.MONGODB_DB_NAME = DEFAULT_DB;
+}
+
+/** Resolved TLS CA path for diagnostics / tooling. */
+export function getMongoTlsCaFile(): string | undefined {
+  return resolveCaFile();
 }

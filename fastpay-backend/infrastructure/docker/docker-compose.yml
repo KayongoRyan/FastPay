@@ -4,13 +4,45 @@ services:
     container_name: fastpay-mongo
     ports:
       - '27018:27017'
+    env_file:
+      - ../../.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-fastpay_root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?Set MONGO_INITDB_ROOT_PASSWORD in fastpay-backend/.env}
+      MONGO_APP_USER: ${MONGO_APP_USER:-fastpay_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in fastpay-backend/.env}
+      MONGO_BACKUP_USER: ${MONGO_BACKUP_USER:-fastpay_backup}
+      MONGO_BACKUP_PASSWORD: ${MONGO_BACKUP_PASSWORD:?Set MONGO_BACKUP_PASSWORD in fastpay-backend/.env}
+      MONGO_RO_USER: ${MONGO_RO_USER:-fastpay_ro}
+      MONGO_RO_PASSWORD: ${MONGO_RO_PASSWORD:?Set MONGO_RO_PASSWORD in fastpay-backend/.env}
+    command: ['--config', '/etc/mongod/mongod.conf']
     volumes:
       - fastpay-mongo-data:/data/db
+      - ../mongo/mongod.conf:/etc/mongod/mongod.conf:ro
+      - ../mongo/certs:/etc/mongo/tls:ro
+      - ../mongo/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      test:
+        [
+          'CMD',
+          'mongosh',
+          '--tls',
+          '--tlsCAFile',
+          '/etc/mongo/tls/ca.crt',
+          '--tlsAllowInvalidHostnames',
+          '-u',
+          '${MONGO_APP_USER:-fastpay_app}',
+          '-p',
+          '${MONGO_APP_PASSWORD}',
+          '--authenticationDatabase',
+          'FastPay',
+          '--eval',
+          "db.adminCommand('ping')",
+        ]
+      interval: 10s
+      timeout: 8s
+      retries: 12
+      start_period: 40s
     restart: unless-stopped
 
   redis:

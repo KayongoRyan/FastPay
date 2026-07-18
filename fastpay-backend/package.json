@@ -20,6 +20,9 @@
     "corpus:sync": "npm run corpus:sync --prefix ../FastPay",
     "docker:up": "docker compose -f infrastructure/docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f infrastructure/docker/docker-compose.yml down",
+    "mongo:certs": "node infrastructure/mongo/scripts/gen-certs.mjs",
+    "mongo:backup": "powershell -ExecutionPolicy Bypass -File infrastructure/mongo/scripts/backup-local.ps1",
+    "mongo:migrate-auth": "powershell -ExecutionPolicy Bypass -File infrastructure/mongo/scripts/migrate-enable-auth.ps1",
     "docker:build": "docker build -t fastpay-backend:local .",
     "docker:scan": "powershell -ExecutionPolicy Bypass -File infrastructure/docker/scan-image.ps1",
     "k8s:load": "node -e \"const {execSync}=require('child_process');const ctx=execSync('kubectl config current-context',{encoding:'utf8'}).trim();if(ctx.startsWith('kind-')){execSync('kind load docker-image fastpay-backend:local',{stdio:'inherit'})}else{console.log('Docker Desktop uses local images; no load step needed.')}\"",
@@ -32,6 +35,7 @@
     "@nestjs/schematics": "^11.0.0",
     "@types/node": "^22.10.0",
     "mongodb-memory-server": "^10.1.4",
+    "selfsigned": "^2.4.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"

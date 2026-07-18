@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: payment-service
+        fastpay.io/mongo-client: "true"
     spec:
       initContainers:
         - name: wait-mongo
@@ -36,8 +37,14 @@ spec:
           envFrom:
             - configMapRef:
                 name: fastpay-config
+            - secretRef:
+                name: fastpay-secrets
           ports:
             - containerPort: 3003
+          volumeMounts:
+            - name: mongo-tls
+              mountPath: /etc/mongo-tls
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /health
@@ -50,6 +57,10 @@ spec:
               port: 3003
             initialDelaySeconds: 20
             periodSeconds: 10
+      volumes:
+        - name: mongo-tls
+          secret:
+            secretName: mongo-tls
 ---
 apiVersion: v1
 kind: Service
