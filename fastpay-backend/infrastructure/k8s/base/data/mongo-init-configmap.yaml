@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-scripts
+  namespace: fastpay
+data:
+  01-users.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    : "${MONGO_INITDB_ROOT_USERNAME:?}"
+    : "${MONGO_INITDB_ROOT_PASSWORD:?}"
+    : "${MONGO_APP_USER:=fastpay_app}"
+    : "${MONGO_APP_PASSWORD:?}"
+    : "${MONGO_BACKUP_USER:=fastpay_backup}"
+    : "${MONGO_BACKUP_PASSWORD:?}"
+    : "${MONGO_RO_USER:=fastpay_ro}"
+    : "${MONGO_RO_PASSWORD:?}"
+    TLS_ARGS=(--tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames)
+    AUTH_ARGS=(-u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin)
+    mongosh "${TLS_ARGS[@]}" "${AUTH_ARGS[@]}" <<EOF
+    use FastPay
+    db.createUser({ user: "$MONGO_APP_USER", pwd: "$MONGO_APP_PASSWORD", roles: [{ role: "readWrite", db: "FastPay" }] })
+    db.createUser({ user: "$MONGO_BACKUP_USER", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "FastPay" }, { role: "read", db: "FastPay" }] })
+    db.createUser({ user: "$MONGO_RO_USER", pwd: "$MONGO_RO_PASSWORD", roles: [{ role: "read", db: "FastPay" }] })
+    EOF

@@ -5,6 +5,14 @@ resources:
   - ../../base
   - secrets.yaml
 
+secretGenerator:
+  - name: mongo-tls
+    files:
+      - ca.crt=../../../mongo/certs/ca.crt
+      - server.pem=../../../mongo/certs/server.pem
+    options:
+      disableNameSuffixHash: true
+
 patches:
   - path: gateway-nodeport.yaml
   - path: image-local.yaml

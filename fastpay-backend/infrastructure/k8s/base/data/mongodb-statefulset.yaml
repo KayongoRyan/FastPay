@@ -17,28 +17,107 @@ spec:
       containers:
         - name: mongo
           image: mongo:7
+          command: ['--config', '/etc/mongod/mongod.conf']
           ports:
             - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: MONGO_APP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_APP_USER
+            - name: MONGO_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_APP_PASSWORD
+            - name: MONGO_BACKUP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_BACKUP_USER
+            - name: MONGO_BACKUP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_BACKUP_PASSWORD
+            - name: MONGO_RO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_RO_USER
+            - name: MONGO_RO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_RO_PASSWORD
           volumeMounts:
             - name: mongo-data
               mountPath: /data/db
+            - name: mongod-conf
+              mountPath: /etc/mongod
+              readOnly: true
+            - name: mongo-tls
+              mountPath: /etc/mongo/tls
+              readOnly: true
+            - name: mongo-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            - name: mongo-logs
+              mountPath: /var/log/mongodb
           readinessProbe:
-            tcpSocket:
-              port: 27017
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 3
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - >
+                  mongosh --tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames
+                  -u "$MONGO_APP_USER" -p "$MONGO_APP_PASSWORD"
+                  --authenticationDatabase FastPay --eval "db.adminCommand('ping')"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 8
           livenessProbe:
-            tcpSocket:
-              port: 27017
-            initialDelaySeconds: 30
-            periodSeconds: 15
-            timeoutSeconds: 3
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - >
+                  mongosh --tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames
+                  -u "$MONGO_APP_USER" -p "$MONGO_APP_PASSWORD"
+                  --authenticationDatabase FastPay --eval "db.adminCommand('ping')"
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            timeoutSeconds: 8
+      volumes:
+        - name: mongod-conf
+          configMap:
+            name: mongo-config
+        - name: mongo-tls
+          secret:
+            secretName: mongo-tls
+        - name: mongo-init
+          configMap:
+            name: mongo-init-scripts
+            defaultMode: 0755
+        - name: mongo-logs
+          emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: mongo-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ['ReadWriteOnce']
+        # Use an encrypted storage class in production (e.g. gp3 encrypted on EKS).
         resources:
           requests:
             storage: 2Gi
@@ -49,6 +128,7 @@ metadata:
   name: mongo
   namespace: fastpay
 spec:
+  type: ClusterIP
   selector:
     app: mongo
   ports:

@@ -4,8 +4,9 @@ metadata:
   name: fastpay-config
   namespace: fastpay
 data:
-  MONGODB_URI: mongodb://mongo:27017/FastPay
   MONGODB_DB_NAME: FastPay
+  MONGODB_TLS: "true"
+  MONGODB_TLS_CA_FILE: /etc/mongo-tls/ca.crt
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   RABBITMQ_URL: amqp://fastpay:fastpay@rabbitmq:5672

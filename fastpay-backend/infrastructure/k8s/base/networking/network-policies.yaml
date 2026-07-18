@@ -54,8 +54,7 @@ spec:
         - protocol: TCP
           port: 3000
 ---
-# Datastores: lock Mongo to fastpay pods only (belt-and-braces on top of
-# default-deny; keeps the intent explicit if allow-intra-namespace changes).
+# Datastores: only mongo clients and backup jobs may reach Mongo.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -69,7 +68,15 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector: {}
+        - podSelector:
+            matchLabels:
+              fastpay.io/mongo-client: "true"
+        - podSelector:
+            matchLabels:
+              app: mongo-backup
+        - podSelector:
+            matchLabels:
+              app: mongo-init
       ports:
         - protocol: TCP
           port: 27017

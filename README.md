@@ -29,6 +29,7 @@ cd fastpay-backend && npm run start:audit
 docs/security/stride-payment-flow.md
 docs/security/security-center-api.md
 docs/security/network-edge.md   # CDN, WAF, TLS, NetworkPolicies, rate limits
+docs/security/mongo.md          # MongoDB auth, TLS, secrets, backups, RBAC
 ```
 
 ## Quick start
@@ -38,6 +39,8 @@ docs/security/network-edge.md   # CDN, WAF, TLS, NetworkPolicies, rate limits
 ```bash
 # Backend
 cd fastpay-backend
+copy .env.example .env          # set MONGO_* passwords
+npm run mongo:certs
 npm run docker:up
 npm run start:auth
 npm run start:gateway

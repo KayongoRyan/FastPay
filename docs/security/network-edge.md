@@ -101,4 +101,5 @@ EKS/GKE/AKS). Docker Desktop's default CNI ignores them silently.
 | Ingress | nginx TLS (Let's Encrypt), forced HTTPS, `limit-rps` |
 | Gateway | Security headers, CSP, HSTS, CORS allowlist, Redis rate limits, request IDs |
 | Cluster | Default-deny NetworkPolicies, gateway-only entry, non-root pods, seccomp, read-only rootfs |
+| Database | MongoDB SCRAM + TLS, Secrets-backed URIs, RBAC users, daily backups — see [mongo.md](./mongo.md) |
 | Supply chain | gitleaks in CI, image scanning |
