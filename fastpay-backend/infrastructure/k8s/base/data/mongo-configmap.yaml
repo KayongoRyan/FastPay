@@ -22,7 +22,5 @@ data:
       component:
         accessControl:
           verbosity: 2
-    setParameter:
-      authenticationLogEveryN: 1
     storage:
       dbPath: /data/db
