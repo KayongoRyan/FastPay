@@ -12,6 +12,7 @@ data:
         mode: requireTLS
         certificateKeyFile: /etc/mongo/tls/server.pem
         CAFile: /etc/mongo/tls/ca.crt
+        allowConnectionsWithoutCertificates: true
     security:
       authorization: enabled
     systemLog:
