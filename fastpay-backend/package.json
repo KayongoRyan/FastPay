@@ -21,6 +21,8 @@
     "docker:up": "docker compose --env-file .env -f infrastructure/docker/docker-compose.yml up -d",
     "docker:down": "docker compose --env-file .env -f infrastructure/docker/docker-compose.yml down",
     "mongo:certs": "node infrastructure/mongo/scripts/gen-certs.mjs",
+    "mongo:verify": "node infrastructure/mongo/scripts/verify-local.mjs",
+    "mongo:verify:smoke": "node infrastructure/mongo/scripts/verify-local.mjs --smoke",
     "mongo:backup": "powershell -ExecutionPolicy Bypass -File infrastructure/mongo/scripts/backup-local.ps1",
     "mongo:migrate-auth": "powershell -ExecutionPolicy Bypass -File infrastructure/mongo/scripts/migrate-enable-auth.ps1",
     "docker:build": "docker build -t fastpay-backend:local .",

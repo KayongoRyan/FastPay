@@ -29,6 +29,9 @@ export class FastpayMongoModule {
               if (configService.get<boolean>('mongo.tlsAllowInvalidCertificates')) {
                 options.tlsAllowInvalidCertificates = true;
               }
+              if (configService.get<boolean>('mongo.tlsAllowInvalidHostnames')) {
+                options.tlsAllowInvalidHostnames = true;
+              }
             }
 
             return options;

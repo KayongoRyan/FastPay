@@ -25,7 +25,7 @@ echo "Creating RBAC users on open instance ..."
 docker exec fastpay-mongo mongosh --quiet <<EOF
 use FastPay
 try { db.createUser({ user: "${MONGO_APP_USER:-fastpay_app}", pwd: "$MONGO_APP_PASSWORD", roles: [{ role: "readWrite", db: "FastPay" }] }) } catch (e) { print(e) }
-try { db.createUser({ user: "${MONGO_BACKUP_USER:-fastpay_backup}", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "FastPay" }, { role: "read", db: "FastPay" }] }) } catch (e) { print(e) }
+try { db.createUser({ user: "${MONGO_BACKUP_USER:-fastpay_backup}", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "admin" }, { role: "read", db: "FastPay" }] }) } catch (e) { print(e) }
 try { db.createUser({ user: "${MONGO_RO_USER:-fastpay_ro}", pwd: "$MONGO_RO_PASSWORD", roles: [{ role: "read", db: "FastPay" }] }) } catch (e) { print(e) }
 use admin
 try { db.createUser({ user: "${MONGO_INITDB_ROOT_USERNAME:-fastpay_root}", pwd: "$MONGO_INITDB_ROOT_PASSWORD", roles: ["root"] }) } catch (e) { print(e) }
