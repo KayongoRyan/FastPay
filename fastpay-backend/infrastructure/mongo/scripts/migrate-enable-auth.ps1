@@ -33,7 +33,7 @@ try {
   $rootUser = if ($env:MONGO_INITDB_ROOT_USERNAME) { $env:MONGO_INITDB_ROOT_USERNAME } else { "fastpay_root" }
 
   $createApp = "db.getSiblingDB('FastPay').createUser({user:'$appUser',pwd:'$($env:MONGO_APP_PASSWORD)',roles:[{role:'readWrite',db:'FastPay'}]})"
-  $createBackup = "db.getSiblingDB('FastPay').createUser({user:'$backupUser',pwd:'$($env:MONGO_BACKUP_PASSWORD)',roles:[{role:'backup',db:'FastPay'},{role:'read',db:'FastPay'}]})"
+  $createBackup = "db.getSiblingDB('FastPay').createUser({user:'$backupUser',pwd:'$($env:MONGO_BACKUP_PASSWORD)',roles:[{role:'backup',db:'admin'},{role:'read',db:'FastPay'}]})"
   $createRo = "db.getSiblingDB('FastPay').createUser({user:'$roUser',pwd:'$($env:MONGO_RO_PASSWORD)',roles:[{role:'read',db:'FastPay'}]})"
   $createRoot = "db.getSiblingDB('admin').createUser({user:'$rootUser',pwd:'$($env:MONGO_INITDB_ROOT_PASSWORD)',roles:['root']})"
 

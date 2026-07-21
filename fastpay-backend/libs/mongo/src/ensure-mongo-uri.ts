@@ -61,6 +61,7 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
     process.env.MONGODB_DB_NAME ??= DEFAULT_DB;
     process.env.MONGODB_TLS ??= 'true';
     process.env.MONGODB_TLS_CA_FILE ??= 'infrastructure/mongo/certs/ca.crt';
+    process.env.MONGODB_TLS_ALLOW_INVALID_HOSTNAMES ??= 'true';
     return;
   }
 

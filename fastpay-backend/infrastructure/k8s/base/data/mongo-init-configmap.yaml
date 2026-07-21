@@ -20,6 +20,6 @@ data:
     mongosh "${TLS_ARGS[@]}" "${AUTH_ARGS[@]}" <<EOF
     use FastPay
     db.createUser({ user: "$MONGO_APP_USER", pwd: "$MONGO_APP_PASSWORD", roles: [{ role: "readWrite", db: "FastPay" }] })
-    db.createUser({ user: "$MONGO_BACKUP_USER", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "FastPay" }, { role: "read", db: "FastPay" }] })
+    db.createUser({ user: "$MONGO_BACKUP_USER", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "admin" }, { role: "read", db: "FastPay" }] })
     db.createUser({ user: "$MONGO_RO_USER", pwd: "$MONGO_RO_PASSWORD", roles: [{ role: "read", db: "FastPay" }] })
     EOF

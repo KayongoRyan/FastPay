@@ -22,5 +22,6 @@ export default registerAs('mongo', () => {
     tls: envBool(process.env.MONGODB_TLS, tlsFromUri),
     tlsCAFile,
     tlsAllowInvalidCertificates: envBool(process.env.MONGODB_TLS_ALLOW_INVALID),
+    tlsAllowInvalidHostnames: envBool(process.env.MONGODB_TLS_ALLOW_INVALID_HOSTNAMES),
   };
 });
