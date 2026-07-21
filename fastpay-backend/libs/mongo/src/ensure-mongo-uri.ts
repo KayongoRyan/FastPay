@@ -1,5 +1,6 @@
 import { connect } from 'node:net';
-import { isAbsolute, resolve } from 'node:path';
+
+import { resolveBackendPath } from './resolve-backend-path';
 
 const DEFAULT_PORT = 27018;
 const DEFAULT_DB = 'FastPay';
@@ -23,7 +24,13 @@ function isPortOpen(port: number, host = '127.0.0.1'): Promise<boolean> {
 function resolveCaFile(): string | undefined {
   const raw = process.env.MONGODB_TLS_CA_FILE;
   if (!raw) return undefined;
-  return isAbsolute(raw) ? raw : resolve(process.cwd(), raw);
+  return resolveBackendPath(raw);
+}
+
+function normalizeTlsEnv(): void {
+  if (process.env.MONGODB_TLS_CA_FILE) {
+    process.env.MONGODB_TLS_CA_FILE = resolveBackendPath(process.env.MONGODB_TLS_CA_FILE);
+  }
 }
 
 function buildSecuredDockerUri(): string {
@@ -47,6 +54,8 @@ declare global {
 
 /** Use Docker Mongo when available; otherwise start in-memory Mongo for local dev. */
 export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
+  normalizeTlsEnv();
+
   const configuredUri = process.env.MONGODB_URI;
   const forceMemory = process.env.FASTPAY_MEMORY_MONGO === 'true';
   const requireDocker = process.env.FASTPAY_USE_DOCKER_MONGO === 'true';
@@ -62,6 +71,7 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
     process.env.MONGODB_TLS ??= 'true';
     process.env.MONGODB_TLS_CA_FILE ??= 'infrastructure/mongo/certs/ca.crt';
     process.env.MONGODB_TLS_ALLOW_INVALID_HOSTNAMES ??= 'true';
+    normalizeTlsEnv();
     return;
   }
 
