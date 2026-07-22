@@ -4,12 +4,18 @@ kind: Kustomization
 resources:
   - ../../base
   - secrets.yaml
+  - mongo-express.yaml
 
 secretGenerator:
   - name: mongo-tls
     files:
       - ca.crt=../../../mongo/certs/ca.crt
       - server.pem=../../../mongo/certs/server.pem
+    options:
+      disableNameSuffixHash: true
+  - name: mongo-keyfile
+    files:
+      - keyfile=../../../mongo/certs/keyfile
     options:
       disableNameSuffixHash: true
 

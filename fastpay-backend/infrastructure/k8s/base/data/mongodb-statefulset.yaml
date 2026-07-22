@@ -5,7 +5,8 @@ metadata:
   namespace: fastpay
 spec:
   serviceName: mongo
-  replicas: 1
+  replicas: 3
+  podManagementPolicy: OrderedReady
   selector:
     matchLabels:
       app: mongo
@@ -70,8 +71,8 @@ spec:
             - name: mongo-tls
               mountPath: /etc/mongo/tls
               readOnly: true
-            - name: mongo-init
-              mountPath: /docker-entrypoint-initdb.d
+            - name: mongo-keyfile
+              mountPath: /etc/mongo/keyfile
               readOnly: true
             - name: mongo-logs
               mountPath: /var/log/mongodb
@@ -82,8 +83,8 @@ spec:
                 - -c
                 - >
                   mongosh --tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames
-                  -u "$MONGO_APP_USER" -p "$MONGO_APP_PASSWORD"
-                  --authenticationDatabase FastPay --eval "db.adminCommand('ping')"
+                  -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD"
+                  --authenticationDatabase admin --eval "db.adminCommand('ping')"
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 8
@@ -94,8 +95,8 @@ spec:
                 - -c
                 - >
                   mongosh --tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames
-                  -u "$MONGO_APP_USER" -p "$MONGO_APP_PASSWORD"
-                  --authenticationDatabase FastPay --eval "db.adminCommand('ping')"
+                  -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD"
+                  --authenticationDatabase admin --eval "db.adminCommand('ping')"
             initialDelaySeconds: 45
             periodSeconds: 20
             timeoutSeconds: 8
@@ -106,10 +107,10 @@ spec:
         - name: mongo-tls
           secret:
             secretName: mongo-tls
-        - name: mongo-init
-          configMap:
-            name: mongo-init-scripts
-            defaultMode: 0755
+        - name: mongo-keyfile
+          secret:
+            secretName: mongo-keyfile
+            defaultMode: 0400
         - name: mongo-logs
           emptyDir: {}
   volumeClaimTemplates:
@@ -117,7 +118,6 @@ spec:
         name: mongo-data
       spec:
         accessModes: ['ReadWriteOnce']
-        # Use an encrypted storage class in production (e.g. gp3 encrypted on EKS).
         resources:
           requests:
             storage: 2Gi
@@ -128,9 +128,10 @@ metadata:
   name: mongo
   namespace: fastpay
 spec:
-  type: ClusterIP
+  clusterIP: None
   selector:
     app: mongo
   ports:
     - port: 27017
       targetPort: 27017
+      name: mongo

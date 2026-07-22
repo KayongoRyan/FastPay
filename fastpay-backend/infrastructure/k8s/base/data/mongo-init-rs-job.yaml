@@ -1,0 +1,72 @@
+# Run once after StatefulSet pods are Ready (or after wiping PVCs):
+#   kubectl apply -f infrastructure/k8s/base/data/mongo-init-rs-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongo-init-rs
+  namespace: fastpay
+spec:
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: mongo-init-rs
+        fastpay.io/mongo-client: "true"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init-rs
+          image: mongo:7
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -euo pipefail
+              TLS=(--tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames)
+              AUTH=(-u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin)
+              until mongosh "${TLS[@]}" "${AUTH[@]}" --host mongo-0.mongo --eval "db.adminCommand('ping')" &>/dev/null; do
+                echo "waiting for mongo-0..."
+                sleep 3
+              done
+              mongosh "${TLS[@]}" "${AUTH[@]}" --host mongo-0.mongo --eval "
+              try {
+                if (rs.status().ok === 1) { print('already initiated'); quit(0); }
+              } catch (e) {
+                rs.initiate({
+                  _id: 'rs0',
+                  members: [
+                    { _id: 0, host: 'mongo-0.mongo:27017' },
+                    { _id: 1, host: 'mongo-1.mongo:27017' },
+                    { _id: 2, host: 'mongo-2.mongo:27017' }
+                  ]
+                });
+              }
+              "
+              for i in $(seq 1 60); do
+                if mongosh "${TLS[@]}" "${AUTH[@]}" --host mongo-0.mongo --quiet --eval "rs.isMaster().ismaster" | grep -q true; then
+                  echo "replica set ready"
+                  exit 0
+                fi
+                sleep 3
+              done
+              echo "timed out waiting for PRIMARY" >&2
+              exit 1
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_INITDB_ROOT_PASSWORD
+          volumeMounts:
+            - name: mongo-tls
+              mountPath: /etc/mongo/tls
+              readOnly: true
+      volumes:
+        - name: mongo-tls
+          secret:
+            secretName: mongo-tls

@@ -1,7 +1,8 @@
 services:
-  mongo:
+  mongo-0:
     image: mongo:7
     container_name: fastpay-mongo
+    hostname: mongo-0
     ports:
       - '27018:27017'
     env_file:
@@ -15,12 +16,20 @@ services:
       MONGO_BACKUP_PASSWORD: ${MONGO_BACKUP_PASSWORD:?Set MONGO_BACKUP_PASSWORD in fastpay-backend/.env}
       MONGO_RO_USER: ${MONGO_RO_USER:-fastpay_ro}
       MONGO_RO_PASSWORD: ${MONGO_RO_PASSWORD:?Set MONGO_RO_PASSWORD in fastpay-backend/.env}
-    command: ['--config', '/etc/mongod/mongod.conf']
+    command: ['mongod']
+    entrypoint:
+      [
+        '/bin/bash',
+        '-c',
+        'cp /mongo-docker-entrypoint.sh /tmp/mongo-entrypoint.sh && sed -i "s/\\r$//" /tmp/mongo-entrypoint.sh && exec /bin/bash /tmp/mongo-entrypoint.sh',
+      ]
     volumes:
-      - fastpay-mongo-data:/data/db
+      - fastpay-mongo-data-0:/data/db
       - ../mongo/mongod.conf:/etc/mongod/mongod.conf:ro
       - ../mongo/certs:/etc/mongo/tls:ro
+      - ../mongo/certs/keyfile:/etc/mongo/keyfile/keyfile:ro
       - ../mongo/init:/docker-entrypoint-initdb.d:ro
+      - ../mongo/scripts/mongo-docker-entrypoint.sh:/mongo-docker-entrypoint.sh:ro
     healthcheck:
       test:
         [
@@ -31,19 +40,72 @@ services:
           '/etc/mongo/tls/ca.crt',
           '--tlsAllowInvalidHostnames',
           '-u',
-          '${MONGO_APP_USER:-fastpay_app}',
+          '${MONGO_INITDB_ROOT_USERNAME:-fastpay_root}',
           '-p',
-          '${MONGO_APP_PASSWORD}',
+          '${MONGO_INITDB_ROOT_PASSWORD}',
           '--authenticationDatabase',
-          'FastPay',
+          'admin',
           '--eval',
           "db.adminCommand('ping')",
         ]
       interval: 10s
       timeout: 8s
-      retries: 12
-      start_period: 40s
+      retries: 18
+      start_period: 120s
     restart: unless-stopped
+    networks:
+      - fastpay
+
+  mongo-rs-init:
+    image: mongo:7
+    container_name: fastpay-mongo-rs-init
+    env_file:
+      - ../../.env
+    environment:
+      MONGO_RS_SINGLE: 'true'
+    volumes:
+      - ../mongo/certs:/etc/mongo/tls:ro
+      - ../mongo/scripts/init-replica-set.sh:/init-replica-set.sh:ro
+    entrypoint:
+      [
+        '/bin/bash',
+        '-c',
+        'cp /init-replica-set.sh /tmp/init-rs.sh && sed -i "s/\\r$//" /tmp/init-rs.sh && exec /bin/bash /tmp/init-rs.sh',
+      ]
+    depends_on:
+      mongo-0:
+        condition: service_healthy
+    restart: 'no'
+    networks:
+      - fastpay
+
+  mongo-express:
+    profiles: [tools]
+    image: mongo-express:1.0.2-20-alpine3.19
+    container_name: fastpay-mongo-express
+    env_file:
+      - ../../.env
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-change-me-express-dev}
+      ME_CONFIG_MONGODB_ENABLE_TLS: 'true'
+      ME_CONFIG_MONGODB_TLS_CA_FILE: /etc/mongo/tls/ca.crt
+      ME_CONFIG_MONGODB_TLS_ALLOW_INVALID_HOSTNAMES: 'true'
+      ME_CONFIG_MONGODB_SERVER: mongo-0
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_AUTH_DATABASE: FastPay
+      ME_CONFIG_MONGODB_AUTH_USERNAME: ${MONGO_RO_USER:-fastpay_ro}
+      ME_CONFIG_MONGODB_AUTH_PASSWORD: ${MONGO_RO_PASSWORD:?Set MONGO_RO_PASSWORD in fastpay-backend/.env}
+    volumes:
+      - ../mongo/certs/ca.crt:/etc/mongo/tls/ca.crt:ro
+    ports:
+      - '8081:8081'
+    depends_on:
+      mongo-rs-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - fastpay
 
   redis:
     image: redis:7-alpine
@@ -56,6 +118,8 @@ services:
       timeout: 3s
       retries: 10
     restart: unless-stopped
+    networks:
+      - fastpay
 
   mock-horizon:
     image: node:20-alpine
@@ -67,6 +131,12 @@ services:
     ports:
       - '8090:8090'
     restart: unless-stopped
+    networks:
+      - fastpay
+
+networks:
+  fastpay:
+    name: fastpay
 
 volumes:
-  fastpay-mongo-data:
+  fastpay-mongo-data-0:

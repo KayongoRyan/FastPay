@@ -2,7 +2,7 @@
 set -euo pipefail
 
 IMAGE="${1:-fastpay-backend:local}"
-BASE_IMAGE="${2:-node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293}"
+BASE_IMAGE="${2:-node:22-alpine}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SBOM_DIR="$SCRIPT_DIR/sbom"
 
