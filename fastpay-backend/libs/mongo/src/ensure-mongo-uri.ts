@@ -5,6 +5,7 @@ import { loadBackendEnv, resolveBackendPath } from './resolve-backend-path';
 const DEFAULT_PORT = 27018;
 const DEFAULT_DB = 'FastPay';
 const DEFAULT_APP_USER = 'fastpay_app';
+const DEFAULT_REPLICA_SET = 'rs0';
 
 function isPortOpen(port: number, host = '127.0.0.1'): Promise<boolean> {
   return new Promise((resolvePort) => {
@@ -44,7 +45,11 @@ function buildSecuredDockerUri(): string {
   }
 
   const encoded = encodeURIComponent(password);
-  return `mongodb://${user}:${encoded}@127.0.0.1:${DEFAULT_PORT}/${DEFAULT_DB}?authSource=${DEFAULT_DB}`;
+  const replicaSet = process.env.MONGO_REPLICA_SET ?? DEFAULT_REPLICA_SET;
+  return (
+    `mongodb://${user}:${encoded}@127.0.0.1:${DEFAULT_PORT}/${DEFAULT_DB}` +
+    `?authSource=${DEFAULT_DB}&replicaSet=${replicaSet}&directConnection=true`
+  );
 }
 
 declare global {

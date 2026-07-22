@@ -13,8 +13,11 @@ data:
         certificateKeyFile: /etc/mongo/tls/server.pem
         CAFile: /etc/mongo/tls/ca.crt
         allowConnectionsWithoutCertificates: true
+    replication:
+      replSetName: rs0
     security:
       authorization: enabled
+      keyFile: /etc/mongo/keyfile/keyfile
     systemLog:
       destination: file
       path: /var/log/mongodb/mongod.log

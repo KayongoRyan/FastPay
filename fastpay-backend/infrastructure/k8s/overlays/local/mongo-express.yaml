@@ -1,0 +1,77 @@
+# Optional read-only Mongo admin UI (local overlay only). Do not expose publicly.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+  namespace: fastpay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+        fastpay.io/mongo-client: "true"
+    spec:
+      containers:
+        - name: mongo-express
+          image: mongo-express:1.0.2-20-alpine3.19
+          ports:
+            - containerPort: 8081
+          env:
+            - name: ME_CONFIG_BASICAUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_EXPRESS_USER
+            - name: ME_CONFIG_BASICAUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_EXPRESS_PASSWORD
+            - name: ME_CONFIG_MONGODB_ENABLE_TLS
+              value: "true"
+            - name: ME_CONFIG_MONGODB_TLS_CA_FILE
+              value: /etc/mongo/tls/ca.crt
+            - name: ME_CONFIG_MONGODB_TLS_ALLOW_INVALID_HOSTNAMES
+              value: "true"
+            - name: ME_CONFIG_MONGODB_SERVER
+              value: mongo-0.mongo
+            - name: ME_CONFIG_MONGODB_PORT
+              value: "27017"
+            - name: ME_CONFIG_MONGODB_AUTH_DATABASE
+              value: FastPay
+            - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_RO_USER
+            - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fastpay-secrets
+                  key: MONGO_RO_PASSWORD
+          volumeMounts:
+            - name: mongo-tls
+              mountPath: /etc/mongo/tls
+              readOnly: true
+      volumes:
+        - name: mongo-tls
+          secret:
+            secretName: mongo-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express
+  namespace: fastpay
+spec:
+  type: NodePort
+  selector:
+    app: mongo-express
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30081

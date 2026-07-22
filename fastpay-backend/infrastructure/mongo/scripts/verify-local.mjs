@@ -44,7 +44,7 @@ async function verifyMongo() {
     console.log('OK: unauthenticated connection rejected');
   }
 
-  const uri = `mongodb://${appUser}:${encodeURIComponent(process.env.MONGO_APP_PASSWORD ?? appPassword)}@127.0.0.1:27018/FastPay?authSource=FastPay`;
+  const uri = `mongodb://${appUser}:${encodeURIComponent(process.env.MONGO_APP_PASSWORD ?? appPassword)}@127.0.0.1:27018/FastPay?authSource=FastPay&replicaSet=${process.env.MONGO_REPLICA_SET ?? 'rs0'}&directConnection=true`;
   const client = new MongoClient(uri, {
     tls: true,
     tlsCAFile: caFile,
@@ -57,6 +57,24 @@ async function verifyMongo() {
   console.log('OK: TLS + SCRAM ping');
   console.log(`OK: FastPay.users count = ${users}`);
   await client.close();
+
+  const rootUser = process.env.MONGO_INITDB_ROOT_USERNAME ?? 'fastpay_root';
+  const rootPass = process.env.MONGO_INITDB_ROOT_PASSWORD;
+  if (rootPass) {
+    const adminUri = `mongodb://${rootUser}:${encodeURIComponent(rootPass)}@127.0.0.1:27018/admin?replicaSet=${process.env.MONGO_REPLICA_SET ?? 'rs0'}&directConnection=true`;
+    const admin = new MongoClient(adminUri, {
+      tls: true,
+      tlsCAFile: caFile,
+      tlsAllowInvalidHostnames: true,
+      serverSelectionTimeoutMS: 8000,
+    });
+    await admin.connect();
+    const rs = await admin.db('admin').command({ replSetGetStatus: 1 });
+    const members = rs.members?.length ?? 0;
+    const primary = rs.members?.find((m) => m.stateStr === 'PRIMARY')?.name ?? 'unknown';
+    console.log(`OK: replica set rs0 (${members} members, primary=${primary})`);
+    await admin.close();
+  }
 }
 
 async function smokeAuthGateway() {

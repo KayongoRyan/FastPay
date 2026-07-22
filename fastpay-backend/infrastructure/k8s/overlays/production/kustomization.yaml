@@ -13,6 +13,11 @@ secretGenerator:
       - server.pem=../../../mongo/certs/server.pem
     options:
       disableNameSuffixHash: true
+  - name: mongo-keyfile
+    files:
+      - keyfile=../../../mongo/certs/keyfile
+    options:
+      disableNameSuffixHash: true
 
 patches:
   - path: ingress-tls.yaml
