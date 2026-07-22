@@ -1,6 +1,6 @@
 import { connect } from 'node:net';
 
-import { resolveBackendPath } from './resolve-backend-path';
+import { loadBackendEnv, resolveBackendPath } from './resolve-backend-path';
 
 const DEFAULT_PORT = 27018;
 const DEFAULT_DB = 'FastPay';
@@ -54,6 +54,7 @@ declare global {
 
 /** Use Docker Mongo when available; otherwise start in-memory Mongo for local dev. */
 export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
+  loadBackendEnv();
   normalizeTlsEnv();
 
   const configuredUri = process.env.MONGODB_URI;
