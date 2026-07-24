@@ -18,7 +18,7 @@ const staggerBlocks: StaggerBlock[] = [
   { trigger: ".services-page__grid", targets: ".services-page__grid .service-detail-card", stagger: 0.09 },
   { trigger: ".steps-grid", targets: ".steps-grid .step-card", stagger: 0.12 },
   { trigger: ".services__grid", targets: ".services__grid .service-item", stagger: 0.08 },
-  { trigger: ".testimonials__grid", targets: ".testimonials__grid .testimonial-card", stagger: 0.12 },
+  { trigger: ".testimonials__stack", targets: ".testimonials__stack .testimonial-card", stagger: 0.12 },
   {
     trigger: ".pricing__grid",
     targets: ".pricing__grid .pricing-card",
@@ -35,7 +35,7 @@ const fadeUpSelectors = [
   ".sec-hero__inner > *",
   ".contact-hero__inner > *",
   ".services__header",
-  ".testimonials__header",
+  ".testimonials__intro > *",
   ".pricing__header",
   ".logo-strip__label",
   ".split-panel__content",
