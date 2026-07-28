@@ -19,6 +19,11 @@ export {
   type MomoPaymentStatusResponse,
   type MomoHistoryItem,
 } from './momo';
+export {
+  fetchWalletMe,
+  fetchWalletHistory,
+  type WalletMeResponse,
+} from './wallet';
 export { sendEmailOtp, verifyEmailOtp } from './onboarding';
 export { uploadKycDocument, fetchKycStatus, type KycDocumentType } from './kyc';
 export {

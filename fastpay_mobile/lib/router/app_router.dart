@@ -9,6 +9,7 @@ import '../features/auth/screens/register_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/security/screens/security_screen.dart';
 import '../features/settings/screens/settings_screen.dart';
+import '../features/kyc/screens/kyc_screen.dart';
 import '../features/offline/screens/offline_receive_screen.dart';
 import '../features/offline/screens/offline_send_screen.dart';
 
@@ -66,6 +67,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/security',
         builder: (context, state) => const SecurityScreen(),
+      ),
+      GoRoute(
+        path: '/kyc',
+        builder: (context, state) => const KycScreen(),
       ),
       GoRoute(
         path: '/offline/send',

@@ -3,13 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/providers/auth_provider.dart';
+import '../wallet/providers/wallet_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(walletProvider.notifier).refresh());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    final walletState = ref.watch(walletProvider);
 
     if (!auth.isReady || auth.isLoading) {
       return const Scaffold(
@@ -18,6 +31,7 @@ class HomeScreen extends ConsumerWidget {
     }
 
     final user = auth.user!;
+    final wallet = walletState.wallet;
 
     return Scaffold(
       appBar: AppBar(
@@ -38,10 +52,10 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(walletProvider.notifier).refresh(),
+        child: ListView(
+          padding: const EdgeInsets.all(24),
           children: [
             Text(
               'Signed in as ${user.fullName}',
@@ -52,54 +66,74 @@ class HomeScreen extends ConsumerWidget {
               children: [
                 _InfoRow(label: 'Account', value: user.email ?? user.phone ?? user.id),
                 _InfoRow(label: 'KYC', value: '${user.kycStatus} (level ${user.kycLevel})'),
-                _InfoRow(
-                  label: 'Biometric',
-                  value: user.biometricEnabled
-                      ? '${auth.biometricLabel} enabled'
-                      : 'Password only',
-                ),
-                const _InfoRow(
-                  label: 'Wallet',
-                  value: 'Stellar wallet — coming next milestone',
-                ),
+                if (wallet != null) ...[
+                  _InfoRow(label: 'Wallet #', value: wallet.accountNumber),
+                  _InfoRow(
+                    label: 'Balance',
+                    value: 'RWF ${wallet.balance.toStringAsFixed(0)}',
+                  ),
+                  _InfoRow(
+                    label: 'Stellar',
+                    value: '${wallet.publicKey.substring(0, 8)}…',
+                  ),
+                ] else
+                  const _InfoRow(label: 'Wallet', value: 'Not loaded — tap refresh'),
               ],
             ),
+            if (walletState.error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                walletState.error!,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+            ],
             const SizedBox(height: 16),
-            if (user.biometricEnabled)
-              OutlinedButton(
-                onPressed: auth.isLoading
+            if (wallet == null)
+              ElevatedButton(
+                onPressed: walletState.loading
                     ? null
-                    : () => ref.read(authProvider.notifier).disableBiometric(),
-                child: Text('Disable ${auth.biometricLabel}'),
-              )
-            else
-              OutlinedButton(
-                onPressed: auth.isLoading
-                    ? null
-                    : () => ref.read(authProvider.notifier).enableBiometric(),
-                child: Text('Enable ${auth.biometricLabel}'),
+                    : () => ref.read(walletProvider.notifier).provision(),
+                child: walletState.loading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Provision wallet'),
               ),
             const SizedBox(height: 12),
             OutlinedButton(
+              onPressed: () => context.push('/kyc'),
+              child: const Text('KYC verification'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
               onPressed: () => context.push('/offline/send'),
-              child: const Text('Offline send (QR)'),
+              child: const Text('Send & relay'),
             ),
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: () => context.push('/offline/receive'),
               child: const Text('Offline receive (scan & relay)'),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Wallet + Stellar signing — next milestone'),
+            if (walletState.history.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text(
+                'Recent activity',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              ...walletState.history.take(5).map(
+                    (item) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        '${item.direction == 'out' ? '−' : '+'}${item.amount} ${item.asset}',
+                      ),
+                      subtitle: Text(item.counterparty),
+                      trailing: Text(item.status),
+                    ),
                   ),
-                );
-              },
-              child: const Text('Create wallet (placeholder)'),
-            ),
+            ],
           ],
         ),
       ),

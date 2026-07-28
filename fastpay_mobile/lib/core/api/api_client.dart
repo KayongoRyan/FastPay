@@ -29,6 +29,45 @@ class ApiClient {
     return _parse(response, parser);
   }
 
+  Future<List<T>> getList<T>(
+    String path, {
+    required T Function(Map<String, dynamic> json) parser,
+    bool authenticated = false,
+  }) async {
+    final response = await _http.get(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: _headers(authenticated),
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map<String, dynamic>>()
+            .map(parser)
+            .toList(growable: false);
+      }
+      throw ApiException('Unexpected list response shape');
+    }
+
+    throw ApiException(_extractError(response), statusCode: response.statusCode);
+  }
+
+  Future<void> postVoid(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = false,
+  }) async {
+    final response = await _http.post(
+      Uri.parse('${ApiConfig.baseUrl}$path'),
+      headers: _headers(authenticated),
+      body: body == null ? null : jsonEncode(body),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(_extractError(response), statusCode: response.statusCode);
+    }
+  }
+
   Future<T> post<T>(
     String path, {
     Map<String, dynamic>? body,

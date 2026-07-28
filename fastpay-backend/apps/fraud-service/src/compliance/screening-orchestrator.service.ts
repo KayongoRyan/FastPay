@@ -13,7 +13,7 @@ import {
 } from '@fastpay/schemas';
 import { ConfigService } from '@nestjs/config';
 
-import { ChainalysisProviderService } from './chainalysis-provider.service';
+import { ConfigurableChainalysisProvider } from './chainalysis-http-provider.service';
 import { RulesEngineService } from './rules-engine.service';
 import { ScreeningRequest, ScreeningResult } from './screening.types';
 
@@ -22,7 +22,7 @@ export class ScreeningOrchestratorService {
   private readonly networkPassphrase: string;
 
   constructor(
-    private readonly chainalysisProvider: ChainalysisProviderService,
+    private readonly chainalysisProvider: ConfigurableChainalysisProvider,
     private readonly rulesEngine: RulesEngineService,
     @InjectModel(FraudCase.name)
     private readonly fraudCaseModel: Model<FraudCaseDocument>,

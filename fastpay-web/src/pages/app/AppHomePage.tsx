@@ -22,8 +22,9 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useWallet } from "../../hooks/useWallet";
 import { loadSettings } from "../../lib/auth-api";
-import { formatRwf, recentTransactions, walletAccount } from "../../lib/wallet-data";
+import { formatRwf } from "../../lib/wallet-api";
 
 const quickActions = [
   { to: "/app/features", label: "Features", icon: LayoutGrid },
@@ -96,21 +97,25 @@ const weekBars = [42, 58, 48, 72, 65, 80, 68];
 
 export function AppHomePage() {
   const { user } = useAuth();
+  const { wallet, history, loading, error } = useWallet();
   const hideBalance = loadSettings().hideBalance;
+  const balance = wallet?.balance ?? 0;
+  const accountNumber = wallet?.accountNumber ?? "—";
 
   return (
     <div className="wapp-page">
+      {error && <p className="auth-form__error" role="alert">{error}</p>}
       <section className="wapp-hero-card">
         <div>
           <span className="wapp-hero-card__label">Available balance</span>
           <strong className="wapp-hero-card__balance">
-            {hideBalance ? "RWF ••••••" : formatRwf(walletAccount.balance)}
+            {loading ? "…" : hideBalance ? "RWF ••••••" : formatRwf(balance)}
           </strong>
-          <span className="wapp-hero-card__delta">{walletAccount.weeklyChange} this week</span>
+          <span className="wapp-hero-card__delta">Live wallet balance</span>
         </div>
         <div className="wapp-hero-card__account">
           <small>Account</small>
-          <span>{walletAccount.accountNumber}</span>
+          <span>{accountNumber}</span>
           <em>{user?.kycStatus === "verified" ? "KYC verified" : "KYC pending"}</em>
         </div>
       </section>
@@ -147,23 +152,31 @@ export function AppHomePage() {
             <Link to="/app/wallet">View all</Link>
           </header>
           <ul className="wapp-tx">
-            {recentTransactions.slice(0, 5).map((tx) => (
+            {history.slice(0, 5).map((tx) => (
               <li key={tx.id} className="wapp-tx__row">
                 <span className={`wapp-tx__icon wapp-tx__icon--${tx.direction}`}>
                   {tx.direction === "in" ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
                 </span>
                 <div>
-                  <strong>{tx.name}</strong>
+                  <strong>{tx.counterparty}</strong>
                   <small>
-                    {tx.detail} · {tx.date}
+                    {tx.amount} {tx.asset} · {tx.status}
                   </small>
                 </div>
                 <span className={`wapp-tx__amount${tx.direction === "in" ? " is-in" : ""}`}>
                   {tx.direction === "in" ? "+" : "−"}
-                  {formatRwf(tx.amount)}
+                  {tx.amount} {tx.asset}
                 </span>
               </li>
             ))}
+            {!loading && history.length === 0 && (
+              <li className="wapp-tx__row">
+                <div>
+                  <strong>No activity yet</strong>
+                  <small>Transfers will appear here.</small>
+                </div>
+              </li>
+            )}
           </ul>
         </section>
 

@@ -1,7 +1,8 @@
 import { CheckCircle2, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { PinModal } from "../../components/PinModal";
-import { formatRwf } from "../../lib/wallet-data";
+import { useWallet } from "../../hooks/useWallet";
+import { formatRwf, initiateMomo } from "../../lib/wallet-api";
 
 const providers = [
   { id: "mtn", name: "MTN MoMo", tone: "gold" },
@@ -11,12 +12,14 @@ const providers = [
 const presets = [1000, 5000, 10000, 20000];
 
 export function AppBuyPage() {
+  const { wallet, refresh } = useWallet();
   const [provider, setProvider] = useState<(typeof providers)[number]["id"]>("mtn");
   const [phone, setPhone] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [done, setDone] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const numericAmount = Number(amount.replace(/[^\d]/g, ""));
   const providerName = providers.find((p) => p.id === provider)!.name;
@@ -117,7 +120,7 @@ export function AppBuyPage() {
             ))}
           </div>
 
-          <button type="submit" className="auth-form__submit">
+          <button type="submit" className="auth-form__submit" disabled={submitting}>
             Buy now
           </button>
         </form>
@@ -129,8 +132,30 @@ export function AppBuyPage() {
           subtitle={`${formatRwf(numericAmount)} · ${providerName} · ${phone}`}
           onClose={() => setPinOpen(false)}
           onSuccess={() => {
-            setPinOpen(false);
-            setDone(true);
+            void (async () => {
+              if (!wallet?.publicKey) {
+                setError("Wallet not ready. Try again.");
+                setPinOpen(false);
+                return;
+              }
+              setSubmitting(true);
+              try {
+                await initiateMomo({
+                  walletPublicKey: wallet.publicKey,
+                  phone: phone.replace(/\s/g, ""),
+                  amountRwf: numericAmount,
+                  provider,
+                });
+                await refresh();
+                setPinOpen(false);
+                setDone(true);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Top-up failed");
+                setPinOpen(false);
+              } finally {
+                setSubmitting(false);
+              }
+            })();
           }}
         />
       )}

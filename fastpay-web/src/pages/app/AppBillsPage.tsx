@@ -1,15 +1,38 @@
 import { CheckCircle2, Receipt } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PinModal } from "../../components/PinModal";
-import { billHistory, billers, formatRwf } from "../../lib/wallet-data";
+import { useWallet } from "../../hooks/useWallet";
+import { billers } from "../../lib/wallet-data";
+import { formatRwf, payBill } from "../../lib/wallet-api";
 
 export function AppBillsPage() {
+  const { history, refresh } = useWallet();
   const [billerId, setBillerId] = useState(billers[0].id);
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pinOpen, setPinOpen] = useState(false);
   const [paidMsg, setPaidMsg] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const billHistory = useMemo(
+    () =>
+      history
+        .filter((item) => item.direction === "out")
+        .slice(0, 8)
+        .map((item) => ({
+          id: item.id,
+          biller: item.counterparty || "Bill payment",
+          ref: item.txHash.slice(0, 12),
+          date: new Date(item.createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          amount: Number(item.amount) * 1420,
+          status: item.status,
+        })),
+    [history],
+  );
 
   const biller = billers.find((b) => b.id === billerId)!;
   const numericAmount = Number(amount.replace(/[^\d]/g, ""));
@@ -48,6 +71,7 @@ export function AppBillsPage() {
 
           <form className="settings-form" onSubmit={handleSubmit}>
             {error && <p className="auth-form__error" role="alert">{error}</p>}
+            {payError && <p className="auth-form__error" role="alert">{payError}</p>}
 
             <label>
               <span>Biller</span>
@@ -115,11 +139,22 @@ export function AppBillsPage() {
           title="Confirm bill payment"
           subtitle={`${formatRwf(numericAmount)} · ${biller.name}`}
           onClose={() => setPinOpen(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setPinOpen(false);
-            setPaidMsg(`${biller.name} paid — ${formatRwf(numericAmount)} (${reference}).`);
-            setReference("");
-            setAmount("");
+            setPayError(null);
+            try {
+              await payBill({
+                billerId,
+                reference: reference.trim(),
+                amountRwf: numericAmount,
+              });
+              await refresh();
+              setPaidMsg(`${biller.name} paid — ${formatRwf(numericAmount)} (${reference}).`);
+              setReference("");
+              setAmount("");
+            } catch (err) {
+              setPayError(err instanceof Error ? err.message : "Bill payment failed.");
+            }
           }}
         />
       )}

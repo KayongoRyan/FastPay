@@ -3,8 +3,20 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { OfflineRelay, OfflineRelaySchema, Transaction, TransactionSchema } from '@fastpay/schemas';
+import { FastpayAuthModule } from '@fastpay/common';
+import {
+  AuditLog,
+  AuditLogSchema,
+  OfflineRelay,
+  OfflineRelaySchema,
+  Transaction,
+  TransactionSchema,
+  Wallet,
+  WalletSchema,
+} from '@fastpay/schemas';
 
+import authConfig from '../config/auth.config';
+import { PaymentAuditService } from '../audit/payment-audit.service';
 import offlineConfig from '../config/offline.config';
 import servicesConfig from '../config/services.config';
 import stellarConfig from '../config/stellar.config';
@@ -18,12 +30,16 @@ const inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
 
 @Module({
   imports: [
+    ConfigModule.forFeature(authConfig),
     ConfigModule.forFeature(offlineConfig),
     ConfigModule.forFeature(servicesConfig),
     ConfigModule.forFeature(stellarConfig),
+    FastpayAuthModule,
     MongooseModule.forFeature([
       { name: OfflineRelay.name, schema: OfflineRelaySchema },
       { name: Transaction.name, schema: TransactionSchema },
+      { name: Wallet.name, schema: WalletSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     ...(inlineOfflineQueue
       ? []
@@ -34,6 +50,7 @@ const inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
     OfflineService,
     BlockchainClient,
     FraudClient,
+    PaymentAuditService,
     ...(inlineOfflineQueue ? [] : [OfflineProcessor]),
   ],
 })

@@ -1,0 +1,63 @@
+name: Golden smoke
+
+on:
+  pull_request:
+    paths:
+      - 'fastpay-backend/**'
+      - '.github/workflows/golden-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  golden-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: fastpay-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: fastpay-backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Mongo TLS certs
+        run: npm run mongo:certs
+
+      - name: Start infrastructure
+        run: npm run docker:up
+
+      - name: Wait for Mongo
+        run: npm run mongo:verify
+
+      - name: Build services
+        run: npm run build
+
+      - name: Start backend services
+        env:
+          FASTPAY_INLINE_OFFLINE_QUEUE: 'true'
+          INTERNAL_SERVICE_SECRET: ci-internal-secret
+        run: |
+          npm run start:gateway &
+          npm run start:auth &
+          npm run start:wallet &
+          npm run start:payment &
+          npm run start:blockchain &
+          sleep 25
+
+      - name: Run golden smoke
+        env:
+          GATEWAY_URL: http://127.0.0.1:3000
+          INTERNAL_SERVICE_SECRET: ci-internal-secret
+        run: npm run golden:smoke -- --skip-mongo
+
+      - name: Stop Docker
+        if: always()
+        run: npm run docker:down

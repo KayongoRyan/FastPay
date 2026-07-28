@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PinModal } from "../../components/PinModal";
+import { useWallet } from "../../hooks/useWallet";
 import {
   createSavingsAccount,
   loadSavingsAccounts,
@@ -18,11 +19,12 @@ import {
   type SavingsAccount,
   type SavingsAccountType,
 } from "../../lib/savings-accounts";
-import { formatRwf, walletAccount } from "../../lib/wallet-data";
+import { formatRwf } from "../../lib/wallet-api";
 
 const lockOptions = [15, 20, 25, 30] as const;
 
 export function AppSavingsPage() {
+  const { wallet } = useWallet();
   const [accounts, setAccounts] = useState<SavingsAccount[]>(loadSavingsAccounts);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -41,7 +43,7 @@ export function AppSavingsPage() {
     saveSavingsAccounts(accounts);
   }, [accounts]);
 
-  const total = totalSavingsBalance(accounts) || walletAccount.savings;
+  const total = totalSavingsBalance(accounts) || wallet?.balance || 0;
 
   function validateCreate(): boolean {
     setError(null);
@@ -54,7 +56,7 @@ export function AppSavingsPage() {
       setError("Minimum opening deposit is RWF 1,000.");
       return false;
     }
-    if (initial > walletAccount.balance) {
+    if (initial > (wallet?.balance ?? 0)) {
       setError("Opening deposit exceeds your main wallet balance.");
       return false;
     }
@@ -236,7 +238,7 @@ export function AppSavingsPage() {
               />
             </label>
             <p className="wapp-form-card__hint">
-              Main wallet: <strong>{formatRwf(walletAccount.balance)}</strong>
+              Main wallet: <strong>{formatRwf(wallet?.balance ?? 0)}</strong>
             </p>
 
             <button type="submit" className="auth-form__submit">
