@@ -9,7 +9,7 @@ async function bootstrap() {
   await ensureMongoUri('wallet-service');
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  const port = process.env.PORT ?? 3002;
+  const port = process.env.WALLET_SERVICE_PORT ?? 3002;
   await app.listen(port);
   console.log('wallet-service running on http://localhost:' + port);
 }

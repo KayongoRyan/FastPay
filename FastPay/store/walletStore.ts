@@ -17,6 +17,7 @@ import {
 } from '@/lib/api/stellar';
 import { getRelayStatus, submitOfflineRelay, type RelayResponse, type RelayStatusResponse } from '@/lib/api';
 import { fetchMomoHistory, type MomoHistoryItem } from '@/lib/api/momo';
+import { fetchWalletMe } from '@/lib/api/wallet';
 import { buildUnsignedPayment } from '@/lib/stellar/build-payment';
 import { STELLAR_NETWORK_PASSPHRASE } from '@/lib/stellar/constants';
 import type { StellarBalanceEntry, WalletTransaction } from '@/lib/stellar/types';
@@ -131,10 +132,11 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     set({ isRefreshing: true, error: null });
 
     try {
-      const [balances, payments, momoHistory] = await Promise.all([
+      const [balances, payments, momoHistory, serverWallet] = await Promise.all([
         fetchAccountBalances(wallet.publicKey),
         fetchPaymentHistory(wallet.publicKey),
         fetchMomoHistory(wallet.publicKey).catch(() => [] as MomoHistoryItem[]),
+        fetchWalletMe().catch(() => null),
       ]);
 
       const nativeBalanceXlm = getNativeBalance(balances);
@@ -149,7 +151,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         balances,
         nativeBalanceXlm,
         balanceXlmFormatted: formatXlmBalance(nativeBalanceXlm),
-        balanceRwfEstimate: cryptoPortfolio.totalRwfFormatted,
+        balanceRwfEstimate: serverWallet
+          ? `RWF ${serverWallet.balance.toLocaleString('en-US')}`
+          : cryptoPortfolio.totalRwfFormatted,
         balanceUsdtFormatted: cryptoPortfolio.totalUsdtFormatted,
         cryptoPortfolio,
         transactions,

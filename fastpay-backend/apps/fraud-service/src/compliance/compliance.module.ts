@@ -12,6 +12,10 @@ import {
 import complianceConfig from '../config/compliance.config';
 import stellarConfig from '../config/stellar.config';
 import { ChainalysisProviderService } from './chainalysis-provider.service';
+import {
+  ChainalysisHttpProviderService,
+  ConfigurableChainalysisProvider,
+} from './chainalysis-http-provider.service';
 import { ChainalysisMockController } from './chainalysis-mock.controller';
 import { ChainalysisMockService } from './chainalysis-mock.service';
 import { ComplianceController } from './compliance.controller';
@@ -32,6 +36,8 @@ import { ScreeningOrchestratorService } from './screening-orchestrator.service';
   providers: [
     ChainalysisMockService,
     ChainalysisProviderService,
+    ChainalysisHttpProviderService,
+    ConfigurableChainalysisProvider,
     RulesEngineService,
     ScreeningOrchestratorService,
     ComplianceService,

@@ -35,6 +35,7 @@ import { BiometricChallengeService } from './rate-limit/biometric-challenge.serv
 import { SecurityAlertService } from './security/security-alert.service';
 import { SessionService } from './security/session.service';
 import { verifyEd25519Signature } from './utils/ed25519.util';
+import { WalletClient } from '../clients/wallet.client';
 
 export interface AuthTokens {
   accessToken: string;
@@ -69,6 +70,7 @@ export class AuthService {
     private readonly auditLog: AuditLogService,
     private readonly sessionService: SessionService,
     private readonly securityAlert: SecurityAlertService,
+    private readonly walletClient: WalletClient,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
     this.accessExpiresIn = this.configService.getOrThrow<string>(
@@ -118,6 +120,8 @@ export class AuthService {
           phone: user.phone,
         },
       });
+
+      await this.walletClient.provisionForUser(user._id.toString());
 
       return { user: this.toAuthUser(user), tokens };
     } catch (error) {

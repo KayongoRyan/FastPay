@@ -1,19 +1,24 @@
 import { KeyRound, Laptop, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { freezeAccountRequest, unfreezeAccountRequest } from "../../lib/auth-api";
 import { clearPin } from "../../lib/pin";
+import {
+  fetchSecurityAlerts,
+  fetchSecuritySessions,
+  revokeOtherSessions,
+  revokeSecuritySession,
+  type SecurityAlert,
+  type SecuritySession,
+} from "../../lib/security-api";
 
-const sessions = [
-  { id: "s1", device: "This browser", detail: "Windows · Kigali, RW", icon: Laptop, current: true },
-  { id: "s2", device: "FastPay mobile", detail: "Android · last active 2h ago", icon: Smartphone, current: false },
-];
-
-const alerts = [
-  { id: "a1", title: "New sign-in on web", detail: "Windows · Kigali · today", tone: "info" },
-  { id: "a2", title: "Transfer above RWF 500K screened", detail: "Passed fraud checks · Jul 12", tone: "ok" },
-];
+function sessionIcon(platform?: string) {
+  if (platform?.toLowerCase().includes("android") || platform?.toLowerCase().includes("ios")) {
+    return Smartphone;
+  }
+  return Laptop;
+}
 
 export function AppSecurityPage() {
   const { user, refreshUser } = useAuth();
@@ -21,6 +26,35 @@ export function AppSecurityPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sessions, setSessions] = useState<SecuritySession[]>([]);
+  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
+  const [loadingSecurity, setLoadingSecurity] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingSecurity(true);
+      try {
+        const [sessionRes, alertRes] = await Promise.all([
+          fetchSecuritySessions(),
+          fetchSecurityAlerts(),
+        ]);
+        if (!cancelled) {
+          setSessions(sessionRes.sessions);
+          setAlerts(alertRes.alerts);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Could not load security data.");
+        }
+      } finally {
+        if (!cancelled) setLoadingSecurity(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleFreeze() {
     setMsg(null);
@@ -62,6 +96,26 @@ export function AppSecurityPage() {
     navigate("/pin-setup");
   }
 
+  async function handleRevokeSession(sessionId: string) {
+    try {
+      await revokeSecuritySession(sessionId);
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+      setMsg("Session revoked.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not revoke session.");
+    }
+  }
+
+  async function handleRevokeOthers() {
+    try {
+      await revokeOtherSessions();
+      setSessions((prev) => prev.filter((s) => s.current));
+      setMsg("Other sessions revoked.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not revoke sessions.");
+    }
+  }
+
   return (
     <div className="wapp-page">
       <div className="wapp-grid-2">
@@ -71,37 +125,70 @@ export function AppSecurityPage() {
               <h2>
                 <ShieldCheck size={18} /> Active sessions
               </h2>
+              <button type="button" className="btn-ghost-navy" onClick={handleRevokeOthers}>
+                Sign out others
+              </button>
             </header>
-            <ul className="wapp-sessions">
-              {sessions.map((s) => (
-                <li key={s.id}>
-                  <span className="wapp-sessions__icon">
-                    <s.icon size={17} />
-                  </span>
-                  <div>
-                    <strong>
-                      {s.device}
-                      {s.current && <em> · current</em>}
-                    </strong>
-                    <small>{s.detail}</small>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {loadingSecurity ? (
+              <p className="wapp-form-card__hint">Loading sessions…</p>
+            ) : sessions.length === 0 ? (
+              <p className="wapp-form-card__hint">No active sessions found.</p>
+            ) : (
+              <ul className="wapp-sessions">
+                {sessions.map((s) => {
+                  const Icon = sessionIcon(s.platform);
+                  return (
+                    <li key={s.sessionId}>
+                      <span className="wapp-sessions__icon">
+                        <Icon size={17} />
+                      </span>
+                      <div>
+                        <strong>
+                          {s.deviceLabel}
+                          {s.current && <em> · current</em>}
+                        </strong>
+                        <small>
+                          {s.platform ?? "unknown"}
+                          {s.ipAddress ? ` · ${s.ipAddress}` : ""}
+                          {s.lastActiveAt
+                            ? ` · ${new Date(s.lastActiveAt).toLocaleString()}`
+                            : ""}
+                        </small>
+                      </div>
+                      {!s.current && (
+                        <button
+                          type="button"
+                          className="btn-ghost-navy"
+                          onClick={() => handleRevokeSession(s.sessionId)}
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
 
           <section className="wapp-card">
             <header className="wapp-card__head">
               <h2>Recent alerts</h2>
             </header>
-            <ul className="wapp-alerts">
-              {alerts.map((a) => (
-                <li key={a.id} className={`wapp-alerts__row wapp-alerts__row--${a.tone}`}>
-                  <strong>{a.title}</strong>
-                  <small>{a.detail}</small>
-                </li>
-              ))}
-            </ul>
+            {loadingSecurity ? (
+              <p className="wapp-form-card__hint">Loading alerts…</p>
+            ) : alerts.length === 0 ? (
+              <p className="wapp-form-card__hint">No security alerts yet.</p>
+            ) : (
+              <ul className="wapp-alerts">
+                {alerts.map((a) => (
+                  <li key={a.id} className="wapp-alerts__row wapp-alerts__row--info">
+                    <strong>{a.title}</strong>
+                    <small>{a.detail ?? a.body ?? a.type}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
 

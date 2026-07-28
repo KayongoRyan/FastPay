@@ -15,14 +15,27 @@ import { FeeBumpTransaction, TransactionBuilder } from '@stellar/stellar-sdk';
 import { Queue } from 'bullmq';
 import { Model } from 'mongoose';
 
-import { OfflineRelay, OfflineRelayDocument, OfflineRelayStatus } from '@fastpay/schemas';
+import {
+  OfflineRelay,
+  OfflineRelayDocument,
+  OfflineRelayStatus,
+  Transaction,
+  TransactionDocument,
+  TransactionStatus,
+  TransactionType,
+  Wallet,
+  WalletDocument,
+} from '@fastpay/schemas';
 
+import { PAYMENT_AUDIT_ACTIONS } from '../audit/audit.constants';
+import { PaymentAuditService } from '../audit/payment-audit.service';
 import { BlockchainClient } from '../clients/blockchain.client';
 import {
   BroadcastJobData,
   ParsedSignedTransaction,
   QueueSignedTxResult,
 } from './interfaces/parsed-transaction.interface';
+import { parsePaymentFromXdr } from './parse-payment.util';
 
 @Injectable()
 export class OfflineService {
@@ -35,10 +48,15 @@ export class OfflineService {
   constructor(
     @InjectModel(OfflineRelay.name)
     private readonly offlineRelayModel: Model<OfflineRelayDocument>,
+    @InjectModel(Transaction.name)
+    private readonly transactionModel: Model<TransactionDocument>,
+    @InjectModel(Wallet.name)
+    private readonly walletModel: Model<WalletDocument>,
     @Optional() @InjectQueue('offline-tx')
     private readonly offlineQueue: Queue<BroadcastJobData> | undefined,
     private readonly blockchainClient: BlockchainClient,
     private readonly configService: ConfigService,
+    private readonly paymentAudit: PaymentAuditService,
   ) {
     this.networkPassphrase = this.configService.getOrThrow<string>(
       'stellar.networkPassphrase',
@@ -113,28 +131,74 @@ export class OfflineService {
       `Queueing offline tx ${txHash} from ${parsed.sourceAccount} seq=${parsed.sequence}`,
     );
 
+    const wallet = await this.walletModel
+      .findOne({ publicKey: parsed.sourceAccount })
+      .exec();
+
     const status =
       fraudMeta?.decision === 'review'
         ? OfflineRelayStatus.PENDING_REVIEW
         : OfflineRelayStatus.QUEUED;
 
+    const payment = parsePaymentFromXdr(signedTxXDR, this.networkPassphrase);
+
+    const session = await this.offlineRelayModel.db.startSession();
+    session.startTransaction();
+
     try {
-      await this.offlineRelayModel.create({
-        txHash,
-        signedXdr: signedTxXDR,
-        status,
-        recipientPhone,
-        fraudRiskScore: fraudMeta?.riskScore,
-        fraudDecision: fraudMeta?.decision,
-      });
+      await this.offlineRelayModel.create(
+        [
+          {
+            txHash,
+            signedXdr: signedTxXDR,
+            status,
+            recipientPhone,
+            fraudRiskScore: fraudMeta?.riskScore,
+            fraudDecision: fraudMeta?.decision,
+            walletId: wallet?._id,
+          },
+        ],
+        { session },
+      );
+
+      if (wallet && payment) {
+        await this.transactionModel.create(
+          [
+            {
+              walletId: wallet._id,
+              txHash,
+              chain: 'stellar',
+              type: TransactionType.TRANSFER,
+              amount: payment.amount,
+              token: payment.asset,
+              netAmount: Number.parseFloat(payment.amount),
+              fromAddress: payment.source,
+              toAddress: payment.destination,
+              status: TransactionStatus.QUEUED,
+            },
+          ],
+          { session },
+        );
+      }
+
+      await session.commitTransaction();
     } catch (error) {
+      await session.abortTransaction();
       if (this.isDuplicateKeyError(error)) {
         throw new ConflictException(
           `Transaction with hash ${txHash} is already queued`,
         );
       }
       throw error;
+    } finally {
+      await session.endSession();
     }
+
+    await this.paymentAudit.record({
+      action: PAYMENT_AUDIT_ACTIONS.RELAY_ACCEPTED,
+      userId: wallet?.userId?.toString(),
+      details: { txHash, status, fraudDecision: fraudMeta?.decision },
+    });
 
     try {
       if (this.inlineOfflineQueue || !this.offlineQueue) {
@@ -171,6 +235,7 @@ export class OfflineService {
       };
     } catch (error) {
       await this.offlineRelayModel.deleteOne({ txHash }).exec();
+      await this.transactionModel.deleteOne({ txHash }).exec();
       this.logger.error(
         `Failed to enqueue tx ${txHash}: ${error instanceof Error ? error.message : error}`,
       );
@@ -202,9 +267,57 @@ export class OfflineService {
       update.retryCount = retryCount;
     }
 
-    return this.offlineRelayModel
+    const relay = await this.offlineRelayModel
       .findOneAndUpdate({ txHash }, { $set: update }, { new: true })
       .exec();
+
+    const txStatus = this.mapRelayToTransactionStatus(status);
+    if (txStatus) {
+      const txUpdate: Partial<Transaction> = { status: txStatus };
+      if (status === OfflineRelayStatus.CONFIRMED) {
+        txUpdate.confirmedAt = new Date();
+      }
+      await this.transactionModel
+        .updateOne({ txHash }, { $set: txUpdate })
+        .exec();
+    }
+
+    if (status === OfflineRelayStatus.CONFIRMED) {
+      const wallet = relay?.walletId
+        ? await this.walletModel.findById(relay.walletId).exec()
+        : null;
+      await this.paymentAudit.record({
+        action: PAYMENT_AUDIT_ACTIONS.RELAY_CONFIRMED,
+        userId: wallet?.userId?.toString(),
+        details: { txHash, onChainTxHash },
+      });
+    }
+
+    if (status === OfflineRelayStatus.FAILED) {
+      await this.paymentAudit.record({
+        action: PAYMENT_AUDIT_ACTIONS.RELAY_FAILED,
+        details: { txHash, lastError },
+      });
+    }
+
+    return relay;
+  }
+
+  private mapRelayToTransactionStatus(
+    status: OfflineRelayStatus,
+  ): TransactionStatus | null {
+    switch (status) {
+      case OfflineRelayStatus.QUEUED:
+        return TransactionStatus.QUEUED;
+      case OfflineRelayStatus.BROADCASTING:
+        return TransactionStatus.BROADCASTING;
+      case OfflineRelayStatus.CONFIRMED:
+        return TransactionStatus.CONFIRMED;
+      case OfflineRelayStatus.FAILED:
+        return TransactionStatus.FAILED;
+      default:
+        return null;
+    }
   }
 
   private async processInlineBroadcast(

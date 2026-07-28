@@ -8,6 +8,7 @@ export function ServicesPage() {
   return (
     <>
       <PageHero
+        vivid
         label="Services"
         title="Everything You Need To Move Money"
         subtitle="Cards, convert, budgeting, security, and AI — one platform for personal and business finance."

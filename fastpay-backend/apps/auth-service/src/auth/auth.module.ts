@@ -18,6 +18,7 @@ import {
 } from '@fastpay/schemas';
 
 import authConfig from '../config/auth.config';
+import servicesConfig from '../config/services.config';
 import { AuditLogService } from './audit/audit-log.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -28,10 +29,12 @@ import { SecurityAlertService } from './security/security-alert.service';
 import { SessionService } from './security/session.service';
 
 import { VerificationService } from './verification/verification.service';
+import { WalletClient } from '../clients/wallet.client';
 
 @Module({
   imports: [
     ConfigModule.forFeature(authConfig),
+    ConfigModule.forFeature(servicesConfig),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: AuditLog.name, schema: AuditLogSchema },
@@ -58,6 +61,7 @@ import { VerificationService } from './verification/verification.service';
     VerificationService,
     SessionService,
     SecurityAlertService,
+    WalletClient,
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })

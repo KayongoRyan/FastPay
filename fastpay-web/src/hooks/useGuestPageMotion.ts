@@ -49,6 +49,34 @@ const fadeUpSelectors = [
   ".pricing-page__faq > div:first-child",
 ];
 
+function animatePageHeroVivid(main: HTMLElement) {
+  const hero = main.querySelector(".page-hero--vivid");
+  if (!hero) return;
+
+  const orbs = hero.querySelectorAll(".page-hero__orb");
+  gsap.to(orbs, {
+    x: "random(-22, 22)",
+    y: "random(-16, 16)",
+    duration: "random(9, 14)",
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut",
+    stagger: { each: 1.8, from: "random" },
+  });
+
+  const shine = hero.querySelector(".page-hero__shine");
+  if (shine) {
+    gsap.to(shine, {
+      x: 40,
+      opacity: 0.9,
+      duration: 4.5,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+  }
+}
+
 function animateHero(main: HTMLElement) {
   const hero = main.querySelector(".hero");
   if (!hero) return;
@@ -126,6 +154,7 @@ export function useGuestPageMotion(mainRef: RefObject<HTMLElement | null>) {
 
       const ctx = gsap.context(() => {
         animateHero(main);
+        animatePageHeroVivid(main);
         animateSecHeroGlow(main);
         animateCategoryBars(main);
 

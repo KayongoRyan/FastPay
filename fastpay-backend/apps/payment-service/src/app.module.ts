@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { createHealthController } from '@fastpay/common';
 import { FastpayMongoModule } from '@fastpay/mongo';
 
+import authConfig from './config/auth.config';
 import offlineConfig from './config/offline.config';
 import servicesConfig from './config/services.config';
 import stellarConfig from './config/stellar.config';
@@ -19,7 +20,7 @@ const inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [offlineConfig, servicesConfig, stellarConfig],
+      load: [authConfig, offlineConfig, servicesConfig, stellarConfig],
       envFilePath: ['.env', '../../.env'],
     }),
     FastpayMongoModule.forRoot(),

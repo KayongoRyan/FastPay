@@ -2,20 +2,22 @@ import { Copy, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { walletAccount } from "../../lib/wallet-data";
+import { useWallet } from "../../hooks/useWallet";
 
 export function AppReceivePage() {
   const { user } = useAuth();
+  const { wallet } = useWallet();
   const [copied, setCopied] = useState<string | null>(null);
+  const accountNumber = wallet?.accountNumber ?? "—";
 
   const qrPayload = useMemo(() => {
     const params = new URLSearchParams({
-      account: walletAccount.accountNumber,
+      account: accountNumber,
       ...(user?.fullName ? { name: user.fullName } : {}),
       ...(user?.phone ? { phone: user.phone } : {}),
     });
     return `fastpay://pay?${params.toString()}`;
-  }, [user]);
+  }, [user, accountNumber]);
 
   async function copy(value: string, tag: string) {
     await navigator.clipboard.writeText(value).catch(() => undefined);
@@ -54,16 +56,16 @@ export function AppReceivePage() {
                 excavate: true,
               }}
             />
-            <span className="wapp-qr__caption">{walletAccount.accountNumber}</span>
+            <span className="wapp-qr__caption">{accountNumber}</span>
           </div>
 
           <div className="wapp-receive__lines">
             <button
               type="button"
               className="wapp-account-line"
-              onClick={() => copy(walletAccount.accountNumber, "acc")}
+              onClick={() => copy(accountNumber, "acc")}
             >
-              <span>{walletAccount.accountNumber}</span>
+              <span>{accountNumber}</span>
               <Copy size={15} />
               {copied === "acc" && <em>Copied</em>}
             </button>
@@ -104,7 +106,7 @@ export function AppReceivePage() {
           <button
             type="button"
             className="btn-ghost-navy wapp-share"
-            onClick={() => copy(`FastPay · ${walletAccount.accountNumber}`, "share")}
+            onClick={() => copy(`FastPay · ${accountNumber}`, "share")}
           >
             <Share2 size={16} />
             {copied === "share" ? "Copied share text" : "Copy share text"}
