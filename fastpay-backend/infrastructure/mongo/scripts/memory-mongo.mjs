@@ -144,6 +144,7 @@ async function tryNativeMemory() {
 async function main() {
   if (await ping()) {
     const state = readState();
+    if (!state) writeState({ backend: 'docker' });
     console.log('Shared memory Mongo already running');
     console.log(state?.uri ?? DEFAULT_URI);
     if (detach) process.exit(0);

@@ -139,11 +139,9 @@ async function resolveSharedMemoryUri(): Promise<string | null> {
   if (state?.uri && (await pingMemoryMongoUri(state.uri))) {
     return state.uri;
   }
-  if (await isPortOpen(MEMORY_MONGO_PORT)) {
-    const fallback = buildMemoryMongoUri();
-    if (await pingMemoryMongoUri(fallback)) {
-      return fallback;
-    }
+  const fallback = buildMemoryMongoUri();
+  if (await pingMemoryMongoUri(fallback)) {
+    return fallback;
   }
   return null;
 }
