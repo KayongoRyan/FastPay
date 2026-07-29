@@ -13,7 +13,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 
-import { User, UserDocument } from '@fastpay/schemas';
+import { User, UserDocument, AccountType } from '@fastpay/schemas';
 import { SecurityAlertType } from '@fastpay/schemas';
 
 import {
@@ -26,6 +26,7 @@ import { BiometricLoginDto } from './dto/biometric-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterMerchantDto } from './dto/register-merchant.dto';
 import {
   JwtAccessPayload,
   JwtRefreshPayload,
@@ -36,6 +37,7 @@ import { SecurityAlertService } from './security/security-alert.service';
 import { SessionService } from './security/session.service';
 import { verifyEd25519Signature } from './utils/ed25519.util';
 import { WalletClient } from '../clients/wallet.client';
+import { MerchantClient } from '../clients/merchant.client';
 
 export interface AuthTokens {
   accessToken: string;
@@ -53,6 +55,10 @@ export interface AuthUserResponse {
   kycStatus: string;
   biometricEnabled: boolean;
   isActive: boolean;
+  accountType: AccountType;
+  merchantOrgId?: string;
+  merchantCode?: string;
+  businessName?: string;
 }
 
 @Injectable()
@@ -71,6 +77,7 @@ export class AuthService {
     private readonly sessionService: SessionService,
     private readonly securityAlert: SecurityAlertService,
     private readonly walletClient: WalletClient,
+    private readonly merchantClient: MerchantClient,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
     this.accessExpiresIn = this.configService.getOrThrow<string>(
@@ -127,6 +134,63 @@ export class AuthService {
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
         throw new ConflictException('Phone, email, or national ID already registered');
+      }
+      throw error;
+    }
+  }
+
+  async registerMerchant(
+    dto: RegisterMerchantDto,
+    context?: AuditContext,
+  ): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+    await this.rateLimiter.assertRegisterAllowed(context?.ipAddress);
+
+    if (!dto.phone && !dto.email) {
+      throw new ConflictException('Phone or email is required');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, this.bcryptRounds);
+
+    try {
+      const user = await this.userModel.create({
+        fullName: dto.fullName.trim(),
+        phone: dto.phone?.trim(),
+        email: dto.email?.trim().toLowerCase(),
+        passwordHash,
+        accountType: AccountType.MERCHANT,
+      });
+
+      const org = await this.merchantClient.createOrg({
+        ownerUserId: user._id.toString(),
+        businessName: dto.businessName.trim(),
+        category: dto.category?.trim(),
+        businessEmail: dto.businessEmail?.trim(),
+        businessPhone: dto.businessPhone?.trim(),
+      });
+
+      if (org) {
+        user.merchantOrgId = org.orgId;
+        await user.save();
+      }
+
+      const tokens = await this.issueTokens(user, context);
+
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REGISTER,
+        userId: user._id.toString(),
+        context,
+        details: {
+          email: user.email,
+          phone: user.phone,
+          accountType: AccountType.MERCHANT,
+          merchantCode: org?.merchantCode,
+        },
+      });
+
+      return { user: this.toAuthUser(user, org?.merchantCode, dto.businessName), tokens };
+    } catch (error) {
+      if (this.isDuplicateKeyError(error)) {
+        throw new ConflictException('Phone or email already registered');
       }
       throw error;
     }
@@ -610,7 +674,12 @@ export class AuthService {
   ): Promise<AuthTokens> {
     const userId = user._id.toString();
     const sessionId = randomUUID();
-    const accessPayload: JwtAccessPayload = { sub: userId, type: 'access' };
+    const accessPayload: JwtAccessPayload = {
+      sub: userId,
+      type: 'access',
+      accountType: user.accountType ?? AccountType.CONSUMER,
+      ...(user.merchantOrgId ? { merchantOrgId: user.merchantOrgId } : {}),
+    };
     const refreshPayload: JwtRefreshPayload = {
       sub: userId,
       type: 'refresh',
@@ -662,7 +731,11 @@ export class AuthService {
     }
   }
 
-  private toAuthUser(user: UserDocument): AuthUserResponse {
+  private toAuthUser(
+    user: UserDocument,
+    merchantCode?: string,
+    businessName?: string,
+  ): AuthUserResponse {
     return {
       id: user._id.toString(),
       fullName: user.fullName,
@@ -672,6 +745,10 @@ export class AuthService {
       kycStatus: user.kycStatus,
       biometricEnabled: user.biometricEnabled,
       isActive: user.isActive,
+      accountType: user.accountType ?? AccountType.CONSUMER,
+      merchantOrgId: user.merchantOrgId,
+      merchantCode,
+      businessName,
     };
   }
 

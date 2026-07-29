@@ -7,6 +7,11 @@ export enum KycStatus {
   REJECTED = 'rejected',
 }
 
+export enum AccountType {
+  CONSUMER = 'consumer',
+  MERCHANT = 'merchant',
+}
+
 @Schema({ collection: 'users', timestamps: true })
 export class User {
   @Prop({ sparse: true })
@@ -47,6 +52,12 @@ export class User {
 
   @Prop({ select: false })
   refreshTokenHash?: string;
+
+  @Prop({ enum: Object.values(AccountType), default: AccountType.CONSUMER })
+  accountType!: AccountType;
+
+  @Prop({ type: String, ref: 'MerchantOrg' })
+  merchantOrgId?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

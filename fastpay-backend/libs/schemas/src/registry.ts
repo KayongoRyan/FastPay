@@ -28,4 +28,7 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'chat_conversations', service: 'assistant-service', description: 'Assistant chat history per user' },
   { collection: 'assistant_feedback', service: 'assistant-service', description: 'Assistant thumbs up/down feedback' },
   { collection: 'momo_payments', service: 'payment-service', description: 'Mobile money top-up payments' },
+  { collection: 'merchant_orgs', service: 'merchant-service', description: 'Registered merchant businesses' },
+  { collection: 'merchant_invoices', service: 'merchant-service', description: 'Payable merchant invoices' },
+  { collection: 'merchant_transactions', service: 'merchant-service', description: 'Payments received by merchants' },
 ];

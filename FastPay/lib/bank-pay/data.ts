@@ -3,6 +3,7 @@ import type {
   BankPayFormValues,
   BankPayMerchant,
 } from "./types";
+import { lookupMerchantApi } from "@/lib/api/bank-pay";
 import {
   buildFastPayAccountNumber,
   formatFastPayAccountNumberDisplay,
@@ -81,16 +82,15 @@ export function getBeneficiaryById(
   return BENEFICIARIES.find((item) => item.id === id);
 }
 
-export function lookupMerchant(code: string): BankPayMerchant | null {
+export async function lookupMerchant(code: string): Promise<BankPayMerchant | null> {
+  const fromApi = await lookupMerchantApi(code);
+  if (fromApi) return fromApi;
+
   const normalized = code.trim().toUpperCase();
-  if (!normalized) {
-    return null;
-  }
+  if (!normalized) return null;
 
   const known = MERCHANTS.find((merchant) => merchant.code === normalized);
-  if (known) {
-    return known;
-  }
+  if (known) return known;
 
   return {
     code: normalized,

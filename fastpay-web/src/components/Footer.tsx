@@ -9,6 +9,7 @@ const columns = [
       { label: "Analytics", to: "/analytics" },
       { label: "Security", to: "/security" },
       { label: "Pricing", to: "/pricing" },
+      { label: "Merchant portal", to: "/merchant/login" },
     ],
   },
   {

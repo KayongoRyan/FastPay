@@ -68,6 +68,10 @@ export function AppShell() {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.accountType === "merchant") {
+    return <Navigate to="/merchant" replace />;
+  }
+
   if (!hasPin(user.id)) {
     return <Navigate to="/pin-setup" replace />;
   }
