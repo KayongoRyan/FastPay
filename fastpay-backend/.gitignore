@@ -1,2 +1,7 @@
 infrastructure/mongo/backups/*
 !infrastructure/mongo/backups/.gitkeep
+
+# Stray tsc output in lib src/ breaks ts-node path resolution
+libs/*/src/**/*.js
+libs/*/src/**/*.js.map
+libs/*/src/**/*.d.ts

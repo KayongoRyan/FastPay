@@ -2,7 +2,9 @@ import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { AuthLayout } from "./components/AuthLayout";
 import { Layout } from "./components/Layout";
+import { MerchantShell } from "./components/MerchantShell";
 import { AuthProvider } from "./context/AuthContext";
+import { MerchantAuthProvider } from "./context/MerchantAuthContext";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { HomePage } from "./pages/HomePage";
@@ -29,10 +31,16 @@ import { AppSecurityPage } from "./pages/app/AppSecurityPage";
 import { AppSubscriptionsPage } from "./pages/app/AppSubscriptionsPage";
 import { AppTransferPage } from "./pages/app/AppTransferPage";
 import { AppWalletPage } from "./pages/app/AppWalletPage";
+import { MerchantDashboardPage } from "./pages/merchant/MerchantDashboardPage";
+import { MerchantInvoicesPage } from "./pages/merchant/MerchantInvoicesPage";
+import { MerchantLoginPage } from "./pages/merchant/MerchantLoginPage";
+import { MerchantSettingsPage } from "./pages/merchant/MerchantSettingsPage";
+import { MerchantTransactionsPage } from "./pages/merchant/MerchantTransactionsPage";
 
 export default function App() {
   return (
     <AuthProvider>
+      <MerchantAuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Marketing site — guests only; Layout bounces signed-in users to /app */}
@@ -75,8 +83,18 @@ export default function App() {
           {/* Legacy account routes */}
           <Route path="profile" element={<Navigate to="/app/profile" replace />} />
           <Route path="settings" element={<Navigate to="/app/settings" replace />} />
+
+          {/* Merchant portal — separate auth + nav from consumer /app */}
+          <Route path="merchant/login" element={<MerchantLoginPage />} />
+          <Route path="merchant" element={<MerchantShell />}>
+            <Route index element={<MerchantDashboardPage />} />
+            <Route path="invoices" element={<MerchantInvoicesPage />} />
+            <Route path="transactions" element={<MerchantTransactionsPage />} />
+            <Route path="settings" element={<MerchantSettingsPage />} />
+          </Route>
         </Routes>
       </BrowserRouter>
+      </MerchantAuthProvider>
     </AuthProvider>
   );
 }

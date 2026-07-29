@@ -12,6 +12,7 @@ import stellarConfig from './config/stellar.config';
 import { OfflineModule } from './offline/offline.module';
 import { PaymentsModule } from './payments/payments.module';
 import { MomoModule } from './momo/momo.module';
+import { BankPayModule } from './bank-pay/bank-pay.module';
 
 const HealthController = createHealthController('payment-service');
 const inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
@@ -42,6 +43,7 @@ const inlineOfflineQueue = process.env.FASTPAY_INLINE_OFFLINE_QUEUE === 'true';
     OfflineModule,
     PaymentsModule,
     MomoModule,
+    BankPayModule,
   ],
   controllers: [HealthController],
 })

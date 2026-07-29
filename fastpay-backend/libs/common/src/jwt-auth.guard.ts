@@ -36,7 +36,11 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid access token');
     }
 
-    request.user = { userId: payload.sub };
+    request.user = {
+      userId: payload.sub,
+      accountType: payload.accountType ?? 'consumer',
+      merchantOrgId: payload.merchantOrgId,
+    };
     return true;
   }
 }

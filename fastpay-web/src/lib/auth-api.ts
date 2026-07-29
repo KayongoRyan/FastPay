@@ -9,6 +9,10 @@ export type AuthUser = {
   kycStatus?: string;
   biometricEnabled?: boolean;
   isActive?: boolean;
+  accountType?: "consumer" | "merchant";
+  merchantOrgId?: string;
+  merchantCode?: string;
+  businessName?: string;
 };
 
 export type AuthTokens = {

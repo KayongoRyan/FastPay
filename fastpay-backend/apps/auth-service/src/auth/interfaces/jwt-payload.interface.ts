@@ -1,6 +1,10 @@
+import { AccountType } from '@fastpay/schemas';
+
 export interface JwtAccessPayload {
   sub: string;
   type: 'access';
+  accountType?: AccountType;
+  merchantOrgId?: string;
 }
 
 export interface JwtRefreshPayload {
@@ -11,4 +15,6 @@ export interface JwtRefreshPayload {
 
 export interface AuthenticatedUser {
   userId: string;
+  accountType?: AccountType;
+  merchantOrgId?: string;
 }

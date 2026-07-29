@@ -30,6 +30,7 @@ import { SessionService } from './security/session.service';
 
 import { VerificationService } from './verification/verification.service';
 import { WalletClient } from '../clients/wallet.client';
+import { MerchantClient } from '../clients/merchant.client';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { WalletClient } from '../clients/wallet.client';
     SessionService,
     SecurityAlertService,
     WalletClient,
+    MerchantClient,
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })

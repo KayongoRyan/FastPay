@@ -1,5 +1,9 @@
 export * from './auth/user.schema';
 
+export * from './merchant/merchant-org.schema';
+export * from './merchant/merchant-invoice.schema';
+export * from './merchant/merchant-transaction.schema';
+
 export * from './wallet/wallet.schema';
 
 export * from './payment/transaction.schema';
