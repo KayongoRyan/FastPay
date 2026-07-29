@@ -47,16 +47,34 @@ npm run start:gateway      # :3000
 
 ### MongoDB connection errors (`ECONNREFUSED :27018`)
 
-Auth-service expects **secured** MongoDB on **localhost:27018** (SCRAM + TLS).
+Auth-service expects **secured** MongoDB on **localhost:27018** (SCRAM + TLS) when Docker is running.
 
 1. Copy `.env.example` → `.env` and set `MONGO_*` passwords.
 2. Run `npm run mongo:certs` then `npm run docker:up`.
-3. **No Docker:** `start:auth` auto-starts **in-memory MongoDB** (no TLS/auth; data lost on exit).
+3. **No Docker:** use **shared in-memory MongoDB** (all services share one DB on `:27019`):
+
+```bash
+npm run mongo:memory          # terminal 1 — keep running
+npm run mongo:verify:memory   # sanity check
+npm run start:auth            # terminal 2 — auto-connects to :27019 if Docker is down
+```
+
+Or let the first service auto-start memory Mongo (default when Docker is off):
+
+```bash
+npm run start:auth   # spawns shared in-memory rs0 on :27019 if needed
+```
 
 See [`docs/security/mongo.md`](../docs/security/mongo.md) for RBAC users, backups, and K8s secrets.
 
-Force in-memory Mongo: `FASTPAY_MEMORY_MONGO=true npm run start:auth`  
-Require Docker Mongo only: `FASTPAY_USE_DOCKER_MONGO=true npm run start:auth`
+| Mode | Command / env |
+|------|----------------|
+| Docker (persistent, SCRAM+TLS) | `npm run docker:up` |
+| Shared in-memory (ephemeral, rs0) | `npm run mongo:memory` |
+| Force in-memory over Docker | `FASTPAY_MEMORY_MONGO=true` |
+| Memory only (fail if not running) | `FASTPAY_MEMORY_MONGO=only` |
+| Require Docker only | `FASTPAY_USE_DOCKER_MONGO=true` |
+| Stop in-memory server | `npm run mongo:memory:stop` |
 
 Host `mongosh`:
 
