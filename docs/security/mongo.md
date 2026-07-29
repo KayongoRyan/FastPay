@@ -159,6 +159,31 @@ Uses `mongorestore --drop` against the `FastPay` database on primary `fastpay-mo
 
 Set an encrypted `storageClassName` on the mongo volumeClaimTemplate in production.
 
+## In-memory / shared dev Mongo (`:27019`)
+
+When Docker secured Mongo (`:27018`) is not running, services can use a **shared dev database** on **`127.0.0.1:27019`** — one replica set (`rs0`) for all microservices (supports transactions). **No SCRAM/TLS** — dev only.
+
+| Command | Description |
+|---------|-------------|
+| `npm run mongo:memory` | Start shared memory DB (native `mongodb-memory-server`, Docker fallback if native fails) |
+| `npm run docker:memory` | Docker-only profile (`docker-compose.memory.yml`) |
+| `npm run mongo:verify:memory` | Ping + rs0 check |
+| `npm run mongo:memory:stop` | Stop native process or `docker:memory:down` |
+
+Connection URI (written to `.fastpay/memory-mongo.json`):
+
+```text
+mongodb://127.0.0.1:27019/FastPay?replicaSet=rs0&directConnection=true
+```
+
+Env flags:
+
+- `FASTPAY_MEMORY_MONGO=true` — prefer `:27019` over secured Docker `:27018`
+- `FASTPAY_MEMORY_MONGO=only` — require memory server; do not fall back to `:27018`
+- `FASTPAY_MEMORY_MONGO_AUTO_START=false` — services fail instead of spawning memory Mongo
+
+First service without Docker auto-runs `memory-mongo.mjs --detach` unless auto-start is disabled.
+
 ## Audit
 
 | Layer | Status |
