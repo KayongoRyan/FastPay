@@ -1,0 +1,50 @@
+# Shared dev Mongo — no auth/TLS, replica set rs0, port 27019.
+# Ephemeral data (tmpfs-style: remove volume to reset). All services share one DB.
+#
+#   npm run docker:memory
+#   npm run docker:memory:down
+#
+services:
+  mongo-memory:
+    image: mongo:7
+    container_name: fastpay-mongo-memory
+    hostname: mongo-memory
+    ports:
+      - '127.0.0.1:27019:27017'
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    volumes:
+      - fastpay-mongo-memory-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - fastpay-memory
+
+  mongo-memory-init:
+    image: mongo:7
+    container_name: fastpay-mongo-memory-init
+    depends_on:
+      mongo-memory:
+        condition: service_healthy
+    restart: 'no'
+    entrypoint:
+      [
+        'mongosh',
+        '--host',
+        'mongo-memory',
+        '--eval',
+        "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo-memory:27017' }] }) }",
+      ]
+    networks:
+      - fastpay-memory
+
+volumes:
+  fastpay-mongo-memory-data:
+
+networks:
+  fastpay-memory:
+    name: fastpay-memory
