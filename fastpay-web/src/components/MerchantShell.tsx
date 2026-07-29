@@ -26,7 +26,7 @@ export function MerchantShell() {
 
   if (!ready) {
     return (
-      <div className="wapp-loading">
+      <div className="auth-loading">
         <p>Loading merchant portal…</p>
       </div>
     );
@@ -45,79 +45,85 @@ export function MerchantShell() {
     navigate("/merchant/login");
   }
 
-  return (
-    <div className="merchant-shell">
-      <header className="merchant-shell__top">
-        <button
-          type="button"
-          className="merchant-shell__menu-btn"
-          aria-label="Open menu"
-          onClick={() => setMobileOpen(true)}
-        >
-          <Menu size={20} />
-        </button>
-        <Link to="/merchant" className="merchant-shell__brand">
-          <Store size={18} />
-          <span>FastPay Merchant</span>
-        </Link>
-        <div className="merchant-shell__user">
-          <strong>{user?.businessName ?? user?.fullName}</strong>
-          {user?.merchantCode && <em>{user.merchantCode}</em>}
-        </div>
-      </header>
+  const nav = (
+    <nav className="wapp-nav" aria-label="Merchant navigation">
+      <div className="wapp-nav__group">
+        <span className="wapp-nav__label">Merchant</span>
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) => `wapp-nav__item${isActive ? " is-active" : ""}`}
+            onClick={() => setMobileOpen(false)}
+          >
+            <item.icon size={18} strokeWidth={2.1} />
+            {item.label}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
 
-      <div className={`merchant-shell__drawer${mobileOpen ? " is-open" : ""}`}>
-        <div className="merchant-shell__drawer-head">
-          <span>Merchant menu</span>
-          <button type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)}>
-            <X size={18} />
+  return (
+    <div className="wapp">
+      <aside className={`wapp__sidebar${mobileOpen ? " is-open" : ""}`}>
+        <div className="wapp__sidebar-head">
+          <Link to="/merchant" className="wapp__brand" onClick={() => setMobileOpen(false)}>
+            <span className="wapp__brand-mark">
+              <Store size={16} strokeWidth={2.4} />
+            </span>
+            FastPay Merchant
+          </Link>
+          <button
+            type="button"
+            className="wapp__sidebar-close"
+            aria-label="Close menu"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X size={20} />
           </button>
         </div>
-        <nav className="merchant-shell__nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) => (isActive ? "is-active" : undefined)}
-            >
-              <item.icon size={17} />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <button type="button" className="merchant-shell__logout" onClick={handleLogout}>
-          <LogOut size={16} /> Sign out
-        </button>
-      </div>
 
-      <aside className="merchant-shell__sidebar">
-        <div className="merchant-shell__brand merchant-shell__brand--sidebar">
-          <Store size={18} />
-          <span>FastPay Merchant</span>
-        </div>
-        <nav className="merchant-shell__nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => (isActive ? "is-active" : undefined)}
-            >
-              <item.icon size={17} />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <button type="button" className="merchant-shell__logout" onClick={handleLogout}>
-          <LogOut size={16} /> Sign out
+        {nav}
+
+        <button type="button" className="wapp-nav__item wapp-nav__logout" onClick={handleLogout}>
+          <LogOut size={18} strokeWidth={2.1} />
+          Sign out
         </button>
       </aside>
 
-      <main className="merchant-shell__main">
-        <Outlet />
-      </main>
+      {mobileOpen && (
+        <div className="wapp__scrim" role="presentation" onClick={() => setMobileOpen(false)} />
+      )}
+
+      <div className="wapp__main">
+        <header className="wapp__topbar">
+          <button
+            type="button"
+            className="wapp__menu-btn"
+            aria-label="Open menu"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="wapp__topbar-title">
+            <small>{user?.businessName ?? "Merchant portal"}</small>
+            <strong>{user?.merchantCode ? `Code ${user.merchantCode}` : user?.fullName}</strong>
+          </div>
+
+          <Link to="/merchant/settings" className="wapp__topbar-user">
+            <span className="user-menu__avatar">
+              {(user?.businessName ?? user?.fullName ?? "M").slice(0, 2).toUpperCase()}
+            </span>
+          </Link>
+        </header>
+
+        <main className="wapp__content">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

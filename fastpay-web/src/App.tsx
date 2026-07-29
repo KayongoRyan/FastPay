@@ -57,6 +57,7 @@ export default function App() {
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
             <Route path="pin-setup" element={<PinSetupPage />} />
+            <Route path="merchant/login" element={<MerchantLoginPage />} />
           </Route>
 
           {/* Wallet app — replaces the site once signed in with a PIN */}
@@ -85,7 +86,6 @@ export default function App() {
           <Route path="settings" element={<Navigate to="/app/settings" replace />} />
 
           {/* Merchant portal — separate auth + nav from consumer /app */}
-          <Route path="merchant/login" element={<MerchantLoginPage />} />
           <Route path="merchant" element={<MerchantShell />}>
             <Route index element={<MerchantDashboardPage />} />
             <Route path="invoices" element={<MerchantInvoicesPage />} />
