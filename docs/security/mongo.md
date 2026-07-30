@@ -11,7 +11,7 @@ FastPay runs **MongoDB 7 Community** as a **3-member replica set (`rs0`)** with 
 | MITM on wire | `requireTLS` + CA mounted in apps |
 | Public DB exposure | Docker: `:27018` on localhost only; K8s: headless ClusterIP, no NodePort |
 | Single node failure | 3-member replica set with automatic primary election |
-| Lateral movement | NetworkPolicy: only `fastpay.io/mongo-client` pods + backup job |
+| Lateral movement | NetworkPolicy: only `fastpay.io/mongo-client` pods + backup/init jobs + rs peers (no blanket namespace access) |
 | Data loss | Daily CronJob `mongodump` + local `npm run mongo:backup` + tested restore |
 
 ## RBAC users
@@ -97,8 +97,9 @@ npm run mongo:verify
 ### Prerequisites
 
 1. Generate certs + keyfile on the deploy machine: `npm run mongo:certs`
-2. Local overlay builds `mongo-tls` and `mongo-keyfile` Secrets via kustomize `secretGenerator`.
-3. Apply secrets with mongo credentials (`overlays/local/secrets.yaml` for dev).
+2. `npm run k8s:deploy` copies those files into `overlays/<env>/certs/` (Kustomize v5+ only allows secret sources inside the overlay tree).
+3. Local overlay builds `mongo-tls` and `mongo-keyfile` Secrets via kustomize `secretGenerator`.
+4. Apply secrets with mongo credentials (`overlays/local/secrets.yaml` for dev).
 
 ```powershell
 npm run k8s:deploy

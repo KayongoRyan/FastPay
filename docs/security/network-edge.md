@@ -72,9 +72,16 @@ The local overlay (`overlays/local`) stays HTTP on `api.fastpay.local` — no AC
 | Policy | Effect |
 |--------|--------|
 | `default-deny-ingress` | No pod accepts traffic unless another policy allows it |
-| `allow-intra-namespace` | fastpay pods can talk to each other (gateway → services, services → data) |
-| `allow-ingress-to-gateway` | Only the `ingress-nginx` namespace can reach `api-gateway:3000` |
-| `mongo/redis/rabbitmq-from-services-only` | Datastores explicitly scoped to fastpay pods |
+| `allow-ingress-to-gateway` | Only `ingress-nginx` may reach `api-gateway:3000` |
+| `allow-app-tier-ingress` | Gateway + Nest services may reach each other (explicit app list) |
+| `mongo-from-clients-only` | Mongo accepts `fastpay.io/mongo-client` pods, init/backup jobs, and rs peers |
+| `redis-from-app-tier-only` | Redis accepts gateway, auth, payment, assistant only |
+| `rabbitmq-from-app-tier-only` | RabbitMQ accepts app-tier services only (not all pods) |
+| `mock-horizon-from-blockchain-only` | Mock Horizon accepts blockchain-service only |
+| `allow-mongo-express-ingress` | Local admin UI NodePort (local overlay) |
+
+Net effect: **mongo-express, backup jobs, and non-app pods cannot reach wallet/auth APIs**.
+Datastores are no longer reachable from every pod in the namespace.
 
 Net effect: from outside the namespace, **only the gateway via nginx** is reachable.
 Egress is left open (services need DNS, Horizon, OpenAI, MoMo APIs).
@@ -100,6 +107,6 @@ EKS/GKE/AKS). Docker Desktop's default CNI ignores them silently.
 | Edge | Cloudflare CDN, WAF, DDoS, TLS 1.3, edge rate limits |
 | Ingress | nginx TLS (Let's Encrypt), forced HTTPS, `limit-rps` |
 | Gateway | Security headers, CSP, HSTS, CORS allowlist, Redis rate limits, request IDs |
-| Cluster | Default-deny NetworkPolicies, gateway-only entry, non-root pods, seccomp, read-only rootfs |
+| Cluster | Default-deny NetworkPolicies, gateway-only entry, app-tier + datastore-scoped rules |
 | Database | MongoDB SCRAM + TLS, Secrets-backed URIs, RBAC users, daily backups — see [mongo.md](./mongo.md) |
 | Supply chain | gitleaks in CI, image scanning |

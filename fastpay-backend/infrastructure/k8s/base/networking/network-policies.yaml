@@ -1,14 +1,25 @@
 # Network segmentation for the fastpay namespace.
 #
 # Model:
-#   - Default: deny ALL ingress to every pod (egress stays open — services need
-#     DNS, Mongo/Redis, Stellar Horizon, OpenAI, MoMo APIs).
-#   - Only nginx-ingress may reach the api-gateway from outside.
-#   - Pods inside the namespace may talk to each other (gateway -> services,
-#     service -> service, services -> mongo/redis/rabbitmq).
+#   - default-deny-ingress on all pods
+#   - ingress-nginx → api-gateway:3000 only (external entry)
+#   - app-tier pods (gateway + Nest services) may reach each other
+#   - datastores accept only from designated clients — NOT blanket namespace access
 #
-# Net effect: nothing in the cluster is reachable from other namespaces or the
-# outside world except the gateway through the ingress controller.
+# Kubernetes ORs ingress rules across policies. The old allow-intra-namespace policy
+# made mongo/redis restrictions ineffective because any pod could reach any pod.
+#
+# Requires a CNI that enforces NetworkPolicy (Calico, Cilium). Docker Desktop ignores these.
+
+# ── Application tier (gateway + backend microservices) ──
+# Keep in sync with apps/* deployments and stubs-deployment.yaml.
+# ────────────────────────────────────────────────────────
+# &app-tier-apps:
+#   api-gateway, auth-service, wallet-service, payment-service,
+#   family-service, escrow-service, merchant-service, treasury-service,
+#   blockchain-service, fraud-service, kyc-service, audit-service
+
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -18,22 +29,8 @@ spec:
   podSelector: {}
   policyTypes:
     - Ingress
+
 ---
-# Intra-namespace traffic: any fastpay pod can reach any other fastpay pod.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-intra-namespace
-  namespace: fastpay
-spec:
-  podSelector: {}
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector: {}
----
-# External entry point: only the ingress-nginx controller may reach the gateway.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -53,12 +50,62 @@ spec:
       ports:
         - protocol: TCP
           port: 3000
+
 ---
-# Datastores: only mongo clients and backup jobs may reach Mongo.
+# Gateway and backend services may call each other (proxy + internal HTTP clients).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: mongo-from-services-only
+  name: allow-app-tier-ingress
+  namespace: fastpay
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - api-gateway
+          - auth-service
+          - wallet-service
+          - payment-service
+          - family-service
+          - escrow-service
+          - merchant-service
+          - treasury-service
+          - blockchain-service
+          - fraud-service
+          - kyc-service
+          - audit-service
+          - assistant-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - api-gateway
+                  - auth-service
+                  - wallet-service
+                  - payment-service
+                  - family-service
+                  - escrow-service
+                  - merchant-service
+                  - treasury-service
+                  - blockchain-service
+                  - fraud-service
+                  - kyc-service
+                  - audit-service
+                  - assistant-service
+
+---
+# MongoDB: app clients, init/backup jobs, and replica-set peers only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mongo-from-clients-only
   namespace: fastpay
 spec:
   podSelector:
@@ -77,14 +124,19 @@ spec:
         - podSelector:
             matchLabels:
               app: mongo-init
+        - podSelector:
+            matchLabels:
+              app: mongo
       ports:
         - protocol: TCP
           port: 27017
+
 ---
+# Redis: app-tier services only (gateway rate limiter, auth, payment queues).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: redis-from-services-only
+  name: redis-from-app-tier-only
   namespace: fastpay
 spec:
   podSelector:
@@ -94,15 +146,25 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector: {}
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - api-gateway
+                  - auth-service
+                  - payment-service
+                  - assistant-service
       ports:
         - protocol: TCP
           port: 6379
+
 ---
+# RabbitMQ: app-tier only (phase-2 messaging; no infra/admin exposure).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: rabbitmq-from-services-only
+  name: rabbitmq-from-app-tier-only
   namespace: fastpay
 spec:
   podSelector:
@@ -112,9 +174,59 @@ spec:
     - Ingress
   ingress:
     - from:
-        - podSelector: {}
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - api-gateway
+                  - auth-service
+                  - payment-service
+                  - wallet-service
+                  - merchant-service
+                  - assistant-service
       ports:
         - protocol: TCP
           port: 5672
         - protocol: TCP
           port: 15672
+
+---
+# Mock Stellar Horizon: blockchain-service only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mock-horizon-from-blockchain-only
+  namespace: fastpay
+spec:
+  podSelector:
+    matchLabels:
+      app: mock-horizon
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: blockchain-service
+      ports:
+        - protocol: TCP
+          port: 8090
+
+---
+# Local overlay admin UI (NodePort 30081) — not an app-tier member.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mongo-express-ingress
+  namespace: fastpay
+spec:
+  podSelector:
+    matchLabels:
+      app: mongo-express
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8081
