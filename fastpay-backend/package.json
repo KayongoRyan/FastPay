@@ -40,7 +40,7 @@
     "docker:build": "docker build -t fastpay-backend:local .",
     "docker:scan": "powershell -ExecutionPolicy Bypass -File infrastructure/docker/scan-image.ps1",
     "k8s:load": "node -e \"const {execSync}=require('child_process');const ctx=execSync('kubectl config current-context',{encoding:'utf8'}).trim();if(ctx.startsWith('kind-')){execSync('kind load docker-image fastpay-backend:local',{stdio:'inherit'})}else{console.log('Docker Desktop uses local images; no load step needed.')}\"",
-    "k8s:deploy": "kubectl apply -k infrastructure/k8s/overlays/local",
+    "k8s:deploy": "node infrastructure/k8s/scripts/sync-mongo-certs.mjs local && kubectl apply -k infrastructure/k8s/overlays/local",
     "k8s:teardown": "kubectl delete -k infrastructure/k8s/overlays/local --ignore-not-found",
     "k8s:status": "kubectl get pods,svc,ingress -n fastpay"
   },

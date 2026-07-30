@@ -13,6 +13,9 @@ try {
     kind load docker-image fastpay-backend:local
   }
 
+  Write-Host "Syncing Mongo TLS certs into k8s overlay..."
+  node infrastructure/k8s/scripts/sync-mongo-certs.mjs local
+
   Write-Host "Applying manifests (overlays/local)..."
   kubectl apply -k infrastructure/k8s/overlays/local
 

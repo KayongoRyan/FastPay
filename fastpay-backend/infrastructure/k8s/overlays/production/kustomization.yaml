@@ -9,13 +9,13 @@ resources:
 secretGenerator:
   - name: mongo-tls
     files:
-      - ca.crt=../../../mongo/certs/ca.crt
-      - server.pem=../../../mongo/certs/server.pem
+      - ca.crt=certs/ca.crt
+      - server.pem=certs/server.pem
     options:
       disableNameSuffixHash: true
   - name: mongo-keyfile
     files:
-      - keyfile=../../../mongo/certs/keyfile
+      - keyfile=certs/keyfile
     options:
       disableNameSuffixHash: true
 
