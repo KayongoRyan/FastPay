@@ -24,22 +24,33 @@ spec:
               set -euo pipefail
               TLS=(--tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames)
               AUTH=(-u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin)
-              until mongosh "${TLS[@]}" "${AUTH[@]}" --host mongo-0.mongo --eval "db.adminCommand('ping')" &>/dev/null; do
-                echo "waiting for mongo-0..."
-                sleep 3
+              HOSTS=(mongo-0.mongo mongo-1.mongo mongo-2.mongo)
+              for host in "${HOSTS[@]}"; do
+                until mongosh "${TLS[@]}" "${AUTH[@]}" --host "$host" --eval "db.adminCommand('ping')" &>/dev/null; do
+                  echo "waiting for $host..."
+                  sleep 3
+                done
               done
               mongosh "${TLS[@]}" "${AUTH[@]}" --host mongo-0.mongo --eval "
+              let initiated = false;
               try {
-                if (rs.status().ok === 1) { print('already initiated'); quit(0); }
+                if (rs.status().ok === 1) { initiated = true; print('already initiated'); }
               } catch (e) {
-                rs.initiate({
-                  _id: 'rs0',
-                  members: [
-                    { _id: 0, host: 'mongo-0.mongo:27017' },
-                    { _id: 1, host: 'mongo-1.mongo:27017' },
-                    { _id: 2, host: 'mongo-2.mongo:27017' }
-                  ]
-                });
+                rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo-0.mongo:27017' }] });
+                initiated = true;
+                print('initiated single-member rs0');
+              }
+              if (initiated) {
+                const cfg = rs.conf();
+                const hosts = cfg.members.map(m => m.host);
+                if (!hosts.includes('mongo-1.mongo:27017')) {
+                  rs.add({ _id: 1, host: 'mongo-1.mongo:27017' });
+                  print('added mongo-1');
+                }
+                if (!hosts.includes('mongo-2.mongo:27017')) {
+                  rs.add({ _id: 2, host: 'mongo-2.mongo:27017' });
+                  print('added mongo-2');
+                }
               }
               "
               for i in $(seq 1 60); do

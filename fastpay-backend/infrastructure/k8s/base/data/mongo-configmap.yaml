@@ -20,8 +20,8 @@ data:
       keyFile: /etc/mongo/keyfile/keyfile
     systemLog:
       destination: file
-      path: /var/log/mongodb/mongod.log
-      logAppend: true
+      path: /dev/stdout
+      logAppend: false
       verbosity: 1
       component:
         accessControl:
