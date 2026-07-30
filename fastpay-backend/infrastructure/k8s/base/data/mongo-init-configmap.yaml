@@ -15,9 +15,10 @@ data:
     : "${MONGO_BACKUP_PASSWORD:?}"
     : "${MONGO_RO_USER:=fastpay_ro}"
     : "${MONGO_RO_PASSWORD:?}"
+    : "${MONGO_HOST:=mongo-0.mongo}"
     TLS_ARGS=(--tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames)
     AUTH_ARGS=(-u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin)
-    mongosh "${TLS_ARGS[@]}" "${AUTH_ARGS[@]}" <<EOF
+    mongosh "${TLS_ARGS[@]}" "${AUTH_ARGS[@]}" --host "$MONGO_HOST" <<EOF
     use FastPay
     db.createUser({ user: "$MONGO_APP_USER", pwd: "$MONGO_APP_PASSWORD", roles: [{ role: "readWrite", db: "FastPay" }] })
     db.createUser({ user: "$MONGO_BACKUP_USER", pwd: "$MONGO_BACKUP_PASSWORD", roles: [{ role: "backup", db: "admin" }, { role: "read", db: "FastPay" }] })

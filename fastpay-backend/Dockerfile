@@ -35,7 +35,7 @@ COPY --from=builder /app/apps ./apps
 COPY --from=builder /app/libs ./libs
 
 RUN npm ci --omit=dev && \
-    find apps libs -type d -name src -exec rm -rf {} + && \
+    find apps libs -type d -name src ! -path '*/dist/*' -exec rm -rf {} + && \
     find apps libs -type f \( -name 'tsconfig*.json' -o -name 'nest-cli.json' \) -delete
 
 COPY docker-entrypoint.sh /entrypoint.sh

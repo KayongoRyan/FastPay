@@ -22,9 +22,10 @@ spec:
             - -c
             - |
               set -euo pipefail
+              MONGO_HOST="${MONGO_HOST:-mongo-0.mongo}"
               until mongosh --tls --tlsCAFile /etc/mongo/tls/ca.crt --tlsAllowInvalidHostnames \
                 -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" \
-                --authenticationDatabase admin --eval "db.adminCommand('ping')" &>/dev/null; do
+                --authenticationDatabase admin --host "$MONGO_HOST" --eval "db.adminCommand('ping')" &>/dev/null; do
                 echo "waiting for mongo..."
                 sleep 3
               done
