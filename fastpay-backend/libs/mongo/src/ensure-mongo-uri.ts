@@ -91,6 +91,25 @@ async function pingMemoryMongoUri(uri: string): Promise<boolean> {
   }
 }
 
+async function pingDockerMongoUri(uri: string): Promise<boolean> {
+  const caFile = resolveCaFile();
+  const client = new MongoClient(uri, {
+    serverSelectionTimeoutMS: 5000,
+    tls: true,
+    ...(caFile ? { tlsCAFile: caFile } : {}),
+    tlsAllowInvalidHostnames: true,
+  });
+  try {
+    await client.connect();
+    await client.db(DEFAULT_DB).command({ ping: 1 });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await client.close().catch(() => undefined);
+  }
+}
+
 function applyMemoryMongoEnv(uri: string): void {
   process.env.MONGODB_URI = uri;
   process.env.MONGODB_DB_NAME ??= DEFAULT_DB;
@@ -212,8 +231,20 @@ export async function ensureMongoUri(serviceName = 'fastpay'): Promise<void> {
 
   const dockerMongoUp = await isPortOpen(DOCKER_PORT);
   if (dockerMongoUp) {
-    applyDockerMongoEnv(buildSecuredDockerUri());
-    return;
+    try {
+      const dockerUri = buildSecuredDockerUri();
+      if (await pingDockerMongoUri(dockerUri)) {
+        applyDockerMongoEnv(dockerUri);
+        return;
+      }
+      console.warn(
+        `[${serviceName}] Port :${DOCKER_PORT} is open but MongoDB did not respond — using shared memory Mongo instead.`,
+      );
+    } catch (error) {
+      console.warn(
+        `[${serviceName}] Docker Mongo on :${DOCKER_PORT} unavailable (${error instanceof Error ? error.message : error}) — using shared memory Mongo instead.`,
+      );
+    }
   }
 
   if (requireDocker) {

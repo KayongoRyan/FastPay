@@ -57,6 +57,20 @@ function createRouteProxy(
       const pathname = path.split('?')[0] ?? path;
       return pathname.startsWith(prefix) ? pathname : `${prefix}${pathname}`;
     },
+    on: {
+      error: (err, req, res) => {
+        if ('headersSent' in res && !res.headersSent) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(
+            JSON.stringify({
+              statusCode: 503,
+              message: `Upstream ${route.path}-service unavailable at ${target}. Start it with npm run start:${route.path === 'auth' ? 'auth' : route.path}.`,
+              error: 'Service Unavailable',
+            }),
+          );
+        }
+      },
+    },
   });
 }
 
