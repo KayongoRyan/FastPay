@@ -126,11 +126,15 @@ async function waitForMemoryMongo(timeoutMs = 90000): Promise<string> {
     if (state?.uri && (await pingMemoryMongoUri(state.uri))) {
       return state.uri;
     }
+    const fallback = buildMemoryMongoUri();
+    if (await pingMemoryMongoUri(fallback)) {
+      return fallback;
+    }
     await sleep(500);
   }
   throw new Error(
     `Shared in-memory MongoDB did not become ready within ${timeoutMs / 1000}s. ` +
-      'Run manually: npm run mongo:memory',
+      'Run manually: npm run docker:memory (Windows) or npm run mongo:memory',
   );
 }
 
