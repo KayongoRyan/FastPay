@@ -32,6 +32,13 @@ type ApiErrorBody = {
   error?: string;
 };
 
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Session expired. Please log in again.");
+    this.name = "SessionExpiredError";
+  }
+}
+
 function extractMessage(body: ApiErrorBody, fallback: string) {
   if (Array.isArray(body.message)) return body.message.join(". ");
   if (typeof body.message === "string") return body.message;
@@ -48,14 +55,12 @@ async function requestJson<T>(
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (options.auth) {
-    const token = readAccessToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-  }
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    res = options.auth
+      ? await authorizedFetch(path, { ...options, headers })
+      : await fetch(`${API_BASE}${path}`, { ...options, headers });
   } catch {
     throw new Error(
       "Cannot reach FastPay API. Start the gateway (npm run start:gateway) and auth service (npm run start:auth), then retry.",
@@ -65,6 +70,10 @@ async function requestJson<T>(
   const data = (await res.json().catch(() => ({}))) as ApiErrorBody & T;
 
   if (!res.ok) {
+    if (res.status === 401 && options.auth) {
+      clearSession();
+      throw new SessionExpiredError();
+    }
     throw new Error(extractMessage(data, `Request failed (${res.status})`));
   }
 
@@ -137,6 +146,93 @@ export function clearSession() {
 
 export function readAccessToken() {
   return localStorage.getItem("fastpay_access_token");
+}
+
+export function readRefreshToken() {
+  return localStorage.getItem("fastpay_refresh_token");
+}
+
+function decodeJwtPayload(token: string): { exp?: number; type?: string } | null {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/"))) as {
+      exp?: number;
+      type?: string;
+    };
+  } catch {
+    return null;
+  }
+}
+
+let refreshInFlight: Promise<string | null> | null = null;
+
+export async function refreshAccessToken(): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    const refreshToken = readRefreshToken();
+    if (!refreshToken) return null;
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: "POST",
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const data = (await res.json().catch(() => ({}))) as AuthTokens & ApiErrorBody;
+      if (!res.ok) return null;
+
+      localStorage.setItem("fastpay_access_token", data.accessToken);
+      localStorage.setItem("fastpay_refresh_token", data.refreshToken);
+      return data.accessToken;
+    } catch {
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+/** Returns a valid access token, refreshing proactively when near expiry. */
+export async function ensureAccessToken(): Promise<string | null> {
+  const token = readAccessToken();
+  if (!token) return null;
+
+  const payload = decodeJwtPayload(token);
+  const expiresAtMs = payload?.exp ? payload.exp * 1000 : 0;
+  const stillValid = expiresAtMs > Date.now() + 30_000;
+
+  if (stillValid) return token;
+  return refreshAccessToken();
+}
+
+export async function authorizedFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
+  if (options.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  let token = await ensureAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  let res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+
+  if (res.status === 401 && readRefreshToken()) {
+    token = await refreshAccessToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+      res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    }
+  }
+
+  return res;
 }
 
 export function getStoredUser(): AuthUser | null {

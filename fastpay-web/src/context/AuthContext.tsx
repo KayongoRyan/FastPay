@@ -43,8 +43,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(fresh);
           localStorage.setItem("fastpay_user", JSON.stringify(fresh));
         })
-        .catch(() => {
-          /* keep cached user if /me fails */
+        .catch(async () => {
+          const { refreshAccessToken, clearSession } = await import("../lib/auth-api");
+          const refreshed = await refreshAccessToken();
+          if (!refreshed) {
+            clearSession();
+            setUser(null);
+            return;
+          }
+          try {
+            const fresh = await fetchProfile();
+            setUser(fresh);
+            localStorage.setItem("fastpay_user", JSON.stringify(fresh));
+          } catch {
+            clearSession();
+            setUser(null);
+          }
         })
         .finally(() => setReady(true));
       return;

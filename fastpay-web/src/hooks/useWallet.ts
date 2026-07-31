@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { SessionExpiredError } from "../lib/auth-api";
 import {
   fetchWallet,
   fetchWalletHistory,
   type WalletHistoryItem,
   type WalletView,
 } from "../lib/wallet-api";
-
 type WalletState = {
   wallet: WalletView | null;
   history: WalletHistoryItem[];
@@ -32,6 +32,10 @@ export function useWallet(): WalletState {
       setWallet(walletData);
       setHistory(historyData);
     } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        window.location.assign("/login");
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load wallet");
     } finally {
       setLoading(false);

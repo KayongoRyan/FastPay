@@ -15,6 +15,7 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'offline_relay', service: 'payment-service', description: 'Offline signed XDR relay queue' },
   { collection: 'families', service: 'family-service', description: 'Family groups' },
   { collection: 'family_members', service: 'family-service', description: 'User membership in families' },
+  { collection: 'family_invites', service: 'family-service', description: 'Pending family membership invites' },
   { collection: 'family_savings_goals', service: 'family-service', description: 'Shared savings goals' },
   { collection: 'savings_contributions', service: 'family-service', description: 'Contributions to goals' },
   { collection: 'approval_requests', service: 'family-service', description: 'Parent/child tx approvals' },

@@ -1,4 +1,4 @@
-import { readAccessToken } from "./auth-api";
+import { authorizedFetch, clearSession, SessionExpiredError } from "./auth-api";
 import { walletAccount, recentTransactions as mockTransactions } from "./wallet-data";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
@@ -47,8 +47,18 @@ async function requestJson<T>(
     headers.set("Content-Type", "application/json");
   }
   if (options.auth) {
-    const token = readAccessToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const res = await authorizedFetch(path, { ...options, headers });
+    const data = (await res.json().catch(() => ({}))) as ApiErrorBody & T;
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        clearSession();
+        throw new SessionExpiredError();
+      }
+      throw new Error(extractMessage(data, `Request failed (${res.status})`));
+    }
+
+    return data as T;
   }
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
