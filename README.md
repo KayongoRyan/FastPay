@@ -63,9 +63,11 @@ npm run mongo:certs
 npm run docker:up               # or npm run docker:memory on Windows
 npm run start:auth
 npm run start:gateway
+npm run start:blockchain        # :3009 — required before wallet
+npm run start:wallet            # :3002
+npm run start:family            # :3004
 npm run start:payment
 npm run start:merchant          # :3006 — merchant API
-npm run start:blockchain
 
 # Web (consumer + merchant portal)
 cd fastpay-web

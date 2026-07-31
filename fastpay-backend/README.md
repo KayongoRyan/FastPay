@@ -100,6 +100,25 @@ Symptoms: `500 Internal Server Error` on `dockerDesktopLinuxEngine`, compose can
 
 Disable **Kubernetes** in Docker settings if the engine won't start (enable later for K8s deploy).
 
+### Wallet `ECONNREFUSED :3009` / `fetch failed`
+
+`wallet-service` provisions Stellar accounts via `blockchain-service` (:3009), which funds via mock Horizon friendbot (:8090).
+
+Start **in this order** (separate terminals):
+
+```powershell
+# 1. Mock Horizon (Docker or native)
+docker start fastpay-mock-horizon    # or: npm run mock:horizon
+
+# 2. Blockchain (required before wallet)
+npm run start:blockchain             # :3009
+
+# 3. Wallet
+npm run start:wallet                 # :3002
+```
+
+Verify: `curl.exe -s http://localhost:3009/health` and `curl.exe -s "http://localhost:8090/friendbot?addr=GTEST"` both succeed.
+
 Host `mongosh`:
 
 ```powershell

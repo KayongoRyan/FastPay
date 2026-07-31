@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { CurrentUserId, JwtAuthGuard } from '@fastpay/common';
 
 import { InternalProvisionDto } from './dto/internal-provision.dto';
+import { InternalTransferDto } from './dto/internal-transfer.dto';
 import { TransferDto } from './dto/transfer.dto';
 import { WalletService } from './wallet.service';
 
@@ -56,12 +57,29 @@ export class InternalWalletController {
     @Headers('x-internal-secret') secret: string | undefined,
     @Body() dto: InternalProvisionDto,
   ) {
+    this.assertSecret(secret);
+    return this.walletService.provisionForUser(dto.userId);
+  }
+
+  @Post('transfer')
+  transfer(
+    @Headers('x-internal-secret') secret: string | undefined,
+    @Body() dto: InternalTransferDto,
+  ) {
+    this.assertSecret(secret);
+    return this.walletService.transfer(dto.userId, {
+      destination: dto.destination,
+      amountRwf: dto.amountRwf,
+      memo: dto.memo,
+    });
+  }
+
+  private assertSecret(secret: string | undefined) {
     const expected = this.configService.getOrThrow<string>(
       'auth.internalServiceSecret',
     );
     if (!secret || secret !== expected) {
       throw new UnauthorizedException('Invalid internal secret');
     }
-    return this.walletService.provisionForUser(dto.userId);
   }
 }

@@ -12,6 +12,7 @@ export * from './payment/momo-payment.schema';
 
 export * from './family/family.schema';
 export * from './family/family-member.schema';
+export * from './family/family-invite.schema';
 export * from './family/family-savings-goal.schema';
 export * from './family/savings-contribution.schema';
 export * from './family/approval-request.schema';

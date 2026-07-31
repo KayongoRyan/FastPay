@@ -103,6 +103,30 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  if (req.method === 'GET' && url.pathname === '/friendbot') {
+    const addr = url.searchParams.get('addr');
+    if (!addr) {
+      return sendJson(res, 400, { detail: 'addr query param required' });
+    }
+
+    accounts.set(addr, {
+      id: addr,
+      account_id: addr,
+      sequence: '1',
+      subentry_count: 0,
+      balances: [{ balance: '10000.0000000', asset_type: 'native' }],
+      signers: [{ key: addr, weight: 1, type: 'ed25519_public_key' }],
+      thresholds: { low_threshold: 0, med_threshold: 0, high_threshold: 0 },
+      flags: {
+        auth_required: false,
+        auth_revocable: false,
+        auth_immutable: false,
+      },
+    });
+
+    return sendJson(res, 200, { success: true });
+  }
+
   sendJson(res, 404, { detail: 'Not found' });
 });
 

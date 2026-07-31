@@ -23,11 +23,23 @@ export class BlockchainClient {
   }
 
   async createAccount(): Promise<StellarAccountKeys> {
-    const response = await fetch(`${this.baseUrl}/stellar/accounts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fundWithFriendbot: true }),
-    });
+    const url = `${this.baseUrl}/stellar/accounts`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fundWithFriendbot: true }),
+      });
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException)?.code;
+      if (code === 'ECONNREFUSED') {
+        throw new Error(
+          `Blockchain service unreachable at ${this.baseUrl}. Start mock Horizon (npm run mock:horizon or docker mock-horizon) then: npm run start:blockchain`,
+        );
+      }
+      throw error;
+    }
 
     if (!response.ok) {
       const text = await response.text();
