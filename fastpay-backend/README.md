@@ -54,15 +54,27 @@ Auth-service expects **secured** MongoDB on **localhost:27018** (SCRAM + TLS) wh
 3. **No Docker:** use **shared in-memory MongoDB** (all services share one DB on `:27019`):
 
 ```bash
-npm run mongo:memory          # terminal 1 — keep running
-npm run mongo:verify:memory   # sanity check
-npm run start:auth            # terminal 2 — auto-connects to :27019 if Docker is down
+# Windows: prefer Docker memory profile (native mongodb-memory-server often fails)
+npm run docker:memory           # detached — all services auto-connect
+npm run mongo:verify:memory
+
+# Linux/macOS: native in-memory (keep terminal open)
+npm run mongo:memory
+npm run mongo:verify:memory
 ```
 
-Or let the first service auto-start memory Mongo (default when Docker is off):
+Or let the first service auto-start memory Mongo (default when Docker `:27018` is down):
 
 ```bash
 npm run start:auth   # spawns shared in-memory rs0 on :27019 if needed
+```
+
+**Stale state / 90s timeout:** if `.fastpay/memory-mongo.json` points at a dead process:
+
+```powershell
+npm run mongo:memory:stop
+npm run docker:memory          # Windows
+npm run mongo:verify:memory
 ```
 
 See [`docs/security/mongo.md`](../docs/security/mongo.md) for RBAC users, backups, and K8s secrets.
@@ -70,11 +82,23 @@ See [`docs/security/mongo.md`](../docs/security/mongo.md) for RBAC users, backup
 | Mode | Command / env |
 |------|----------------|
 | Docker (persistent, SCRAM+TLS) | `npm run docker:up` |
-| Shared in-memory (ephemeral, rs0) | `npm run mongo:memory` |
+| Shared in-memory (ephemeral, rs0) | `npm run mongo:memory` or `npm run docker:memory` (Windows) |
 | Force in-memory over Docker | `FASTPAY_MEMORY_MONGO=true` |
 | Memory only (fail if not running) | `FASTPAY_MEMORY_MONGO=only` |
 | Require Docker only | `FASTPAY_USE_DOCKER_MONGO=true` |
-| Stop in-memory server | `npm run mongo:memory:stop` |
+| Stop in-memory / clear stale state | `npm run mongo:memory:stop` |
+
+### Docker Desktop troubleshooting
+
+Symptoms: `500 Internal Server Error` on `dockerDesktopLinuxEngine`, compose can't pull images, engine stuck on **Starting the Docker Engine** with RAM 0.00 GB.
+
+1. Quit Docker Desktop (tray → Quit)
+2. Admin PowerShell: `wsl --shutdown`
+3. Reopen Docker Desktop; wait for **Engine running**
+4. Verify: `docker version` shows **Client and Server**
+5. Still broken: Settings → Troubleshoot → Restart; last resort → Clean/Purge data
+
+Disable **Kubernetes** in Docker settings if the engine won't start (enable later for K8s deploy).
 
 Host `mongosh`:
 
@@ -107,6 +131,7 @@ Canonical schemas: `libs/schemas/` — see `docs/schema/er-diagram.md`.
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/auth/register` | Create account |
+| POST | `/auth/register/merchant` | Register merchant org + owner |
 | POST | `/auth/login` | Login (rate-limited, lockout after 5 failures) |
 | POST | `/auth/refresh` | Rotate tokens |
 | POST | `/auth/logout` | Invalidate refresh token (Bearer required) |
@@ -133,19 +158,36 @@ Full stack in-cluster: MongoDB, Redis, RabbitMQ, mock Horizon, gateway + all ser
 
 ### Prerequisites
 
-1. Enable **Kubernetes** in Docker Desktop
-2. Install ingress (one-time): `./infrastructure/k8s/scripts/setup-ingress.ps1`
-3. Optional hosts entry: `127.0.0.1 api.fastpay.local`
+1. Docker Desktop **engine running** (`docker version` shows Server)
+2. Enable **Kubernetes** in Docker Desktop (use **Docker Desktop** provisioner unless you need kind)
+3. Install ingress (one-time): `./infrastructure/k8s/scripts/setup-ingress.ps1`
+4. Optional hosts entry: `127.0.0.1 api.fastpay.local`
+5. Generate TLS assets: `npm run mongo:certs` (synced into overlay by `k8s:deploy`)
 
 ### Deploy
 
 ```powershell
 cd fastpay-backend
 npm run docker:build
-npm run docker:scan
-./infrastructure/k8s/scripts/deploy-local.ps1
-# or: npm run k8s:deploy (after image build + scan)
+npm run docker:scan          # optional; fails on CRITICAL CVEs
+npm run k8s:deploy           # syncs certs + applies overlays/local
+
+# One-shot (build, kind load if needed, apply, wait for rollouts):
+# ./infrastructure/k8s/scripts/deploy-local.ps1
+
+# After first deploy — Mongo replica set + app users (jobs are not all in k8s:deploy):
+kubectl wait --for=condition=complete job/mongo-init-rs -n fastpay --timeout=300s
+kubectl apply -f infrastructure/k8s/base/data/mongo-init-users-job.yaml
+kubectl wait --for=condition=complete job/mongo-init-users -n fastpay --timeout=300s
+
+npm run k8s:status
 ```
+
+**kind clusters:** run `npm run k8s:load` after `docker:build` so nodes can pull `fastpay-backend:local`.
+
+**App pods `ErrImageNeverPull`:** run `npm run docker:build` (image must exist locally with `imagePullPolicy: Never`).
+
+**Mongo pods stuck:** ensure `mongo-tls` / `mongo-keyfile` secrets exist in namespace `fastpay` (local overlay must set `namespace: fastpay` for cert secrets).
 
 ### Container security
 

@@ -36,32 +36,72 @@ docs/security/mongo.md          # MongoDB auth, TLS, secrets, backups, RBAC
 
 ### Option A — npm (local dev)
 
-```bash
+**Mongo (pick one):**
+
+| Mode | When to use | Start |
+|------|-------------|--------|
+| **Docker secured** (persistent, SCRAM+TLS `:27018`) | Normal dev | `npm run mongo:certs` then `npm run docker:up` |
+| **Docker memory** (shared ephemeral rs0 `:27019`) | **Windows** when native memory-server fails | `npm run docker:memory` |
+| **Auto memory** | Docker off; first service spawns shared DB | just `npm run start:auth` |
+
+If services hang on *"Shared in-memory MongoDB did not become ready"*:
+
+```powershell
+cd fastpay-backend
+npm run mongo:memory:stop    # clears stale .fastpay/memory-mongo.json
+npm run docker:memory        # Windows-friendly
+npm run mongo:verify:memory
+```
+
+**Docker Desktop stuck on "Starting the Engine"?** Quit Docker → admin `wsl --shutdown` → reopen Docker → wait for **Engine running** → `docker version` must show **Server**, not just Client.
+
+```powershell
 # Backend
 cd fastpay-backend
 copy .env.example .env          # set MONGO_* passwords
 npm run mongo:certs
-npm run docker:up
+npm run docker:up               # or npm run docker:memory on Windows
 npm run start:auth
 npm run start:gateway
 npm run start:payment
+npm run start:merchant          # :3006 — merchant API
 npm run start:blockchain
+
+# Web (consumer + merchant portal)
+cd fastpay-web
+npm install
+npm run dev                     # http://localhost:5173 — /merchant/login
 
 # Expo app (physical device)
 cd FastPay
-cp .env.example .env   # set EXPO_PUBLIC_API_URL to your PC's LAN IP
+cp .env.example .env            # EXPO_PUBLIC_API_URL = PC LAN IP :3000
 npm run start
 ```
 
+See `fastpay-backend/README.md` for all services, Mongo modes, and troubleshooting.
+
 ### Option B — local Kubernetes
 
-```bash
-cd fastpay-backend 
-# Enable K8s in Docker Desktop, then:
-./infrastructure/k8s/scripts/setup-ingress.ps1   # one-time
-./infrastructure/k8s/scripts/deploy-local.ps1
-# Gateway: http://localhost:30000/health (or port-forward to :3000)
+Requires **Docker Desktop** with engine running. Use built-in Kubernetes (not kind) unless you know you need kind + `k8s:load`.
+
+```powershell
+cd fastpay-backend
+npm run mongo:certs
+npm run docker:build
+npm run k8s:deploy
+kubectl apply -f infrastructure/k8s/base/data/mongo-init-users-job.yaml
+# wait for mongo-init-rs job if rs not ready:
+kubectl wait --for=condition=complete job/mongo-init-rs -n fastpay --timeout=300s
+
+# One-time: ./infrastructure/k8s/scripts/setup-ingress.ps1
+# Full stack (build + kind load + apply): ./infrastructure/k8s/scripts/deploy-local.ps1
 ```
+
+| Endpoint | URL |
+|----------|-----|
+| Gateway (NodePort) | `http://localhost:30000/health` |
+| Port-forward | `./infrastructure/k8s/scripts/port-forward-gateway.ps1` → `:3000` |
+| Ingress (optional) | `127.0.0.1 api.fastpay.local` → `http://api.fastpay.local/health` |
 
 See `fastpay-backend/README.md` for full K8s docs.
 
