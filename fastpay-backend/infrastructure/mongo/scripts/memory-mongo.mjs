@@ -36,13 +36,14 @@ function writeState(extra = {}) {
     STATE_FILE,
     JSON.stringify(
       {
-        uri: DEFAULT_URI,
-        port: PORT,
+        uri: extra.uri ?? DEFAULT_URI,
+        port: extra.port ?? PORT,
         db: DB,
         replicaSet: REPLICA_SET,
         pid: process.pid,
         backend: extra.backend ?? 'unknown',
         startedAt: new Date().toISOString(),
+        ...extra,
       },
       null,
       2,
@@ -123,7 +124,7 @@ async function tryNativeMemory() {
     uri += `${uri.includes('?') ? '&' : '?'}replicaSet=${REPLICA_SET}`;
   }
 
-  writeState({ backend: 'mongodb-memory-server', nativeUri: uri });
+  writeState({ backend: 'mongodb-memory-server', uri, port: Number(new URL(uri).port) || PORT });
 
   const shutdown = async () => {
     console.log('\nStopping native in-memory Mongo…');
