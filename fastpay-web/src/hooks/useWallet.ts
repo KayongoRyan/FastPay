@@ -25,12 +25,17 @@ export function useWallet(): WalletState {
     setLoading(true);
     setError(null);
     try {
-      const [walletData, historyData] = await Promise.all([
+      const [walletResult, historyResult] = await Promise.allSettled([
         fetchWallet(),
         fetchWalletHistory(),
       ]);
-      setWallet(walletData);
-      setHistory(historyData);
+      if (walletResult.status === "rejected") {
+        throw walletResult.reason;
+      }
+      setWallet(walletResult.value);
+      setHistory(
+        historyResult.status === "fulfilled" ? historyResult.value : [],
+      );
     } catch (err) {
       if (err instanceof SessionExpiredError) {
         window.location.assign("/login");

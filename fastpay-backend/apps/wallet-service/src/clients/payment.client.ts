@@ -44,21 +44,21 @@ export class PaymentClient {
   }
 
   async getHistory(publicKey: string) {
-    const response = await fetch(
-      `${this.baseUrl}/payments/history/${encodeURIComponent(publicKey)}`,
-      {
-        headers: {
-          'X-Internal-Secret':
-            process.env.INTERNAL_SERVICE_SECRET ??
-            'dev-internal-secret-change-in-production',
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/payments/history/${encodeURIComponent(publicKey)}`,
+        {
+          headers: {
+            'X-Internal-Secret':
+              process.env.INTERNAL_SERVICE_SECRET ??
+              'dev-internal-secret-change-in-production',
+          },
         },
-      },
-    );
-    if (!response.ok) {
-      throw new Error(`Payment history failed (${response.status})`);
-    }
-    return response.json() as Promise<
-      Array<{
+      );
+      if (!response.ok) {
+        return [];
+      }
+      return (await response.json()) as Array<{
         id: string;
         txHash: string;
         status: string;
@@ -67,7 +67,10 @@ export class PaymentClient {
         direction: 'in' | 'out';
         counterparty: string;
         createdAt: string;
-      }>
-    >;
+      }>;
+    } catch {
+      // Payment service optional for wallet balance views in local dev.
+      return [];
+    }
   }
 }

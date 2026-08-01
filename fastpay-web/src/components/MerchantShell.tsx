@@ -3,9 +3,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Package,
   Receipt,
   Settings,
   Store,
+  Target,
+  Users,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +17,9 @@ import { useMerchantAuth } from "../context/MerchantAuthContext";
 
 const navItems = [
   { to: "/merchant", end: true, label: "Dashboard", icon: LayoutDashboard },
+  { to: "/merchant/inventory", label: "Inventory", icon: Package },
+  { to: "/merchant/team", label: "Team & payroll", icon: Users },
+  { to: "/merchant/goals", label: "Goals", icon: Target },
   { to: "/merchant/invoices", label: "Invoices", icon: FileText },
   { to: "/merchant/transactions", label: "Transactions", icon: Receipt },
   { to: "/merchant/settings", label: "Settings", icon: Settings },
