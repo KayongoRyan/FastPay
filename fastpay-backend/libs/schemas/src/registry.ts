@@ -32,4 +32,9 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'merchant_orgs', service: 'merchant-service', description: 'Registered merchant businesses' },
   { collection: 'merchant_invoices', service: 'merchant-service', description: 'Payable merchant invoices' },
   { collection: 'merchant_transactions', service: 'merchant-service', description: 'Payments received by merchants' },
+  { collection: 'merchant_products', service: 'merchant-service', description: 'Merchant product catalog and stock levels' },
+  { collection: 'merchant_stock_movements', service: 'merchant-service', description: 'Stock in/out/sale/adjustment ledger' },
+  { collection: 'merchant_employees', service: 'merchant-service', description: 'Merchant staff roster and salary config' },
+  { collection: 'merchant_payroll_entries', service: 'merchant-service', description: 'Employee payroll periods and payments' },
+  { collection: 'merchant_goals', service: 'merchant-service', description: 'Short and long-term merchant business goals' },
 ];

@@ -32,9 +32,12 @@ import { AppSubscriptionsPage } from "./pages/app/AppSubscriptionsPage";
 import { AppTransferPage } from "./pages/app/AppTransferPage";
 import { AppWalletPage } from "./pages/app/AppWalletPage";
 import { MerchantDashboardPage } from "./pages/merchant/MerchantDashboardPage";
+import { MerchantGoalsPage } from "./pages/merchant/MerchantGoalsPage";
+import { MerchantInventoryPage } from "./pages/merchant/MerchantInventoryPage";
 import { MerchantInvoicesPage } from "./pages/merchant/MerchantInvoicesPage";
 import { MerchantLoginPage } from "./pages/merchant/MerchantLoginPage";
 import { MerchantSettingsPage } from "./pages/merchant/MerchantSettingsPage";
+import { MerchantTeamPage } from "./pages/merchant/MerchantTeamPage";
 import { MerchantTransactionsPage } from "./pages/merchant/MerchantTransactionsPage";
 
 export default function App() {
@@ -88,6 +91,9 @@ export default function App() {
           {/* Merchant portal — separate auth + nav from consumer /app */}
           <Route path="merchant" element={<MerchantShell />}>
             <Route index element={<MerchantDashboardPage />} />
+            <Route path="inventory" element={<MerchantInventoryPage />} />
+            <Route path="team" element={<MerchantTeamPage />} />
+            <Route path="goals" element={<MerchantGoalsPage />} />
             <Route path="invoices" element={<MerchantInvoicesPage />} />
             <Route path="transactions" element={<MerchantTransactionsPage />} />
             <Route path="settings" element={<MerchantSettingsPage />} />

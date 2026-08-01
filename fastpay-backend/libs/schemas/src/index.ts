@@ -3,6 +3,11 @@ export * from './auth/user.schema';
 export * from './merchant/merchant-org.schema';
 export * from './merchant/merchant-invoice.schema';
 export * from './merchant/merchant-transaction.schema';
+export * from './merchant/merchant-product.schema';
+export * from './merchant/merchant-stock-movement.schema';
+export * from './merchant/merchant-employee.schema';
+export * from './merchant/merchant-payroll.schema';
+export * from './merchant/merchant-goal.schema';
 
 export * from './wallet/wallet.schema';
 
