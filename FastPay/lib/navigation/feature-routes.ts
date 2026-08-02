@@ -56,7 +56,11 @@ export const featureRoutes = {
     withQuery("/irembo", { service }),
 
   insurancePlans: (plan?: InsurancePlanType) =>
-    withQuery("/services/insurance-plans", { plan }),
+    withQuery("/services/insurance", { plan }),
+
+  insurance: "/services/insurance" as Href,
+  insuranceClaims: "/services/insurance/claims" as Href,
+  insuranceClaim: (id: string) => `/services/insurance/claims/${id}` as Href,
 
   familySetup: "/services/family-setup" as Href,
   voucher: "/services/voucher" as Href,

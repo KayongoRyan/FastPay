@@ -39,6 +39,8 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'merchant_goals', service: 'merchant-service', description: 'Short and long-term merchant business goals' },
   { collection: 'merchant_orders', service: 'merchant-service', description: 'Merchant fulfillment orders linked to escrow deals' },
   { collection: 'escrow_contracts', service: 'escrow-service', description: 'Buyer–seller escrow protection contracts' },
+  { collection: 'insurance_policies', service: 'insurance-service', description: 'Wallet insurance policies and risk scores' },
+  { collection: 'insurance_claims', service: 'insurance-service', description: 'Wallet drain insurance claims and payouts' },
   { collection: 'business_orgs', service: 'business-service', description: 'Company / HQ organizations above merchant branches' },
   { collection: 'business_members', service: 'business-service', description: 'Business portal team memberships and roles' },
 ];

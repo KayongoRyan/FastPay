@@ -15,6 +15,7 @@
     "start:family": "npx --yes kill-port 3004 && npm run start:dev -w @fastpay/family-service",
     "start:escrow": "npx --yes kill-port 3005 && npm run start:dev -w @fastpay/escrow-service",
     "start:blockchain": "npx --yes kill-port 3009 && npm run start:dev -w @fastpay/blockchain-service",
+    "start:insurance": "npx --yes kill-port 3013 && npm run start:dev -w @fastpay/insurance-service",
     "mock:horizon": "node infrastructure/docker/mock-horizon.js",
     "start:fraud": "npx --yes kill-port 3011 && npm run start:dev -w @fastpay/fraud-service",
     "start:kyc": "npx --yes kill-port 3012 && npm run start:dev -w @fastpay/kyc-service",

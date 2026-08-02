@@ -5,11 +5,21 @@ Monorepo for the FastPay fintech wallet.
 ```
 Fast/
 ├── fastpay-backend/        # NestJS microservices + MongoDB
-├── fastpay_mobile/         # Flutter mobile app (iOS + Android) — primary mobile client
-├── fastpay-web/            # Marketing landing site (Vite + React)
-├── FastPay/                # Legacy Expo/RN app (web prototyping)
+├── fastpay_mobile/         # Flutter mobile app (iOS + Android)
+├── fastpay-web/            # Marketing site + consumer / merchant / business portals (Vite + React)
+├── FastPay/                # Expo/RN app — consumer wallet + merchant & business portals
 └── fastpay-assistant-ml/   # Python offline eval brain (assistant golden set / CLI)
 ```
+
+### Account tracks
+
+| Track | Who | Web | Expo |
+|-------|-----|-----|------|
+| **Consumer** | Personal wallet | `/login`, `/signup`, `/app/*` | `(auth)` → `(main)` tabs |
+| **Merchant** | Shop / till | `/merchant/login` | `/merchant/login` → Home · Invoices · Escrow · Settings |
+| **Business HQ** | Company above shops | `/business/login` | `/business/login` → Home · Branches · Settings |
+
+Registration collects **business type** (retail, garage, construction, …), contact, address, TIN / reg. no., etc. Sessions are separate — consumer login rejects merchant/business accounts and vice versa.
 
 ### Marketing site
 
@@ -56,35 +66,63 @@ npm run mongo:verify:memory
 **Docker Desktop stuck on "Starting the Engine"?** Quit Docker → admin `wsl --shutdown` → reopen Docker → wait for **Engine running** → `docker version` must show **Server**, not just Client.
 
 ```powershell
-# Backend
+# Backend (core)
 cd fastpay-backend
 copy .env.example .env          # set MONGO_* passwords
 npm run mongo:certs
 npm run docker:up               # or npm run docker:memory on Windows
-npm run start:auth
-npm run start:gateway
+npm run start:auth              # :3001
+npm run start:gateway           # :3000
 npm run start:blockchain        # :3009 — required before wallet
 npm run start:wallet            # :3002
+npm run start:payment           # :3003
 npm run start:family            # :3004
-npm run start:payment
-npm run start:merchant          # :3006 — merchant API
+npm run start:merchant          # :3006 — shop / till API
+npm run start:business          # :3008 — company HQ API
 
-# Web (consumer + merchant portal)
+# Protection features
+npm run start:escrow            # :3005 — merchant protection (hold → ship → confirm → release)
+npm run start:insurance         # :3013 — wallet insurance (risk score → policy → claims)
+
+# Optional
+npm run start:kyc               # :3012
+npm run start:fraud             # :3011
+npm run start:audit             # :3015
+npm run start:assistant         # :3016
+
+# Web (consumer + merchant + business portals)
 cd fastpay-web
 npm install
-npm run dev                     # http://localhost:5173 — /merchant/login
+npm run dev                     # http://localhost:5173
+#   /login            consumer
+#   /merchant/login   merchant
+#   /business/login   business HQ
 
-# Expo app (physical device)
+# Expo app
 cd FastPay
 cp .env.example .env            # EXPO_PUBLIC_API_URL = PC LAN IP :3000
 npm run start
+#   Personal wallet tabs; footer links → Merchant portal / Business HQ
+#   Services → Escrow, Wallet Insurance
 ```
 
 See `fastpay-backend/README.md` for all services, Mongo modes, and troubleshooting.
 
+### Key product surfaces
+
+| Feature | Gateway | Notes |
+|---------|---------|--------|
+| **Business types** | `/auth/register/merchant`, `/auth/register/business` | Shared catalog: retail, garage, construction, … |
+| **Escrow** | `/escrow/*` | Buyer funds → merchant ships → buyer confirms → settlement. Statuses: pending, paid, shipped, delivered, released, disputed |
+| **Wallet insurance** | `/insurance/*` | Enable → risk engine → premium → policy; claims: submitted → investigating → approved → paid |
+| **Merchant orders** | `/merchant/orders` (+ escrow internal) | Fulfillment linked to escrow contracts |
+
 ### Option B — local Kubernetes
 
-Requires **Docker Desktop** with engine running. Use built-in Kubernetes (not kind) unless you know you need kind + `k8s:load`.
+Requires **Docker Desktop** with the engine running.
+
+- Prefer **Docker Desktop Kubernetes** (Settings → Kubernetes) for simple local clusters.
+- **kind** is fine if you already use it (Docker Desktop → Kubernetes can show cluster type **kind**). Use **Edit cluster** for node resources / version — some edits recreate the cluster and wipe pods.
 
 ```powershell
 cd fastpay-backend
