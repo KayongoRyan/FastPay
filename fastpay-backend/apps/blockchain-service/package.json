@@ -13,9 +13,11 @@
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "@solana/web3.js": "^1.98.4",
     "@stellar/stellar-sdk": "^13.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "ethers": "^6.17.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   }

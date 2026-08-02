@@ -21,6 +21,11 @@ defaults:
   run:
     working-directory: fastpay-backend
 
+env:
+  # Prefer GHCR/ECR; GCR mirror last. CI failed mid-pull from mirror.gcr.io alone.
+  TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2,mirror.gcr.io/aquasec/trivy-db:2
+  TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+
 jobs:
   scan:
     runs-on: ubuntu-latest
@@ -33,21 +38,136 @@ jobs:
       - name: Build image
         run: npm run docker:build
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
         with:
-          image-ref: fastpay-backend:local
-          format: table
-          severity: CRITICAL
-          exit-code: 1
+          version: v0.72.0
+          cache: true
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
+
+      # #region agent log
+      - name: Debug Trivy config
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time
+          payload = {
+            "sessionId": "208281",
+            "runId": "post-fix",
+            "hypothesisId": "E",
+            "location": "container-security.yml:debug-trivy-config",
+            "message": "trivy scan config before DB download",
+            "timestamp": int(time.time() * 1000),
+            "data": {
+              "timeout": "15m",
+              "dbAttempts": 3,
+              "dbRepository": os.environ.get("TRIVY_DB_REPOSITORY", ""),
+              "cacheDir": os.environ.get("TRIVY_CACHE_DIR", ""),
+              "trivyVersion": "v0.72.0",
+            },
+          }
+          print(json.dumps(payload))
+          open("debug-208281.log", "a", encoding="utf-8").write(json.dumps(payload) + "\n")
+          PY
+      # #endregion
+
+      - name: Download Trivy DB (retry)
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$TRIVY_CACHE_DIR"
+          for i in 1 2 3; do
+            echo "::group::DB download attempt $i/3"
+            if trivy image --download-db-only --timeout 15m; then
+              echo "DB download ok on attempt $i"
+              echo "::endgroup::"
+              # #region agent log
+              python3 - <<PY
+          import json, time
+          open("debug-208281.log","a",encoding="utf-8").write(json.dumps({
+            "sessionId":"208281","runId":"post-fix","hypothesisId":"C",
+            "location":"container-security.yml:download-db",
+            "message":"DB download succeeded",
+            "timestamp":int(time.time()*1000),
+            "data":{"attempt":$i,"ok":True}
+          })+"\n")
+          PY
+              # #endregion
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "DB download failed on attempt $i"
+            sleep 20
+          done
+          # #region agent log
+          python3 - <<'PY'
+          import json, time
+          open("debug-208281.log","a",encoding="utf-8").write(json.dumps({
+            "sessionId":"208281","runId":"post-fix","hypothesisId":"C",
+            "location":"container-security.yml:download-db",
+            "message":"DB download failed all retries",
+            "timestamp":int(time.time()*1000),
+            "data":{"ok":False,"attempts":3}
+          })+"\n")
+          PY
+          # #endregion
+          exit 1
+
+      - name: Run Trivy vulnerability scanner
+        working-directory: ${{ github.workspace }}
+        run: |
+          trivy image \
+            --skip-db-update \
+            --severity CRITICAL \
+            --exit-code 1 \
+            --timeout 15m \
+            --format table \
+            fastpay-backend:local
 
       - name: Scan base image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        working-directory: ${{ github.workspace }}
+        run: |
+          trivy image \
+            --skip-db-update \
+            --severity CRITICAL \
+            --exit-code 1 \
+            --timeout 15m \
+            --format table \
+            node:22-alpine
+
+      # #region agent log
+      - name: Debug Trivy scan outcome
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time
+          payload = {
+            "sessionId": "208281",
+            "runId": "post-fix",
+            "hypothesisId": "C",
+            "location": "container-security.yml:debug-trivy-outcome",
+            "message": "trivy job conclusion",
+            "timestamp": int(time.time() * 1000),
+            "data": {"jobStatus": "${{ job.status }}"},
+          }
+          print(json.dumps(payload))
+          open("debug-208281.log", "a", encoding="utf-8").write(json.dumps(payload) + "\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          image-ref: node:22-alpine
-          format: table
-          severity: CRITICAL
-          exit-code: 1
+          name: debug-208281-trivy
+          path: debug-208281.log
+          if-no-files-found: warn
+      # #endregion
 
   secrets:
     runs-on: ubuntu-latest

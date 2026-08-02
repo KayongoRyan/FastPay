@@ -31,6 +31,7 @@ const ROUTES: GatewayRoute[] = [
   { path: 'auth', targetKey: 'authUrl' },
   { path: 'wallet', targetKey: 'walletUrl' },
   { path: 'stellar', targetKey: 'blockchainUrl' },
+  { path: 'blockchain', targetKey: 'blockchainUrl' },
   { path: 'offline', targetKey: 'paymentUrl' },
   { path: 'payments', targetKey: 'paymentUrl' },
   { path: 'momo', targetKey: 'paymentUrl' },
