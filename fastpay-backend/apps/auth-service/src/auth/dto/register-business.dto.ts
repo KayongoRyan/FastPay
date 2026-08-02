@@ -1,4 +1,14 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
+
+import { BusinessType } from '@fastpay/schemas';
 
 export class RegisterBusinessDto {
   @IsString()
@@ -22,6 +32,10 @@ export class RegisterBusinessDto {
   @IsNotEmpty()
   companyName!: string;
 
+  @IsEnum(BusinessType)
+  businessType!: BusinessType;
+
+  /** Custom label when businessType is `other`, or extra detail. */
   @IsOptional()
   @IsString()
   industry?: string;
@@ -40,5 +54,25 @@ export class RegisterBusinessDto {
 
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
   country?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
+
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

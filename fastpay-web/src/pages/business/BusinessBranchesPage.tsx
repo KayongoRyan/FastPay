@@ -6,6 +6,7 @@ import {
   linkBranch,
   type BusinessBranch,
 } from "../../lib/business-api";
+import { BUSINESS_TYPE_OPTIONS, type BusinessType, businessTypeLabel } from "../../lib/business-types";
 
 export function BusinessBranchesPage() {
   const [branches, setBranches] = useState<BusinessBranch[]>([]);
@@ -13,7 +14,7 @@ export function BusinessBranchesPage() {
   const [busy, setBusy] = useState(false);
 
   const [branchName, setBranchName] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<BusinessType | "">("");
   const [merchantCode, setMerchantCode] = useState("");
 
   async function load() {
@@ -31,11 +32,15 @@ export function BusinessBranchesPage() {
       setError("Branch name is required.");
       return;
     }
+    if (!category) {
+      setError("Pick a branch business type.");
+      return;
+    }
     setBusy(true);
     try {
       await createBranch({
         branchName: branchName.trim(),
-        category: category.trim() || undefined,
+        category,
       });
       setBranchName("");
       setCategory("");
@@ -91,8 +96,21 @@ export function BusinessBranchesPage() {
               <input value={branchName} onChange={(e) => setBranchName(e.target.value)} required placeholder="Kigali City Market" />
             </label>
             <label>
-              <span>Category</span>
-              <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Supermarket" />
+              <span>Business type</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as BusinessType)}
+                required
+              >
+                <option value="" disabled>
+                  Select type…
+                </option>
+                {BUSINESS_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <button type="submit" className="auth-form__submit" disabled={busy}>
               {busy ? "Creating…" : "Create merchant branch"}
@@ -138,7 +156,8 @@ export function BusinessBranchesPage() {
                 <div>
                   <strong>{b.businessName}</strong>
                   <small>
-                    {b.merchantCode} · {b.status}
+                    {b.merchantCode}
+                    {b.category ? ` · ${businessTypeLabel(b.category)}` : ""} · {b.status}
                   </small>
                 </div>
                 <span>{formatRwf(b.totalReceivedRwf)}</span>

@@ -5,7 +5,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { BusinessMemberRole } from '@fastpay/schemas';
+import { BusinessMemberRole, BusinessType } from '@fastpay/schemas';
 
 export class CreateBusinessInternalDto {
   @IsString()
@@ -15,6 +15,9 @@ export class CreateBusinessInternalDto {
   @MinLength(2)
   companyName!: string;
 
+  @IsEnum(BusinessType)
+  businessType!: BusinessType;
+
   @IsOptional()
   @IsString()
   industry?: string;
@@ -33,7 +36,27 @@ export class CreateBusinessInternalDto {
 
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
   country?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
+
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 export class UpdateBusinessDto {
@@ -43,6 +66,10 @@ export class UpdateBusinessDto {
   companyName?: string;
 
   @IsOptional()
+  @IsEnum(BusinessType)
+  businessType?: BusinessType;
+
+  @IsOptional()
   @IsString()
   industry?: string;
 
@@ -60,7 +87,27 @@ export class UpdateBusinessDto {
 
   @IsOptional()
   @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
   country?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
+
+  @IsOptional()
+  @IsString()
+  registrationNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
 
 export class LinkMerchantDto {
@@ -75,8 +122,8 @@ export class CreateBranchDto {
   branchName!: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsEnum(BusinessType)
+  category?: BusinessType;
 
   @IsOptional()
   @IsString()

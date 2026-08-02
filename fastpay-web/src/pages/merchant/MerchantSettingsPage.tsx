@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMerchantAuth } from "../../context/MerchantAuthContext";
 import { fetchMerchantOrg, updateMerchantOrg } from "../../lib/merchant-api";
+import { BUSINESS_TYPE_OPTIONS, type BusinessType } from "../../lib/business-types";
 
 export function MerchantSettingsPage() {
   const { user } = useMerchantAuth();
   const [businessName, setBusinessName] = useState(user?.businessName ?? "");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<BusinessType | "">("");
   const [businessPhone, setBusinessPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [taxId, setTaxId] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,9 +20,11 @@ export function MerchantSettingsPage() {
       .then((org) => {
         if (!org) return;
         setBusinessName(org.businessName);
-        setCategory(org.category ?? "");
+        setCategory((org.category as BusinessType) ?? "");
         setBusinessPhone(org.businessPhone ?? "");
         setAddress(org.address ?? "");
+        setCity(org.city ?? "");
+        setTaxId(org.taxId ?? "");
       })
       .catch(() => undefined);
   }, []);
@@ -29,7 +34,14 @@ export function MerchantSettingsPage() {
     setMsg(null);
     setError(null);
     try {
-      await updateMerchantOrg({ businessName, category, businessPhone, address });
+      await updateMerchantOrg({
+        businessName,
+        category: category || undefined,
+        businessPhone,
+        address,
+        city,
+        taxId,
+      });
       setMsg("Business profile updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
@@ -40,7 +52,9 @@ export function MerchantSettingsPage() {
     <div className="merchant-page">
       <header className="merchant-page__head">
         <h1>Settings</h1>
-        <p className="merchant-page__sub">Merchant code <strong>{user?.merchantCode}</strong> cannot be changed.</p>
+        <p className="merchant-page__sub">
+          Merchant code <strong>{user?.merchantCode}</strong> cannot be changed.
+        </p>
       </header>
 
       <section className="wapp-card wapp-form-card">
@@ -52,8 +66,18 @@ export function MerchantSettingsPage() {
             <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} />
           </label>
           <label>
-            <span>Category</span>
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Retail, utilities, …" />
+            <span>Business type</span>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as BusinessType)}
+            >
+              <option value="">Select type…</option>
+              {BUSINESS_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             <span>Business phone</span>
@@ -63,7 +87,19 @@ export function MerchantSettingsPage() {
             <span>Address</span>
             <input value={address} onChange={(e) => setAddress(e.target.value)} />
           </label>
-          <button type="submit" className="auth-form__submit">Save changes</button>
+          <div className="settings-selects">
+            <label>
+              <span>City</span>
+              <input value={city} onChange={(e) => setCity(e.target.value)} />
+            </label>
+            <label>
+              <span>TIN</span>
+              <input value={taxId} onChange={(e) => setTaxId(e.target.value)} />
+            </label>
+          </div>
+          <button type="submit" className="auth-form__submit">
+            Save changes
+          </button>
         </form>
       </section>
 

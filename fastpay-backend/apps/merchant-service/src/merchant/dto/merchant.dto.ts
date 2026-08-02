@@ -19,6 +19,7 @@ import {
   MerchantPaymentChannel,
   MerchantProductStatus,
   MerchantStockMovementType,
+  BusinessType,
 } from '@fastpay/schemas';
 
 export class CreateInvoiceDto {
@@ -43,8 +44,8 @@ export class UpdateOrgDto {
   businessName?: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsEnum(BusinessType)
+  category?: BusinessType;
 
   @IsOptional()
   @IsString()
@@ -57,6 +58,14 @@ export class UpdateOrgDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
 }
 
 export class CreateOrgInternalDto {
@@ -68,8 +77,8 @@ export class CreateOrgInternalDto {
   businessName!: string;
 
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsEnum(BusinessType)
+  category?: BusinessType;
 
   @IsOptional()
   @IsString()
@@ -78,6 +87,18 @@ export class CreateOrgInternalDto {
   @IsOptional()
   @IsString()
   businessPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  taxId?: string;
 
   @IsOptional()
   @IsString()

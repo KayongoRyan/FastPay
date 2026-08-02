@@ -7,6 +7,13 @@ export interface AuthUser {
   kycStatus: string;
   biometricEnabled: boolean;
   isActive: boolean;
+  accountType?: "consumer" | "merchant" | "business";
+  merchantOrgId?: string;
+  merchantCode?: string;
+  businessName?: string;
+  businessOrgId?: string;
+  businessCode?: string;
+  companyName?: string;
 }
 
 export interface AuthTokens {

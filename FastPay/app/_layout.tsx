@@ -29,6 +29,8 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(main)" />
+        <Stack.Screen name="merchant" options={{ animation: "slide_from_right" }} />
+        <Stack.Screen name="business" options={{ animation: "slide_from_right" }} />
         <Stack.Screen name="bank-pay" options={{ animation: "slide_from_right" }} />
         <Stack.Screen name="forgot-passcode" options={{ animation: "slide_from_right" }} />
         <Stack.Screen name="biometric-unlock" />

@@ -19,6 +19,8 @@ export type MerchantOrg = {
   businessEmail?: string;
   businessPhone?: string;
   address?: string;
+  city?: string;
+  taxId?: string;
   status: string;
   totalReceivedRwf: number;
   createdAt?: string;
@@ -179,7 +181,12 @@ export function registerMerchant(input: {
   email?: string;
   phone?: string;
   businessName: string;
-  category?: string;
+  category: string;
+  businessEmail?: string;
+  businessPhone?: string;
+  address?: string;
+  city?: string;
+  taxId?: string;
 }) {
   return requestJson<{ user: MerchantUser; tokens: { accessToken: string; refreshToken: string } }>(
     "/auth/register/merchant",

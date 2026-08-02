@@ -9,6 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import {
+  BusinessType,
   MerchantOrg,
   MerchantOrgDocument,
   MerchantOrgStatus,
@@ -29,9 +30,12 @@ export class MerchantOrgService {
   async createOrg(input: {
     ownerUserId: string;
     businessName: string;
-    category?: string;
+    category?: BusinessType | string;
     businessEmail?: string;
     businessPhone?: string;
+    address?: string;
+    city?: string;
+    taxId?: string;
     businessOrgId?: string;
   }) {
     let merchantCode = randomMerchantCode();
@@ -45,9 +49,12 @@ export class MerchantOrgService {
       ownerUserId: input.ownerUserId,
       merchantCode,
       businessName: input.businessName,
-      category: input.category,
+      category: input.category as BusinessType | undefined,
       businessEmail: input.businessEmail,
       businessPhone: input.businessPhone,
+      address: input.address?.trim(),
+      city: input.city?.trim(),
+      taxId: input.taxId?.trim().toUpperCase(),
       businessOrgId: input.businessOrgId
         ? new Types.ObjectId(input.businessOrgId)
         : undefined,
@@ -132,16 +139,22 @@ export class MerchantOrgService {
     ownerUserId: string,
     patch: {
       businessName?: string;
-      category?: string;
+      category?: BusinessType | string;
       businessEmail?: string;
       businessPhone?: string;
       address?: string;
+      city?: string;
+      taxId?: string;
     },
   ) {
     const current = await this.getOrgForOwner(ownerUserId);
     if (!current) return null;
+    const $set: Record<string, unknown> = { ...patch };
+    if (patch.taxId !== undefined) {
+      $set.taxId = patch.taxId.trim().toUpperCase();
+    }
     const org = await this.orgModel
-      .findByIdAndUpdate(current.orgId, { $set: patch }, { new: true })
+      .findByIdAndUpdate(current.orgId, { $set }, { new: true })
       .exec();
     if (!org) return null;
     return this.toView(org);
@@ -165,6 +178,8 @@ export class MerchantOrgService {
       businessEmail: org.businessEmail,
       businessPhone: org.businessPhone,
       address: org.address,
+      city: org.city,
+      taxId: org.taxId,
       status: org.status,
       totalReceivedRwf: org.totalReceivedRwf,
       businessOrgId: org.businessOrgId?.toString(),
