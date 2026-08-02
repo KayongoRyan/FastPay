@@ -18,7 +18,8 @@ export class MerchantOrg {
   @Prop({ required: true, trim: true })
   businessName!: string;
 
-  @Prop({ trim: true })
+  /** Shop vertical — BusinessType value (retail, garage, …). */
+  @Prop({ trim: true, index: true })
   category?: string;
 
   @Prop({ trim: true })
@@ -29,6 +30,12 @@ export class MerchantOrg {
 
   @Prop({ trim: true })
   address?: string;
+
+  @Prop({ trim: true })
+  city?: string;
+
+  @Prop({ trim: true, uppercase: true })
+  taxId?: string;
 
   @Prop({ enum: Object.values(MerchantOrgStatus), default: MerchantOrgStatus.ACTIVE })
   status!: MerchantOrgStatus;

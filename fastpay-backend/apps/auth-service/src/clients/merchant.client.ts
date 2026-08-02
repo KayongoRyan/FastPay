@@ -24,9 +24,12 @@ export class MerchantClient {
   async createOrg(input: {
     ownerUserId: string;
     businessName: string;
-    category?: string;
+    category: string;
     businessEmail?: string;
     businessPhone?: string;
+    address?: string;
+    city?: string;
+    taxId?: string;
   }): Promise<CreateMerchantOrgResult | null> {
     try {
       const response = await fetch(`${this.baseUrl}/internal/orgs`, {

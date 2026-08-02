@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import {
+  BUSINESS_TYPE_LABELS,
   BusinessMember,
   BusinessMemberDocument,
   BusinessMemberRole,
@@ -15,6 +16,7 @@ import {
   BusinessOrg,
   BusinessOrgDocument,
   BusinessOrgStatus,
+  BusinessType,
 } from '@fastpay/schemas';
 
 import { MerchantBridgeClient } from './merchant-bridge.client';
@@ -37,11 +39,17 @@ export class BusinessOrgService {
   async createOrg(input: {
     ownerUserId: string;
     companyName: string;
+    businessType: BusinessType;
     industry?: string;
     companyEmail?: string;
     companyPhone?: string;
     address?: string;
+    city?: string;
     country?: string;
+    taxId?: string;
+    registrationNumber?: string;
+    website?: string;
+    description?: string;
   }) {
     let businessCode = randomBusinessCode();
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -50,15 +58,26 @@ export class BusinessOrgService {
       businessCode = randomBusinessCode();
     }
 
+    const industry =
+      input.industry?.trim() ||
+      BUSINESS_TYPE_LABELS[input.businessType] ||
+      input.businessType;
+
     const org = await this.orgModel.create({
       ownerUserId: input.ownerUserId,
       businessCode,
       companyName: input.companyName.trim(),
-      industry: input.industry?.trim(),
+      businessType: input.businessType,
+      industry,
       companyEmail: input.companyEmail?.trim().toLowerCase(),
       companyPhone: input.companyPhone?.trim(),
       address: input.address?.trim(),
+      city: input.city?.trim(),
       country: input.country?.trim() || 'RW',
+      taxId: input.taxId?.trim().toUpperCase(),
+      registrationNumber: input.registrationNumber?.trim().toUpperCase(),
+      website: input.website?.trim(),
+      description: input.description?.trim(),
       status: BusinessOrgStatus.ACTIVE,
     });
 
@@ -90,15 +109,35 @@ export class BusinessOrgService {
     ownerUserId: string,
     patch: {
       companyName?: string;
+      businessType?: BusinessType;
       industry?: string;
       companyEmail?: string;
       companyPhone?: string;
       address?: string;
+      city?: string;
       country?: string;
+      taxId?: string;
+      registrationNumber?: string;
+      website?: string;
+      description?: string;
     },
   ) {
+    const $set: Record<string, unknown> = { ...patch };
+    if (patch.taxId !== undefined) {
+      $set.taxId = patch.taxId.trim().toUpperCase();
+    }
+    if (patch.registrationNumber !== undefined) {
+      $set.registrationNumber = patch.registrationNumber.trim().toUpperCase();
+    }
+    if (patch.businessType && !patch.industry) {
+      $set.industry = BUSINESS_TYPE_LABELS[patch.businessType];
+    }
+    if (patch.companyEmail !== undefined) {
+      $set.companyEmail = patch.companyEmail.trim().toLowerCase();
+    }
+
     const org = await this.orgModel
-      .findOneAndUpdate({ ownerUserId }, { $set: patch }, { new: true })
+      .findOneAndUpdate({ ownerUserId }, { $set }, { new: true })
       .exec();
     if (!org) throw new NotFoundException('Business organization not found');
     return this.toView(org);
@@ -153,7 +192,7 @@ export class BusinessOrgService {
     ownerUserId: string,
     input: {
       branchName: string;
-      category?: string;
+      category?: BusinessType | string;
       businessEmail?: string;
       businessPhone?: string;
     },
@@ -163,7 +202,7 @@ export class BusinessOrgService {
       ownerUserId,
       businessOrgId: org.orgId,
       businessName: input.branchName.trim(),
-      category: input.category?.trim(),
+      category: input.category,
       businessEmail: input.businessEmail?.trim(),
       businessPhone: input.businessPhone?.trim(),
     });
@@ -225,11 +264,17 @@ export class BusinessOrgService {
       orgId: org._id.toString(),
       businessCode: org.businessCode,
       companyName: org.companyName,
+      businessType: org.businessType,
       industry: org.industry,
       companyEmail: org.companyEmail,
       companyPhone: org.companyPhone,
       address: org.address,
+      city: org.city,
       country: org.country,
+      taxId: org.taxId,
+      registrationNumber: org.registrationNumber,
+      website: org.website,
+      description: org.description,
       status: org.status,
       createdAt: org.createdAt?.toISOString(),
     };

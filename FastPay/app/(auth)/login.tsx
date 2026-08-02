@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Keyboard, StyleSheet, Text, View } from "react-native";
 
 import { FastPayLogo } from "@/components/FastPayLogo";
+import { PortalAuthLinks } from "@/components/portal/PortalStepBar";
 import { AuthFooter } from "@/components/ui/AuthFooter";
 import { Input } from "@/components/ui/Input";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
@@ -46,15 +47,22 @@ export default function LoginScreen() {
     <Screen
       centered
       footer={
-        <AuthFooter
-          text="Don't have an account?"
-          linkText="Sign Up"
-          href="/register"
-        />
+        <View>
+          <AuthFooter
+            text="Don't have an account?"
+            linkText="Sign Up"
+            href="/register"
+          />
+          <PortalAuthLinks
+            onMerchant={() => router.push("/merchant/login" as Href)}
+            onBusiness={() => router.push("/business/login" as Href)}
+          />
+        </View>
       }
     >
       <View style={styles.inner}>
         <FastPayLogo size={40} />
+        <Text style={styles.subtitle}>Personal wallet</Text>
         <View style={styles.form}>
           <Input
             placeholder="Email or Phone Number"
@@ -94,6 +102,14 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: "center",
     gap: spacing.xl,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginTop: -spacing.md,
   },
   form: {
     width: "100%",

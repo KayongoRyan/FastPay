@@ -169,9 +169,12 @@ export class AuthService {
       const org = await this.merchantClient.createOrg({
         ownerUserId: user._id.toString(),
         businessName: dto.businessName.trim(),
-        category: dto.category?.trim(),
-        businessEmail: dto.businessEmail?.trim(),
-        businessPhone: dto.businessPhone?.trim(),
+        category: dto.category,
+        businessEmail: dto.businessEmail?.trim() || dto.email?.trim().toLowerCase(),
+        businessPhone: dto.businessPhone?.trim() || dto.phone?.trim(),
+        address: dto.address?.trim(),
+        city: dto.city?.trim(),
+        taxId: dto.taxId?.trim(),
       });
 
       if (org) {
@@ -226,11 +229,17 @@ export class AuthService {
       const org = await this.businessClient.createOrg({
         ownerUserId: user._id.toString(),
         companyName: dto.companyName.trim(),
+        businessType: dto.businessType,
         industry: dto.industry?.trim(),
         companyEmail: dto.companyEmail?.trim() || dto.email?.trim().toLowerCase(),
         companyPhone: dto.companyPhone?.trim() || dto.phone?.trim(),
         address: dto.address?.trim(),
+        city: dto.city?.trim(),
         country: dto.country?.trim(),
+        taxId: dto.taxId?.trim(),
+        registrationNumber: dto.registrationNumber?.trim(),
+        website: dto.website?.trim(),
+        description: dto.description?.trim(),
       });
 
       if (org) {

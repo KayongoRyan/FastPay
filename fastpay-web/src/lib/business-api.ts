@@ -15,11 +15,17 @@ export type BusinessOrg = {
   orgId: string;
   businessCode: string;
   companyName: string;
+  businessType?: string;
   industry?: string;
   companyEmail?: string;
   companyPhone?: string;
   address?: string;
+  city?: string;
   country?: string;
+  taxId?: string;
+  registrationNumber?: string;
+  website?: string;
+  description?: string;
   status: string;
   createdAt?: string;
 };
@@ -160,9 +166,17 @@ export function registerBusiness(input: {
   email?: string;
   phone?: string;
   companyName: string;
+  businessType: string;
   industry?: string;
   companyEmail?: string;
   companyPhone?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  taxId?: string;
+  registrationNumber?: string;
+  website?: string;
+  description?: string;
 }) {
   return requestJson<{ user: BusinessUser; tokens: { accessToken: string; refreshToken: string } }>(
     "/auth/register/business",

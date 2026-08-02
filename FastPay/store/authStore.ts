@@ -221,6 +221,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
       try {
         const session = await loginUser(input);
+        const accountType = session.user.accountType ?? "consumer";
+        if (accountType === "merchant") {
+          throw new Error(
+            "This is a merchant account. Open Merchant portal to sign in.",
+          );
+        }
+        if (accountType === "business") {
+          throw new Error(
+            "This is a business HQ account. Open Business portal to sign in.",
+          );
+        }
         await saveAuthSession(session.user, session.tokens);
         await setBiometricLockEnabled(false);
         set({

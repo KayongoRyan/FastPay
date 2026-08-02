@@ -24,11 +24,17 @@ export class BusinessClient {
   async createOrg(input: {
     ownerUserId: string;
     companyName: string;
+    businessType: string;
     industry?: string;
     companyEmail?: string;
     companyPhone?: string;
     address?: string;
+    city?: string;
     country?: string;
+    taxId?: string;
+    registrationNumber?: string;
+    website?: string;
+    description?: string;
   }): Promise<CreateBusinessOrgResult | null> {
     try {
       const response = await fetch(`${this.baseUrl}/internal/orgs`, {
