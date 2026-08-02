@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { FileText, Home, Settings } from "lucide-react-native";
+import { FileText, Handshake, Home, Settings } from "lucide-react-native";
 import { Platform, View } from "react-native";
 
 import {
@@ -11,7 +11,8 @@ import { colors } from "@/theme/colors";
 
 const MERCHANT_TABS = [
   { name: "index", icon: Home },
-  { name: "invoices", icon: FileText, center: true },
+  { name: "invoices", icon: FileText },
+  { name: "escrow", icon: Handshake, center: true },
   { name: "settings", icon: Settings },
 ] as const;
 
@@ -45,6 +46,7 @@ export default function MerchantAppLayout() {
       >
         <Tabs.Screen name="index" options={{ title: "Home" }} />
         <Tabs.Screen name="invoices" options={{ title: "Invoices" }} />
+        <Tabs.Screen name="escrow" options={{ title: "Escrow" }} />
         <Tabs.Screen name="settings" options={{ title: "Settings" }} />
       </Tabs>
     </View>

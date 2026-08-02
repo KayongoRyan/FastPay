@@ -115,4 +115,50 @@ export function createMerchantInvoice(input: { amountRwf: number; description?: 
   });
 }
 
+export type MerchantEscrow = {
+  id: string;
+  escrowCode: string;
+  amountRwf: number;
+  status: string;
+  title?: string;
+  description?: string;
+  sellerMerchantCode?: string;
+  sellerBusinessName?: string;
+  shippingNote?: string;
+  disputeReason?: string;
+  createdAt?: string;
+  fundedAt?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+  releasedAt?: string;
+};
+
+export function listMerchantEscrows() {
+  return portalRequest<MerchantEscrow[]>("merchant", "/escrow/merchant", { auth: true });
+}
+
+export function shipMerchantEscrow(id: string, shippingNote?: string) {
+  return portalRequest<MerchantEscrow>("merchant", `/escrow/${id}/ship`, {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify({ shippingNote }),
+  });
+}
+
+export function deliverMerchantEscrow(id: string) {
+  return portalRequest<MerchantEscrow>("merchant", `/escrow/${id}/deliver`, {
+    method: "POST",
+    auth: true,
+    body: "{}",
+  });
+}
+
+export function disputeMerchantEscrow(id: string, reason: string) {
+  return portalRequest<MerchantEscrow>("merchant", `/escrow/${id}/dispute`, {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify({ reason }),
+  });
+}
+
 export type { PortalUser };

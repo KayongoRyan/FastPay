@@ -10,6 +10,8 @@ import {
   MerchantGoalSchema,
   MerchantInvoice,
   MerchantInvoiceSchema,
+  MerchantOrder,
+  MerchantOrderSchema,
   MerchantOrg,
   MerchantOrgSchema,
   MerchantPayrollEntry,
@@ -29,6 +31,7 @@ import { MerchantGoalsService } from './merchant-goals.service';
 import { MerchantHrService } from './merchant-hr.service';
 import { MerchantInventoryService } from './merchant-inventory.service';
 import { MerchantInvoiceService } from './merchant-invoice.service';
+import { MerchantOrderService } from './merchant-order.service';
 import { MerchantOrgService } from './merchant-org.service';
 
 @Module({
@@ -45,6 +48,7 @@ import { MerchantOrgService } from './merchant-org.service';
       { name: MerchantEmployee.name, schema: MerchantEmployeeSchema },
       { name: MerchantPayrollEntry.name, schema: MerchantPayrollEntrySchema },
       { name: MerchantGoal.name, schema: MerchantGoalSchema },
+      { name: MerchantOrder.name, schema: MerchantOrderSchema },
     ]),
   ],
   controllers: [MerchantController, InternalMerchantController],
@@ -54,6 +58,7 @@ import { MerchantOrgService } from './merchant-org.service';
     MerchantInventoryService,
     MerchantHrService,
     MerchantGoalsService,
+    MerchantOrderService,
   ],
   exports: [
     MerchantOrgService,
@@ -61,6 +66,7 @@ import { MerchantOrgService } from './merchant-org.service';
     MerchantInventoryService,
     MerchantHrService,
     MerchantGoalsService,
+    MerchantOrderService,
   ],
 })
 export class MerchantModule {}
