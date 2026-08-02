@@ -11,7 +11,7 @@ fastpay-backend/
 │   ├── auth-service/
 │   ├── wallet-service/
 │   ├── payment-service/     # Offline relay + MongoDB
-│   ├── blockchain-service/  # Stellar / Horizon
+│   ├── blockchain-service/  # Stellar + ETH/Polygon/Solana/Base
 │   ├── fraud-service/       # Compliance / Chainalysis mock
 │   └── ...                  # family, escrow, merchant, etc.
 ├── libs/
@@ -162,6 +162,7 @@ Audit events are written to `audit_logs` on register, login, refresh, logout, an
 | Path | Service |
 |------|---------|
 | `/stellar/*` | blockchain-service |
+| `/blockchain/*` | blockchain-service (EVM + Solana) |
 | `/offline/*`, `/payments/*`, `/momo/*` | payment-service |
 | `/wallet/*` | wallet-service |
 | `/family/*` | family-service |

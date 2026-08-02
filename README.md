@@ -73,7 +73,7 @@ npm run mongo:certs
 npm run docker:up               # or npm run docker:memory on Windows
 npm run start:auth              # :3001
 npm run start:gateway           # :3000
-npm run start:blockchain        # :3009 — required before wallet
+npm run start:blockchain        # :3009 — Stellar + ETH/Polygon/Solana/Base
 npm run start:wallet            # :3002
 npm run start:payment           # :3003
 npm run start:family            # :3004
@@ -116,6 +116,7 @@ See `fastpay-backend/README.md` for all services, Mongo modes, and troubleshooti
 | **Escrow** | `/escrow/*` | Buyer funds → merchant ships → buyer confirms → settlement. Statuses: pending, paid, shipped, delivered, released, disputed |
 | **Wallet insurance** | `/insurance/*` | Enable → risk engine → premium → policy; claims: submitted → investigating → approved → paid |
 | **Merchant orders** | `/merchant/orders` (+ escrow internal) | Fulfillment linked to escrow contracts |
+| **Blockchain** | `/stellar/*`, `/blockchain/*` | Stellar (Horizon) + EVM/Solana: RPC manager, broadcast, contracts, events, gas |
 
 ### Option B — local Kubernetes
 
