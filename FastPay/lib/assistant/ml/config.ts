@@ -52,7 +52,7 @@ export const ALLOWED_HREFS = new Set([
   "/services/family-wallet",
   "/services/bill",
   "/services/escrow",
-  "/services/insurance-plans",
+  "/services/insurance",
   "/services/voucher",
   "/convert",
   "/bank-pay",

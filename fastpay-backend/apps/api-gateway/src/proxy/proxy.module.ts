@@ -23,7 +23,8 @@ type GatewayRoute = {
     | 'kycUrl'
     | 'assistantUrl'
     | 'auditUrl'
-    | 'businessUrl';
+    | 'businessUrl'
+    | 'insuranceUrl';
 };
 
 const ROUTES: GatewayRoute[] = [
@@ -40,9 +41,10 @@ const ROUTES: GatewayRoute[] = [
   { path: 'treasury', targetKey: 'treasuryUrl' },
   { path: 'compliance', targetKey: 'fraudUrl' },
   { path: 'kyc', targetKey: 'kycUrl' },
+  { path: 'insurance', targetKey: 'insuranceUrl' },
   { path: 'assistant', targetKey: 'assistantUrl' },
-  { path: 'security', targetKey: 'auditUrl' },
   { path: 'audit', targetKey: 'auditUrl' },
+  { path: 'security', targetKey: 'auditUrl' },
 ];
 
 function createRouteProxy(

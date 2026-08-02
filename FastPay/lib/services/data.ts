@@ -77,7 +77,7 @@ export const MORE_SERVICES: ServiceItem[] = [
   },
   {
     id: "insurance",
-    label: "Insurance",
+    label: "Wallet Insurance",
     icon: ShieldCheck,
     href: "/services/insurance",
   },

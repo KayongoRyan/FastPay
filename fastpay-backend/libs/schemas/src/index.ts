@@ -15,6 +15,9 @@ export * from './business/business-member.schema';
 
 export * from './escrow/escrow-contract.schema';
 
+export * from './insurance/insurance-policy.schema';
+export * from './insurance/insurance-claim.schema';
+
 export * from './wallet/wallet.schema';
 
 export * from './payment/transaction.schema';
