@@ -34,7 +34,12 @@ import { MerchantGoalsService } from './merchant-goals.service';
 import { MerchantHrService } from './merchant-hr.service';
 import { MerchantInventoryService } from './merchant-inventory.service';
 import { MerchantInvoiceService } from './merchant-invoice.service';
+import { MerchantOrderService } from './merchant-order.service';
 import { MerchantOrgService } from './merchant-org.service';
+import {
+  CreateOrderInternalDto,
+  UpdateOrderStatusInternalDto,
+} from './dto/order-internal.dto';
 
 @Controller('merchant')
 export class MerchantController {
@@ -44,6 +49,7 @@ export class MerchantController {
     private readonly inventoryService: MerchantInventoryService,
     private readonly hrService: MerchantHrService,
     private readonly goalsService: MerchantGoalsService,
+    private readonly orderService: MerchantOrderService,
   ) {}
 
   @Get('lookup/:code')
@@ -95,6 +101,14 @@ export class MerchantController {
   @UseGuards(MerchantAuthGuard)
   transactions(@CurrentUserId() userId: string) {
     return this.invoiceService.listTransactions(userId);
+  }
+
+  @Get('orders')
+  @UseGuards(MerchantAuthGuard)
+  async listOrders(@CurrentUserId() userId: string) {
+    const org = await this.orgService.getOrgForOwner(userId);
+    if (!org) return [];
+    return this.orderService.listForMerchant(org.orgId);
   }
 
   // ── Inventory ──────────────────────────────────────────────
@@ -233,6 +247,7 @@ export class InternalMerchantController {
   constructor(
     private readonly orgService: MerchantOrgService,
     private readonly invoiceService: MerchantInvoiceService,
+    private readonly orderService: MerchantOrderService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -277,6 +292,29 @@ export class InternalMerchantController {
   ) {
     this.assertSecret(secret);
     return this.invoiceService.recordPayment(dto);
+  }
+
+  @Post('orders')
+  createOrder(
+    @Headers('x-internal-secret') secret: string | undefined,
+    @Body() dto: CreateOrderInternalDto,
+  ) {
+    this.assertSecret(secret);
+    return this.orderService.createInternal(dto);
+  }
+
+  @Post('orders/:id/status')
+  updateOrderStatus(
+    @Headers('x-internal-secret') secret: string | undefined,
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusInternalDto,
+  ) {
+    this.assertSecret(secret);
+    return this.orderService.updateStatusInternal({
+      orderId: id,
+      status: dto.status,
+      shippingNote: dto.shippingNote,
+    });
   }
 
   @Get('lookup/:code')

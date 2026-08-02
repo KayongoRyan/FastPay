@@ -8,9 +8,12 @@ export * from './merchant/merchant-stock-movement.schema';
 export * from './merchant/merchant-employee.schema';
 export * from './merchant/merchant-payroll.schema';
 export * from './merchant/merchant-goal.schema';
+export * from './merchant/merchant-order.schema';
 
 export * from './business/business-org.schema';
 export * from './business/business-member.schema';
+
+export * from './escrow/escrow-contract.schema';
 
 export * from './wallet/wallet.schema';
 

@@ -5,6 +5,7 @@ export enum MerchantPaymentChannel {
   BANK_PAY = 'bank_pay',
   INVOICE = 'invoice',
   QR = 'qr',
+  ESCROW = 'escrow',
 }
 
 @Schema({ collection: 'merchant_transactions', timestamps: { createdAt: true, updatedAt: false } })
