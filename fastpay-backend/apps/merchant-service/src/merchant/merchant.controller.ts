@@ -22,6 +22,7 @@ import {
   CreateOrgInternalDto,
   CreatePayrollDto,
   CreateProductDto,
+  LinkBusinessInternalDto,
   RecordPaymentInternalDto,
   StockMovementDto,
   UpdateEmployeeDto,
@@ -249,6 +250,24 @@ export class InternalMerchantController {
   ) {
     this.assertSecret(secret);
     return this.orgService.createOrg(dto);
+  }
+
+  @Post('orgs/link-business')
+  linkBusiness(
+    @Headers('x-internal-secret') secret: string | undefined,
+    @Body() dto: LinkBusinessInternalDto,
+  ) {
+    this.assertSecret(secret);
+    return this.orgService.linkToBusiness(dto);
+  }
+
+  @Get('orgs/by-business/:businessOrgId')
+  listByBusiness(
+    @Headers('x-internal-secret') secret: string | undefined,
+    @Param('businessOrgId') businessOrgId: string,
+  ) {
+    this.assertSecret(secret);
+    return this.orgService.listByBusinessOrgId(businessOrgId);
   }
 
   @Post('payments')

@@ -5,6 +5,7 @@ export interface JwtAccessPayload {
   type: 'access';
   accountType?: AccountType;
   merchantOrgId?: string;
+  businessOrgId?: string;
 }
 
 export interface JwtRefreshPayload {
@@ -17,4 +18,5 @@ export interface AuthenticatedUser {
   userId: string;
   accountType?: AccountType;
   merchantOrgId?: string;
+  businessOrgId?: string;
 }

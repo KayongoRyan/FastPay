@@ -10,6 +10,7 @@ export enum KycStatus {
 export enum AccountType {
   CONSUMER = 'consumer',
   MERCHANT = 'merchant',
+  BUSINESS = 'business',
 }
 
 @Schema({ collection: 'users', timestamps: true })
@@ -58,6 +59,9 @@ export class User {
 
   @Prop({ type: String, ref: 'MerchantOrg' })
   merchantOrgId?: string;
+
+  @Prop({ type: String, ref: 'BusinessOrg' })
+  businessOrgId?: string;
 
   createdAt?: Date;
   updatedAt?: Date;

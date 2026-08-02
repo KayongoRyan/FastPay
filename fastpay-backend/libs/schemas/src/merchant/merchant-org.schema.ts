@@ -39,6 +39,10 @@ export class MerchantOrg {
   @Prop()
   settlementPublicKey?: string;
 
+  /** Optional link to a parent business (HQ) org */
+  @Prop({ type: Types.ObjectId, ref: 'BusinessOrg', index: true })
+  businessOrgId?: Types.ObjectId;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -46,4 +50,5 @@ export class MerchantOrg {
 export type MerchantOrgDocument = HydratedDocument<MerchantOrg>;
 export const MerchantOrgSchema = SchemaFactory.createForClass(MerchantOrg);
 
-MerchantOrgSchema.index({ ownerUserId: 1 }, { unique: true });
+MerchantOrgSchema.index({ ownerUserId: 1 });
+MerchantOrgSchema.index({ businessOrgId: 1, createdAt: -1 });

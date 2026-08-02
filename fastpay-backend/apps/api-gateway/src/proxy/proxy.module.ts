@@ -22,7 +22,8 @@ type GatewayRoute = {
     | 'fraudUrl'
     | 'kycUrl'
     | 'assistantUrl'
-    | 'auditUrl';
+    | 'auditUrl'
+    | 'businessUrl';
 };
 
 const ROUTES: GatewayRoute[] = [
@@ -35,6 +36,7 @@ const ROUTES: GatewayRoute[] = [
   { path: 'family', targetKey: 'familyUrl' },
   { path: 'escrow', targetKey: 'escrowUrl' },
   { path: 'merchant', targetKey: 'merchantUrl' },
+  { path: 'business', targetKey: 'businessUrl' },
   { path: 'treasury', targetKey: 'treasuryUrl' },
   { path: 'compliance', targetKey: 'fraudUrl' },
   { path: 'kyc', targetKey: 'kycUrl' },

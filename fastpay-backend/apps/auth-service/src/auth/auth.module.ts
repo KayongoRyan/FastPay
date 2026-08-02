@@ -31,6 +31,7 @@ import { SessionService } from './security/session.service';
 import { VerificationService } from './verification/verification.service';
 import { WalletClient } from '../clients/wallet.client';
 import { MerchantClient } from '../clients/merchant.client';
+import { BusinessClient } from '../clients/business.client';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { MerchantClient } from '../clients/merchant.client';
     SecurityAlertService,
     WalletClient,
     MerchantClient,
+    BusinessClient,
   ],
   exports: [AuthService, JwtModule, PassportModule],
 })
