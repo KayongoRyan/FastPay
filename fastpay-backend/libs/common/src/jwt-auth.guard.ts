@@ -40,6 +40,7 @@ export class JwtAuthGuard implements CanActivate {
       userId: payload.sub,
       accountType: payload.accountType ?? 'consumer',
       merchantOrgId: payload.merchantOrgId,
+      businessOrgId: payload.businessOrgId,
     };
     return true;
   }

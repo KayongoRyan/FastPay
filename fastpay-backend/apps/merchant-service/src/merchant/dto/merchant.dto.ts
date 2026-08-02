@@ -78,6 +78,21 @@ export class CreateOrgInternalDto {
   @IsOptional()
   @IsString()
   businessPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  businessOrgId?: string;
+}
+
+export class LinkBusinessInternalDto {
+  @IsString()
+  merchantCode!: string;
+
+  @IsString()
+  businessOrgId!: string;
+
+  @IsString()
+  ownerUserId!: string;
 }
 
 export class RecordPaymentInternalDto {

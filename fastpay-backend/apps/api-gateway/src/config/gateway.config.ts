@@ -8,6 +8,7 @@ export default registerAs('gateway', () => ({
   escrowUrl: process.env.ESCROW_SERVICE_URL ?? 'http://localhost:3005',
   merchantUrl: process.env.MERCHANT_SERVICE_URL ?? 'http://localhost:3006',
   treasuryUrl: process.env.TREASURY_SERVICE_URL ?? 'http://localhost:3007',
+  businessUrl: process.env.BUSINESS_SERVICE_URL ?? 'http://localhost:3008',
   blockchainUrl:
     process.env.BLOCKCHAIN_SERVICE_URL ?? 'http://localhost:3009',
   fraudUrl: process.env.FRAUD_SERVICE_URL ?? 'http://localhost:3011',

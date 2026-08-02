@@ -38,6 +38,8 @@ import { SessionService } from './security/session.service';
 import { verifyEd25519Signature } from './utils/ed25519.util';
 import { WalletClient } from '../clients/wallet.client';
 import { MerchantClient } from '../clients/merchant.client';
+import { BusinessClient } from '../clients/business.client';
+import { RegisterBusinessDto } from './dto/register-business.dto';
 
 export interface AuthTokens {
   accessToken: string;
@@ -59,6 +61,9 @@ export interface AuthUserResponse {
   merchantOrgId?: string;
   merchantCode?: string;
   businessName?: string;
+  businessOrgId?: string;
+  businessCode?: string;
+  companyName?: string;
 }
 
 @Injectable()
@@ -78,6 +83,7 @@ export class AuthService {
     private readonly securityAlert: SecurityAlertService,
     private readonly walletClient: WalletClient,
     private readonly merchantClient: MerchantClient,
+    private readonly businessClient: BusinessClient,
   ) {
     this.bcryptRounds = this.configService.getOrThrow<number>('auth.bcryptRounds');
     this.accessExpiresIn = this.configService.getOrThrow<string>(
@@ -188,6 +194,74 @@ export class AuthService {
       });
 
       return { user: this.toAuthUser(user, org?.merchantCode, dto.businessName), tokens };
+    } catch (error) {
+      if (this.isDuplicateKeyError(error)) {
+        throw new ConflictException('Phone or email already registered');
+      }
+      throw error;
+    }
+  }
+
+  async registerBusiness(
+    dto: RegisterBusinessDto,
+    context?: AuditContext,
+  ): Promise<{ user: AuthUserResponse; tokens: AuthTokens }> {
+    await this.rateLimiter.assertRegisterAllowed(context?.ipAddress);
+
+    if (!dto.phone && !dto.email) {
+      throw new ConflictException('Phone or email is required');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, this.bcryptRounds);
+
+    try {
+      const user = await this.userModel.create({
+        fullName: dto.fullName.trim(),
+        phone: dto.phone?.trim(),
+        email: dto.email?.trim().toLowerCase(),
+        passwordHash,
+        accountType: AccountType.BUSINESS,
+      });
+
+      const org = await this.businessClient.createOrg({
+        ownerUserId: user._id.toString(),
+        companyName: dto.companyName.trim(),
+        industry: dto.industry?.trim(),
+        companyEmail: dto.companyEmail?.trim() || dto.email?.trim().toLowerCase(),
+        companyPhone: dto.companyPhone?.trim() || dto.phone?.trim(),
+        address: dto.address?.trim(),
+        country: dto.country?.trim(),
+      });
+
+      if (org) {
+        user.businessOrgId = org.orgId;
+        await user.save();
+      }
+
+      const tokens = await this.issueTokens(user, context);
+
+      await this.auditLog.record({
+        action: AUTH_AUDIT_ACTIONS.REGISTER,
+        userId: user._id.toString(),
+        context,
+        details: {
+          email: user.email,
+          phone: user.phone,
+          accountType: AccountType.BUSINESS,
+          businessCode: org?.businessCode,
+        },
+      });
+
+      return {
+        user: this.toAuthUser(
+          user,
+          undefined,
+          undefined,
+          org?.businessCode,
+          org?.companyName ?? dto.companyName,
+        ),
+        tokens,
+      };
     } catch (error) {
       if (this.isDuplicateKeyError(error)) {
         throw new ConflictException('Phone or email already registered');
@@ -679,6 +753,7 @@ export class AuthService {
       type: 'access',
       accountType: user.accountType ?? AccountType.CONSUMER,
       ...(user.merchantOrgId ? { merchantOrgId: user.merchantOrgId } : {}),
+      ...(user.businessOrgId ? { businessOrgId: user.businessOrgId } : {}),
     };
     const refreshPayload: JwtRefreshPayload = {
       sub: userId,
@@ -735,6 +810,8 @@ export class AuthService {
     user: UserDocument,
     merchantCode?: string,
     businessName?: string,
+    businessCode?: string,
+    companyName?: string,
   ): AuthUserResponse {
     return {
       id: user._id.toString(),
@@ -749,6 +826,9 @@ export class AuthService {
       merchantOrgId: user.merchantOrgId,
       merchantCode,
       businessName,
+      businessOrgId: user.businessOrgId,
+      businessCode,
+      companyName,
     };
   }
 

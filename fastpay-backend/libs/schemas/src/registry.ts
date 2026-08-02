@@ -37,4 +37,6 @@ export const COLLECTION_REGISTRY: CollectionRegistryEntry[] = [
   { collection: 'merchant_employees', service: 'merchant-service', description: 'Merchant staff roster and salary config' },
   { collection: 'merchant_payroll_entries', service: 'merchant-service', description: 'Employee payroll periods and payments' },
   { collection: 'merchant_goals', service: 'merchant-service', description: 'Short and long-term merchant business goals' },
+  { collection: 'business_orgs', service: 'business-service', description: 'Company / HQ organizations above merchant branches' },
+  { collection: 'business_members', service: 'business-service', description: 'Business portal team memberships and roles' },
 ];

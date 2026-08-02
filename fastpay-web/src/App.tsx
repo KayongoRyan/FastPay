@@ -2,8 +2,10 @@ import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { AuthLayout } from "./components/AuthLayout";
 import { Layout } from "./components/Layout";
+import { BusinessShell } from "./components/BusinessShell";
 import { MerchantShell } from "./components/MerchantShell";
 import { AuthProvider } from "./context/AuthContext";
+import { BusinessAuthProvider } from "./context/BusinessAuthContext";
 import { MerchantAuthProvider } from "./context/MerchantAuthContext";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { ContactPage } from "./pages/ContactPage";
@@ -31,6 +33,11 @@ import { AppSecurityPage } from "./pages/app/AppSecurityPage";
 import { AppSubscriptionsPage } from "./pages/app/AppSubscriptionsPage";
 import { AppTransferPage } from "./pages/app/AppTransferPage";
 import { AppWalletPage } from "./pages/app/AppWalletPage";
+import { BusinessBranchesPage } from "./pages/business/BusinessBranchesPage";
+import { BusinessDashboardPage } from "./pages/business/BusinessDashboardPage";
+import { BusinessLoginPage } from "./pages/business/BusinessLoginPage";
+import { BusinessSettingsPage } from "./pages/business/BusinessSettingsPage";
+import { BusinessTeamPage } from "./pages/business/BusinessTeamPage";
 import { MerchantDashboardPage } from "./pages/merchant/MerchantDashboardPage";
 import { MerchantGoalsPage } from "./pages/merchant/MerchantGoalsPage";
 import { MerchantInventoryPage } from "./pages/merchant/MerchantInventoryPage";
@@ -44,6 +51,7 @@ export default function App() {
   return (
     <AuthProvider>
       <MerchantAuthProvider>
+      <BusinessAuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Marketing site — guests only; Layout bounces signed-in users to /app */}
@@ -61,6 +69,7 @@ export default function App() {
             <Route path="signup" element={<SignupPage />} />
             <Route path="pin-setup" element={<PinSetupPage />} />
             <Route path="merchant/login" element={<MerchantLoginPage />} />
+            <Route path="business/login" element={<BusinessLoginPage />} />
           </Route>
 
           {/* Wallet app — replaces the site once signed in with a PIN */}
@@ -88,7 +97,7 @@ export default function App() {
           <Route path="profile" element={<Navigate to="/app/profile" replace />} />
           <Route path="settings" element={<Navigate to="/app/settings" replace />} />
 
-          {/* Merchant portal — separate auth + nav from consumer /app */}
+          {/* Merchant portal — shop / till ops */}
           <Route path="merchant" element={<MerchantShell />}>
             <Route index element={<MerchantDashboardPage />} />
             <Route path="inventory" element={<MerchantInventoryPage />} />
@@ -98,8 +107,17 @@ export default function App() {
             <Route path="transactions" element={<MerchantTransactionsPage />} />
             <Route path="settings" element={<MerchantSettingsPage />} />
           </Route>
+
+          {/* Business portal — company HQ above merchant branches */}
+          <Route path="business" element={<BusinessShell />}>
+            <Route index element={<BusinessDashboardPage />} />
+            <Route path="branches" element={<BusinessBranchesPage />} />
+            <Route path="team" element={<BusinessTeamPage />} />
+            <Route path="settings" element={<BusinessSettingsPage />} />
+          </Route>
         </Routes>
       </BrowserRouter>
+      </BusinessAuthProvider>
       </MerchantAuthProvider>
     </AuthProvider>
   );

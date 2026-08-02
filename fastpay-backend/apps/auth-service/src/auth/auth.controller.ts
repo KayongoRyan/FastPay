@@ -18,6 +18,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterMerchantDto } from './dto/register-merchant.dto';
+import { RegisterBusinessDto } from './dto/register-business.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { VerifyPasswordDto } from './dto/verify-password.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -40,6 +41,11 @@ export class AuthController {
   @Post('register/merchant')
   registerMerchant(@Body() dto: RegisterMerchantDto, @Req() req: Request) {
     return this.authService.registerMerchant(dto, extractAuditContext(req));
+  }
+
+  @Post('register/business')
+  registerBusiness(@Body() dto: RegisterBusinessDto, @Req() req: Request) {
+    return this.authService.registerBusiness(dto, extractAuditContext(req));
   }
 
   @Post('login')
