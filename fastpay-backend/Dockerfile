@@ -36,7 +36,14 @@ COPY --from=builder /app/libs ./libs
 
 RUN npm ci --omit=dev && \
     find apps libs -type d -name src ! -path '*/dist/*' -exec rm -rf {} + && \
-    find apps libs -type f \( -name 'tsconfig*.json' -o -name 'nest-cli.json' \) -delete
+    find apps libs -type f \( -name 'tsconfig*.json' -o -name 'nest-cli.json' \) -delete && \
+    # CVE-2026-59873: node:22-alpine ships npm with tar < 7.5.19.
+    # Entrypoint only needs `node` — drop the CLI so the vuln isn't in the image.
+    rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx \
+           /usr/local/bin/corepack
 
 COPY docker-entrypoint.sh /entrypoint.sh
 
