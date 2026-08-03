@@ -28,6 +28,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # .env is gitignored; compose scripts require --env-file .env
+      - name: Prepare CI env file
+        run: cp .env.example .env
+
       - name: Generate Mongo TLS certs
         run: npm run mongo:certs
 
