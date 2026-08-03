@@ -76,7 +76,13 @@ export class RulesEngineService {
         ruleHits.push('new_recipient');
         reasons.push('First payment to this recipient');
         riskScore += 15;
-        if (decision === 'allow') decision = 'review';
+        // Golden/CI can set FRAUD_SKIP_NEW_RECIPIENT_REVIEW=true — first-pay
+        // to a brand-new friendbot dest would otherwise park forever in pending_review.
+        const skipReview =
+          process.env.FRAUD_SKIP_NEW_RECIPIENT_REVIEW === 'true';
+        if (decision === 'allow' && !skipReview) {
+          decision = 'review';
+        }
       }
     }
 
