@@ -44,13 +44,12 @@ jobs:
       - name: Build services
         run: npm run build
 
-      # Use built dist (start:prod), not start:dev — blockchain + ethers/solana
-      # cold-compiles past the old 25s sleep and fails /health.
-      # fraud-service is required: payment relay asserts via :3011 before queue.
+      # fraud new_recipient would hold every first transfer in pending_review
       - name: Start backend services
         env:
           FASTPAY_INLINE_OFFLINE_QUEUE: 'true'
           INTERNAL_SERVICE_SECRET: ci-internal-secret
+          FRAUD_SKIP_NEW_RECIPIENT_REVIEW: 'true'
         run: |
           npm run start:prod -w @fastpay/api-gateway &
           npm run start:prod -w @fastpay/auth-service &

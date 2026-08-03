@@ -49,17 +49,29 @@ async function waitFor(url, label, attempts = 60) {
 }
 
 async function pollRelay(txHash, token, maxAttempts = 30) {
+  const { appendFileSync } = await import('node:fs');
+  const logPath = resolve(root, '../.cursor/debug-208281.log');
   for (let i = 0; i < maxAttempts; i++) {
     const res = await fetch(`${gateway}/offline/relay/${txHash}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const body = await res.json();
+    // #region agent log
+    const payload = {sessionId:'208281',runId:'post-fix',hypothesisId:'A,E',location:'golden-smoke.mjs:pollRelay',message:'poll status',data:{i,httpStatus:res.status,status:body.status,lastError:body.lastError??null,txHash:txHash.slice(0,12)},timestamp:Date.now()};
+    try { appendFileSync(logPath, JSON.stringify(payload)+'\n'); } catch { /* ignore */ }
+    fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify(payload)}).catch(()=>{});
+    // #endregion
     if (body.status === 'confirmed') {
       console.log(`OK: relay confirmed (${txHash.slice(0, 12)}…)`);
       return body;
     }
     if (body.status === 'failed') {
       throw new Error(`Relay failed: ${body.lastError ?? 'unknown'}`);
+    }
+    if (body.status === 'pending_review') {
+      throw new Error(
+        'Relay stuck in pending_review (fraud hold). For smoke/CI set FRAUD_SKIP_NEW_RECIPIENT_REVIEW=true on fraud-service.',
+      );
     }
     await new Promise((r) => setTimeout(r, 1500));
   }

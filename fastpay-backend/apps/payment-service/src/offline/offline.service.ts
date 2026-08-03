@@ -202,7 +202,16 @@ export class OfflineService {
 
     try {
       if (this.inlineOfflineQueue || !this.offlineQueue) {
-        if (status !== OfflineRelayStatus.PENDING_REVIEW) {
+        const willBroadcast = status !== OfflineRelayStatus.PENDING_REVIEW;
+        // #region agent log
+        (() => {
+          const payload = {sessionId:'208281',runId:'post-fix',hypothesisId:'A,B',location:'offline.service.ts:queueSignedTx',message:'inline branch',data:{txHash,status,inline:this.inlineOfflineQueue,hasQueue:Boolean(this.offlineQueue),willBroadcast,fraudDecision:fraudMeta?.decision},timestamp:Date.now()};
+          try { require('node:fs').appendFileSync(require('node:path').resolve(process.cwd(), '../.cursor/debug-208281.log'), JSON.stringify(payload)+'\n'); } catch { /* ignore */ }
+          try { require('node:fs').appendFileSync(require('node:path').resolve(process.cwd(), '../../.cursor/debug-208281.log'), JSON.stringify(payload)+'\n'); } catch { /* ignore */ }
+          fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify(payload)}).catch(()=>{});
+        })();
+        // #endregion
+        if (willBroadcast) {
           setImmediate(() => {
             void this.processInlineBroadcast(signedTxXDR, txHash);
           });
@@ -211,9 +220,15 @@ export class OfflineService {
       }
 
       if (status === OfflineRelayStatus.PENDING_REVIEW) {
+        // #region agent log
+        fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify({sessionId:'208281',runId:'pre-fix',hypothesisId:'A,B',location:'offline.service.ts:queueSignedTx',message:'bullmq skipped pending_review',data:{txHash,status},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         return { queueId: txHash, txHash };
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify({sessionId:'208281',runId:'pre-fix',hypothesisId:'B',location:'offline.service.ts:queueSignedTx',message:'bullmq enqueue',data:{txHash,status,inline:this.inlineOfflineQueue},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       const job = await this.offlineQueue.add(
         'broadcast',
         { signedXdr: signedTxXDR, txHash },
@@ -324,6 +339,9 @@ export class OfflineService {
     signedXdr: string,
     txHash: string,
   ): Promise<void> {
+    // #region agent log
+    fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify({sessionId:'208281',runId:'pre-fix',hypothesisId:'C,D',location:'offline.service.ts:processInlineBroadcast',message:'inline broadcast start',data:{txHash},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     await this.updateStatus(
       txHash,
       OfflineRelayStatus.BROADCASTING,
@@ -339,6 +357,9 @@ export class OfflineService {
         OfflineRelayStatus.CONFIRMED,
         onChainTxHash,
       );
+      // #region agent log
+      fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify({sessionId:'208281',runId:'pre-fix',hypothesisId:'C,D',location:'offline.service.ts:processInlineBroadcast',message:'inline broadcast confirmed',data:{txHash,onChainTxHash},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       this.logger.log(
         `Inline broadcast confirmed for ${txHash} -> on-chain ${onChainTxHash}`,
       );
@@ -351,6 +372,9 @@ export class OfflineService {
         message,
         1,
       );
+      // #region agent log
+      fetch('http://127.0.0.1:7374/ingest/e5785f1a-1397-4b7d-b3c8-78db776e0924',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'208281'},body:JSON.stringify({sessionId:'208281',runId:'pre-fix',hypothesisId:'D',location:'offline.service.ts:processInlineBroadcast',message:'inline broadcast failed',data:{txHash,error:message},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       this.logger.error(`Inline broadcast failed for ${txHash}: ${message}`);
     }
   }
