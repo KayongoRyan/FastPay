@@ -8,8 +8,8 @@
       "@fastpay/common/*": ["libs/common/src/*"],
       "@fastpay/mongo": ["libs/mongo/src"],
       "@fastpay/mongo/*": ["libs/mongo/src/*"],
-      "@fastpay/schemas": ["libs/schemas/dist"],
-      "@fastpay/schemas/*": ["libs/schemas/dist/*"]
+      "@fastpay/schemas": ["libs/schemas/src"],
+      "@fastpay/schemas/*": ["libs/schemas/src/*"]
     }
   },
   "include": [
