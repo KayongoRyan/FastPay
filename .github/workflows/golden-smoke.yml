@@ -46,6 +46,7 @@ jobs:
 
       # Use built dist (start:prod), not start:dev — blockchain + ethers/solana
       # cold-compiles past the old 25s sleep and fails /health.
+      # fraud-service is required: payment relay asserts via :3011 before queue.
       - name: Start backend services
         env:
           FASTPAY_INLINE_OFFLINE_QUEUE: 'true'
@@ -56,12 +57,14 @@ jobs:
           npm run start:prod -w @fastpay/wallet-service &
           npm run start:prod -w @fastpay/payment-service &
           npm run start:prod -w @fastpay/blockchain-service &
+          npm run start:prod -w @fastpay/fraud-service &
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:3000/health >/dev/null \
               && curl -sf http://127.0.0.1:3001/health >/dev/null \
               && curl -sf http://127.0.0.1:3002/health >/dev/null \
               && curl -sf http://127.0.0.1:3003/health >/dev/null \
-              && curl -sf http://127.0.0.1:3009/health >/dev/null; then
+              && curl -sf http://127.0.0.1:3009/health >/dev/null \
+              && curl -sf http://127.0.0.1:3011/health >/dev/null; then
               echo "All services healthy"
               exit 0
             fi

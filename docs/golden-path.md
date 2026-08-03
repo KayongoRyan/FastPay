@@ -29,6 +29,7 @@ npm run start:auth          # :3001
 npm run start:wallet        # :3002
 npm run start:payment       # :3003  (FASTPAY_INLINE_OFFLINE_QUEUE=true)
 npm run start:blockchain    # :3009
+npm run start:fraud         # :3011  (required for transfer relay assert)
 npm run start:gateway       # :3000
 npm run golden:smoke
 ```

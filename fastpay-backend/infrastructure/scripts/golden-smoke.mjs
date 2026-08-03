@@ -2,7 +2,8 @@
 /**
  * Golden path smoke test — register → wallet → transfer → history.
  * Requires: Mongo (docker:up), gateway :3000, auth :3001, wallet :3002,
- * payment :3003 (FASTPAY_INLINE_OFFLINE_QUEUE=true), blockchain :3009.
+ * payment :3003 (FASTPAY_INLINE_OFFLINE_QUEUE=true), blockchain :3009,
+ * fraud :3011 (relay asserts compliance before queue).
  *
  * Usage: node infrastructure/scripts/golden-smoke.mjs [--skip-mongo]
  */
@@ -82,6 +83,7 @@ async function main() {
   await waitFor('http://127.0.0.1:3002/health', 'wallet-service');
   await waitFor('http://127.0.0.1:3003/health', 'payment-service');
   await waitFor('http://127.0.0.1:3009/health', 'blockchain-service');
+  await waitFor('http://127.0.0.1:3011/health', 'fraud-service');
 
   const email = `golden-${Date.now()}@fastpay.test`;
   const password = 'GoldenTest1!';
