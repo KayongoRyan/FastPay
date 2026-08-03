@@ -44,17 +44,31 @@ jobs:
       - name: Build services
         run: npm run build
 
+      # Use built dist (start:prod), not start:dev — blockchain + ethers/solana
+      # cold-compiles past the old 25s sleep and fails /health.
       - name: Start backend services
         env:
           FASTPAY_INLINE_OFFLINE_QUEUE: 'true'
           INTERNAL_SERVICE_SECRET: ci-internal-secret
         run: |
-          npm run start:gateway &
-          npm run start:auth &
-          npm run start:wallet &
-          npm run start:payment &
-          npm run start:blockchain &
-          sleep 25
+          npm run start:prod -w @fastpay/api-gateway &
+          npm run start:prod -w @fastpay/auth-service &
+          npm run start:prod -w @fastpay/wallet-service &
+          npm run start:prod -w @fastpay/payment-service &
+          npm run start:prod -w @fastpay/blockchain-service &
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3000/health >/dev/null \
+              && curl -sf http://127.0.0.1:3001/health >/dev/null \
+              && curl -sf http://127.0.0.1:3002/health >/dev/null \
+              && curl -sf http://127.0.0.1:3003/health >/dev/null \
+              && curl -sf http://127.0.0.1:3009/health >/dev/null; then
+              echo "All services healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Timed out waiting for services"
+          exit 1
 
       - name: Run golden smoke
         env:
