@@ -32,6 +32,8 @@ export class AuditLog {
 
   @Prop()
   blockchainHash?: string;
+
+  createdAt?: Date;
 }
 
 export type AuditLogDocument = HydratedDocument<AuditLog>;
